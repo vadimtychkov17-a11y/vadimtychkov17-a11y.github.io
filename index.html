@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VinMer — Чат для родных</title>
+    <link rel="icon" href="favicon.ico">
+    <!-- Подключаем библиотеку Supabase -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; }
+        body { display: flex; height: 100vh; background: #f3f0f7; color: #333; }
+        aside { width: 300px; background: #2e1a47; color: white; display: flex; flex-direction: column; padding: 20px; box-shadow: 2px 0 10px rgba(0,0,0,0.1); }
+        aside h1 { font-size: 1.5rem; font-weight: bold; margin-bottom: 25px; color: #d6bcfa; display: flex; align-items: center; gap: 10px; }
+        .profile-box { background: #442a68; padding: 15px; border-radius: 12px; margin-bottom: 20px; }
+        .profile-box label { font-size: 0.8rem; color: #b794f4; display: block; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 1px; }
+        .profile-box input { width: 100%; padding: 10px; border: 1px solid #553c7b; border-radius: 8px; background: #2e1a47; color: white; font-size: 1rem; outline: none; margin-bottom: 12px; }
+        .profile-box input:focus { border-color: #b794f4; }
+        .profile-box button { width: 100%; padding: 10px; background: #6b46c1; border: none; border-radius: 8px; color: white; font-weight: bold; cursor: pointer; }
+        .profile-box button:hover { background: #805ad5; }
+        main { flex: 1; display: flex; flex-direction: column; background: #faf8ff; position: relative; }
+        #chat-box { flex: 1; padding: 25px; overflow-y: auto; display: flex; flex-direction: column; gap: 15px; background-image: radial-gradient(#e9e3f3 1.5px, transparent 1.5px); background-size: 24px 24px; }
+        .msg { max-width: 60%; padding: 12px 16px; border-radius: 16px; overflow-wrap: break-word; word-break: break-word; font-size: 0.95rem; box-shadow: 0 2px 4px rgba(0,0,0,0.05); animation: fadeIn 0.2s ease-in-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .msg .meta { font-size: 0.75rem; font-weight: bold; margin-bottom: 4px; display: flex; justify-content: space-between; gap: 20px; }
+        .my-msg { background: #805ad5; color: white; align-self: flex-end; border-bottom-right-radius: 2px; }
+        .other-msg { background: white; color: #2d3748; align-self: flex-start; border-bottom-left-radius: 2px; border: 1px solid #e2e8f0; }
+        footer { background: white; padding: 20px 30px; display: flex; gap: 15px; align-items: center; border-top: 1px solid #e2e8f0; }
+        #msg-input { flex: 1; padding: 14px 20px; border: 2px solid #e2e8f0; border-radius: 24px; outline: none; font-size: 1rem; }
+        footer button { background: #6b46c1; color: white; border: none; font-weight: bold; cursor: pointer; padding: 14px 28px; border-radius: 24px; font-size: 1rem; }
+        .status { font-size: 0.8rem; color: #b794f4; margin-top: 10px; text-align: center; }
+        #login-error { color: #fc8181; font-size: 0.9rem; margin-top: 6px; text-align: center; }
+        .hidden { display: none; }
+        #logout-btn { background: none; border: 1px solid #b794f4; color: #b794f4; padding: 6px 12px; border-radius: 8px; cursor: pointer; margin-top: 10px; }
+        #logout-btn:hover { background: #b794f4; color: #2e1a47; }
+        .checkbox-label { font-size: 0.8rem; color: #b794f4; display: flex; align-items: center; gap: 6px; margin-top: 6px; }
+        .checkbox-label input { width: auto; margin: 0; }
+    </style>
+</head>
+<body>
+
+    <aside>
+        <h1>🔮 VinMer</h1>
+        <div class="profile-box" id="login-box">
+            <label for="login-input">Ваше имя (логин)</label>
+            <input type="text" id="login-input" placeholder="Например: Бабушка" autocomplete="off">
+
+            <label for="password-input">Пароль (придумайте)</label>
+            <input type="password" id="password-input" placeholder="Пароль" autocomplete="off">
+
+            <label for="registration-key-input">Ключ регистрации</label>
+            <input type="password" id="registration-key-input" placeholder="Ключ" autocomplete="off">
+
+            <button id="login-btn">Войти / Создать аккаунт</button>
+            <div id="login-error"></div>
+            <div class="checkbox-label">
+                <input type="checkbox" id="remember-me" checked> Запомнить меня
+            </div>
+        </div>
+        <div id="profile-info" class="hidden" style="background:#442a68; padding:15px; border-radius:12px; margin-bottom:20px;">
+            <div style="color:#b794f4;">Вы вошли как <span id="display-username" style="color:white; font-weight:bold;"></span></div>
+            <button id="logout-btn">Выйти</button>
+        </div>
+        <div id="status" class="status">📡 Подключение...</div>
+    </aside>
+
+    <main>
+        <div id="chat-box"></div>
+        <footer id="chat-footer" class="hidden">
+            <input type="text" id="msg-input" placeholder="Напишите сообщение..." autocomplete="off">
+            <button id="send-btn">Отправить</button>
+        </footer>
+    </main>
+
+    <script>
+        // ================================================================
+        //  VINMER на SUPABASE – ИСПРАВЛЕНО: правильное имя supabase
+        //  + привязаны label к input
+        // ================================================================
+
+        (function() {
+            // -------- КОНФИГ --------
+            const SUPABASE_URL = 'https://ikohrvluiaqaxdmsbyhc.supabase.co';
+            const SUPABASE_KEY = 'sb_publishable_5bWF1N233sO8oT0kFIF7kg_faOPlodF';
+
+            // Supabase сам хранит сессию в localStorage.
+            // Не сохраняем пароль приложения вручную.
+            if (!window.supabase || typeof window.supabase.createClient !== 'function') {
+                throw new Error('Не загрузилась библиотека Supabase. Проверьте интернет и CDN.');
+            }
+
+            const supabaseClient = window.supabase.createClient(
+                SUPABASE_URL,
+                SUPABASE_KEY,
+                {
+                    auth: {
+                        persistSession: true,
+                        autoRefreshToken: true,
+                        detectSessionInUrl: true
+                    }
+                }
+            );
+
+            // -------- DOM --------
+            const chatBox = document.getElementById('chat-box');
+            const msgInput = document.getElementById('msg-input');
+            const loginInput = document.getElementById('login-input');
+            const passwordInput = document.getElementById('password-input');
+            const registrationKeyInput = document.getElementById('registration-key-input');
+            const loginBtn = document.getElementById('login-btn');
+            const loginError = document.getElementById('login-error');
+            const loginBox = document.getElementById('login-box');
+            const profileInfo = document.getElementById('profile-info');
+            const displayUsername = document.getElementById('display-username');
+            const logoutBtn = document.getElementById('logout-btn');
+            const chatFooter = document.getElementById('chat-footer');
+            const statusDiv = document.getElementById('status');
+            const rememberCheck = document.getElementById('remember-me');
+            const sendBtn = document.getElementById('send-btn');
+
+            let currentUser = null;
+
+            // -------- ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ --------
+            function makeEmail(username) {
+                return username.trim().toLowerCase() + '@vinmer.local';
+            }
+
+            function escapeHtml(str) {
+                if (!str) return '';
+                const div = document.createElement('div');
+                div.textContent = str;
+                return div.innerHTML;
+            }
+
+            function formatTime(timestamp) {
+                if (!timestamp) return '';
+                const date = new Date(timestamp);
+                return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            }
+
+            // -------- КЛЮЧ РЕГИСТРАЦИИ --------
+            // В исходнике хранится только SHA-256 хэш ключа, а не сам ключ.
+            // Это защищает ключ от случайного просмотра в коде, но НЕ является
+            // полноценной серверной защитой: клиентский JavaScript можно изменить.
+            const REGISTRATION_KEY_HASH = '7922bd46961e92ee14cd80c8828d74db4d9c5a34668a296215f0c6781612860c';
+
+            async function sha256Hex(value) {
+                const bytes = new TextEncoder().encode(value);
+                const hashBuffer = await crypto.subtle.digest('SHA-256', bytes);
+                return Array.from(new Uint8Array(hashBuffer))
+                    .map(b => b.toString(16).padStart(2, '0'))
+                    .join('');
+            }
+
+            async function registrationKeyIsValid(value) {
+                if (!value) return false;
+                return (await sha256Hex(value)) === REGISTRATION_KEY_HASH;
+            }
+
+            // -------- ВХОД / РЕГИСТРАЦИЯ --------
+            async function login() {
+
+                const username = loginInput.value.trim();
+                const password = passwordInput.value.trim();
+
+                if (!username || !password) {
+                    loginError.textContent = 'Введите имя и пароль';
+                    return;
+                }
+
+                loginError.textContent = '';
+                statusDiv.textContent = '⏳ Подключение к Supabase...';
+
+                const email = makeEmail(username);
+
+                try {
+                    // Сначала пробуем обычный вход.
+                    let { data, error } = await supabaseClient.auth.signInWithPassword({
+                        email,
+                        password
+                    });
+
+                    // Если аккаунта ещё нет — создаём его.
+                    if (error) {
+                        if (
+                            error.message.includes('Invalid login credentials') ||
+                            error.message.includes('Invalid login')
+                        ) {
+                            const suppliedKey = registrationKeyInput.value.trim();
+
+                            if (!(await registrationKeyIsValid(suppliedKey))) {
+                                loginError.textContent = 'Неверный ключ регистрации';
+                                statusDiv.textContent = '🔐 Требуется правильный ключ';
+                                return;
+                            }
+
+                            const result = await supabaseClient.auth.signUp({
+                                email,
+                                password,
+                                options: {
+                                    data: { username }
+                                }
+                            });
+
+                            if (result.error) {
+                                loginError.textContent = 'Ошибка регистрации: ' + result.error.message;
+                                statusDiv.textContent = '❌ Ошибка Supabase';
+                                console.error('Supabase signUp:', result.error);
+                                return;
+                            }
+
+                            // ВАЖНО: если в Supabase включено Confirm email,
+                            // signUp может вернуть user без session.
+                            if (!result.data.session) {
+                                loginError.textContent =
+                                    'Аккаунт создан, но Supabase требует подтверждение email. ' +
+                                    'Для VinMer отключите "Confirm email" в Authentication → Providers → Email.';
+                                statusDiv.textContent = '⚠️ Нужна настройка Supabase';
+                                return;
+                            }
+
+                            data = result.data;
+                        } else {
+                            loginError.textContent = 'Ошибка входа: ' + error.message;
+                            statusDiv.textContent = '❌ Ошибка Supabase';
+                            console.error('Supabase signIn:', error);
+                            return;
+                        }
+                    }
+
+                    const user = data?.user;
+                    const session = data?.session;
+
+                    if (!user || !session) {
+                        const sessionResult = await supabaseClient.auth.getSession();
+
+                        if (sessionResult.error || !sessionResult.data.session) {
+                            loginError.textContent =
+                                'Вход выполнен без активной сессии. Проверьте настройки Auth в Supabase.';
+                            statusDiv.textContent = '❌ Нет сессии';
+                            console.error('No Supabase session:', sessionResult.error);
+                            return;
+                        }
+                    }
+
+                    const activeUser = user || (await supabaseClient.auth.getUser()).data.user;
+                    const metaUsername = activeUser?.user_metadata?.username || username;
+
+                    currentUser = {
+                        username: metaUsername,
+                        email,
+                        id: activeUser?.id
+                    };
+
+                    registrationKeyInput.value = '';
+                    enterChat();
+
+                } catch (e) {
+                    console.error('VinMer connection error:', e);
+                    loginError.textContent =
+                        'Не удалось подключиться. Откройте F12 → Console и посмотрите настоящую ошибку.';
+                    statusDiv.textContent =
+                        window.location.protocol === 'file:'
+                            ? '⚠️ Запущено через file://'
+                            : '❌ Ошибка соединения';
+                }
+            }
+
+            // -------- ВХОД В ЧАТ --------
+            function enterChat() {
+                loginBox.classList.add('hidden');
+                profileInfo.classList.remove('hidden');
+                displayUsername.textContent = currentUser.username;
+                chatFooter.classList.remove('hidden');
+                statusDiv.textContent = '📡 Подключено';
+
+                loadMessages();
+
+                if (window.vinmerSubscription) {
+                    window.vinmerSubscription.unsubscribe();
+                }
+
+                window.vinmerSubscription = supabaseClient
+                    .channel('messages')
+                    .on('postgres_changes', {
+                        event: 'INSERT',
+                        schema: 'public',
+                        table: 'messages'
+                    }, (payload) => {
+                        const msg = payload.new;
+                        const timeStr = formatTime(msg.created_at);
+                        addMessageToChat(
+                            msg.author,
+                            msg.text,
+                            timeStr,
+                            msg.author === currentUser.username
+                        );
+                    })
+                    .subscribe((status) => {
+                        console.log('Realtime status:', status);
+                        if (status === 'SUBSCRIBED') {
+                            statusDiv.textContent = '📡 Онлайн';
+                        } else if (status === 'CHANNEL_ERROR') {
+                            statusDiv.textContent = '⚠️ База работает, Realtime не подключён';
+                        } else if (status === 'TIMED_OUT') {
+                            statusDiv.textContent = '⚠️ Realtime: тайм-аут';
+                        }
+                    });
+
+                msgInput.focus();
+            }
+
+            // -------- ВЫХОД --------
+            async function logout() {
+                await supabaseClient.auth.signOut();
+
+                if (window.vinmerSubscription) {
+                    window.vinmerSubscription.unsubscribe();
+                    window.vinmerSubscription = null;
+                }
+
+                currentUser = null;
+                loginBox.classList.remove('hidden');
+                profileInfo.classList.add('hidden');
+                chatFooter.classList.add('hidden');
+                chatBox.innerHTML = '';
+                statusDiv.textContent = '📡 Введите имя и пароль';
+                loginInput.value = '';
+                passwordInput.value = '';
+                registrationKeyInput.value = '';
+                loginError.textContent = '';
+            }
+
+            // -------- ЗАГРУЗКА СООБЩЕНИЙ --------
+            async function loadMessages() {
+                if (!currentUser) return;
+                try {
+                    const { data, error } = await supabaseClient
+                        .from('messages')
+                        .select('*')
+                        .order('created_at', { ascending: true });
+
+                    if (error) {
+                        console.error('Ошибка загрузки сообщений:', error);
+                        statusDiv.textContent = '❌ База: ' + (error.message || 'ошибка');
+                        return;
+                    }
+                    chatBox.innerHTML = '';
+                    data.forEach(msg => {
+                        const timeStr = formatTime(msg.created_at);
+                        const isMy = msg.author === currentUser.username;
+                        addMessageToChat(msg.author, msg.text, timeStr, isMy);
+                    });
+                    chatBox.scrollTop = chatBox.scrollHeight;
+                    statusDiv.textContent = '📡 Онлайн';
+                } catch (e) {
+                    console.error(e);
+                    statusDiv.textContent = '❌ Ошибка';
+                }
+            }
+
+            // -------- ДОБАВЛЕНИЕ СООБЩЕНИЯ В DOM --------
+            function addMessageToChat(author, text, time, isMy) {
+                const d = document.createElement('div');
+                d.className = `msg ${isMy ? 'my-msg' : 'other-msg'}`;
+                d.innerHTML = `<div class="meta"><strong>${escapeHtml(author)}</strong><span>${escapeHtml(time)}</span></div><div>${escapeHtml(text)}</div>`;
+                chatBox.appendChild(d);
+                chatBox.scrollTop = chatBox.scrollHeight;
+            }
+
+            // -------- ОТПРАВКА СООБЩЕНИЯ --------
+            async function sendMessage() {
+                if (!currentUser) return;
+                const text = msgInput.value.trim();
+                if (!text) return;
+
+                try {
+                    const { error } = await supabaseClient
+                        .from('messages')
+                        .insert([
+                            { author: currentUser.username, text: text }
+                        ]);
+                    if (error) {
+                        console.error('Ошибка отправки:', error);
+                        statusDiv.textContent = '❌ Не отправлено';
+                    } else {
+                        msgInput.value = '';
+                        statusDiv.textContent = '✅ Отправлено';
+                        setTimeout(() => { statusDiv.textContent = '📡 Онлайн'; }, 2000);
+                    }
+                } catch (e) {
+                    console.error(e);
+                    statusDiv.textContent = '❌ Ошибка';
+                }
+            }
+
+            // -------- ВОССТАНОВЛЕНИЕ СЕССИИ --------
+            async function restoreSession() {
+                try {
+                    const { data, error } = await supabaseClient.auth.getSession();
+
+                    if (error) {
+                        console.error('Ошибка получения сессии:', error);
+                        statusDiv.textContent = '❌ Auth: ' + error.message;
+                        return;
+                    }
+
+                    if (!data.session) {
+                        loginBox.classList.remove('hidden');
+                        statusDiv.textContent =
+                            window.location.protocol === 'file:'
+                                ? '📁 Открыто как файл — лучше проверить через GitHub Pages'
+                                : '📡 Введите имя и пароль';
+                        return;
+                    }
+
+                    const user = data.session.user;
+                    const username = user?.user_metadata?.username || user?.email?.split('@')[0] || 'Пользователь';
+
+                    currentUser = {
+                        username,
+                        email: user.email,
+                        id: user.id
+                    };
+
+                    enterChat();
+                } catch (e) {
+                    console.error('Ошибка восстановления сессии:', e);
+                    statusDiv.textContent = '❌ Ошибка Auth';
+                }
+            }
+
+            // -------- СОБЫТИЯ --------
+            loginBtn.addEventListener('click', login);
+            logoutBtn.addEventListener('click', logout);
+            sendBtn.addEventListener('click', sendMessage);
+            msgInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') sendMessage(); });
+            loginInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') login(); });
+            passwordInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') login(); });
+
+            window.addEventListener('error', (event) => {
+                console.error('VinMer JS error:', event.error || event.message);
+                if (event.message && event.message.includes('Supabase')) {
+                    statusDiv.textContent = '❌ Ошибка библиотеки Supabase';
+                }
+            });
+
+            // -------- ЗАПУСК --------
+            statusDiv.textContent = '📡 Проверка подключения...';
+            restoreSession();
+        })(); // конец IIFE
+    </script>
+</body>
+</html>
