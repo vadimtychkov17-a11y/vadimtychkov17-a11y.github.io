@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<title>Презентация — Vindim</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html, body {
+    width: 100%; height: 100%;
+    overflow: hidden;
+    font-family: 'Segoe UI', sans-serif;
+    background: #0d0620;
+    color: #fff;
+  }
+
+  /* ===== Звёздный фон ===== */
+  .stars, .stars2, .stars3 {
+    position: fixed; top: 0; left: 0;
+    width: 100%; height: 100%;
+    pointer-events: none;
+    z-index: 0;
+  }
+  .stars {
+    background:
+      radial-gradient(2px 2px at 20px 30px, #fff, transparent),
+      radial-gradient(2px 2px at 40px 70px, #fff, transparent),
+      radial-gradient(1px 1px at 90px 40px, #fff, transparent),
+      radial-gradient(1px 1px at 130px 80px, #fff, transparent),
+      radial-gradient(2px 2px at 160px 120px, #fff, transparent),
+      radial-gradient(1px 1px at 200px 50px, #fff, transparent),
+      radial-gradient(1px 1px at 250px 150px, #fff, transparent),
+      radial-gradient(2px 2px at 300px 90px, #fff, transparent);
+    background-repeat: repeat;
+    background-size: 350px 200px;
+    animation: twinkle 4s infinite;
+  }
+  .stars2 {
+    background:
+      radial-gradient(1px 1px at 50px 20px, #d8b4ff, transparent),
+      radial-gradient(1px 1px at 120px 60px, #d8b4ff, transparent),
+      radial-gradient(1px 1px at 200px 30px, #d8b4ff, transparent),
+      radial-gradient(1px 1px at 280px 100px, #d8b4ff, transparent);
+    background-repeat: repeat;
+    background-size: 400px 150px;
+    animation: twinkle 6s infinite 1s;
+  }
+  .stars3 {
+    background:
+      radial-gradient(1px 1px at 30px 40px, #f0abff, transparent),
+      radial-gradient(1px 1px at 180px 20px, #f0abff, transparent),
+      radial-gradient(2px 2px at 260px 130px, #f0abff, transparent),
+      radial-gradient(1px 1px at 380px 90px, #f0abff, transparent);
+    background-repeat: repeat;
+    background-size: 450px 250px;
+    animation: twinkle 8s infinite 2s;
+  }
+  @keyframes twinkle {
+    0%, 100% { opacity: 0.4; }
+    50% { opacity: 1; }
+  }
+
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background:
+      radial-gradient(circle at 30% 40%, rgba(120, 40, 200, 0.35), transparent 60%),
+      radial-gradient(circle at 70% 70%, rgba(80, 20, 160, 0.4), transparent 60%),
+      linear-gradient(160deg, #1a0733 0%, #0d0620 50%, #1f0a3d 100%);
+    z-index: 0;
+  }
+
+  /* ===== Обёртка окна ===== */
+  .window {
+    position: relative;
+    z-index: 5;
+    width: 100vw;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    padding: 20px;
+    gap: 14px;
+  }
+
+  /* Шапка окна (без крестика) */
+  .window-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 22px;
+    border-radius: 16px 16px 0 0;
+    background: rgba(60, 20, 120, 0.35);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(180, 130, 255, 0.35);
+    border-bottom: none;
+    flex-shrink: 0;
+  }
+  .window-title {
+    font-family: 'Segoe Script', cursive;
+    font-size: 22px;
+    color: #e8d5ff;
+    text-shadow: 0 0 10px rgba(180, 100, 255, 0.7);
+  }
+  .window-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .window-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
+    font-size: 14px;
+    font-weight: 500;
+    color: #e8d5ff;
+    text-decoration: none;
+    background: rgba(168, 85, 247, 0.25);
+    border: 1px solid rgba(180, 130, 255, 0.4);
+    border-radius: 50px;
+    transition: all 0.25s ease;
+    white-space: nowrap;
+  }
+  .window-link:hover {
+    background: rgba(168, 85, 247, 0.5);
+    box-shadow: 0 0 15px rgba(200, 120, 255, 0.6);
+  }
+
+  /* Тело окна с PDF */
+  .window-body {
+    position: relative;
+    flex: 1;
+    border-radius: 0 0 16px 16px;
+    background: linear-gradient(160deg, #1a0733 0%, #0d0620 60%, #1f0a3d 100%);
+    border: 1px solid rgba(180, 130, 255, 0.35);
+    box-shadow:
+      0 0 40px rgba(168, 85, 247, 0.45),
+      0 0 80px rgba(124, 58, 237, 0.3),
+      inset 0 0 60px rgba(120, 40, 200, 0.15);
+    overflow: hidden;
+  }
+  .window-body iframe {
+    width: 100%;
+    height: 100%;
+    border: none;
+    display: block;
+    opacity: 0;
+    transition: opacity 0.5s ease;
+  }
+  .window-body iframe.loaded {
+    opacity: 1;
+  }
+
+  /* ===== Загрузка (спиннер) ===== */
+  .loader {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 24px;
+    background: linear-gradient(160deg, #1a0733 0%, #0d0620 60%, #1f0a3d 100%);
+    z-index: 10;
+    transition: opacity 0.5s ease, visibility 0.5s ease;
+  }
+  .loader.hidden {
+    opacity: 0;
+    visibility: hidden;
+  }
+
+  .spinner {
+    position: relative;
+    width: 80px;
+    height: 80px;
+  }
+  .spinner::before,
+  .spinner::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    border: 3px solid transparent;
+  }
+  .spinner::before {
+    border-top-color: #a855f7;
+    border-right-color: #a855f7;
+    animation: spin 1.2s linear infinite;
+    box-shadow: 0 0 20px rgba(168, 85, 247, 0.8);
+  }
+  .spinner::after {
+    inset: 12px;
+    border-bottom-color: #e8d5ff;
+    border-left-color: #e8d5ff;
+    animation: spin 1.8s linear infinite reverse;
+    box-shadow: 0 0 15px rgba(232, 213, 255, 0.6);
+  }
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
+
+  .loader-text {
+    font-family: 'Segoe Script', cursive;
+    font-size: 22px;
+    color: #e8d5ff;
+    text-shadow: 0 0 15px rgba(180, 100, 255, 0.9),
+                 0 0 30px rgba(140, 60, 220, 0.6);
+    letter-spacing: 1px;
+    animation: pulseText 2s ease-in-out infinite;
+  }
+  @keyframes pulseText {
+    0%, 100% { opacity: 0.7; }
+    50% { opacity: 1; }
+  }
+
+  /* Точки после "Загрузка" */
+  .loader-text .dots span {
+    display: inline-block;
+    animation: dotJump 1.4s infinite;
+  }
+  .loader-text .dots span:nth-child(2) { animation-delay: 0.2s; }
+  .loader-text .dots span:nth-child(3) { animation-delay: 0.4s; }
+  @keyframes dotJump {
+    0%, 60%, 100% { transform: translateY(0); opacity: 0.5; }
+    30% { transform: translateY(-6px); opacity: 1; }
+  }
+
+  /* Адаптив */
+  @media (max-width: 600px) {
+    .window { padding: 10px; gap: 10px; }
+    .window-title { font-size: 18px; }
+    .window-link { padding: 6px 10px; font-size: 12px; }
+    .window-header { padding: 10px 14px; }
+    .spinner { width: 60px; height: 60px; }
+    .loader-text { font-size: 18px; }
+  }
+</style>
+</head>
+<body>
+  <div class="stars"></div>
+  <div class="stars2"></div>
+  <div class="stars3"></div>
+
+  <div class="window">
+    <div class="window-header">
+      <span class="window-title">Презентация</span>
+      <div class="window-actions">
+        <a class="window-link" id="downloadLink" href="#" download>⬇ Скачать</a>
+        <a class="window-link" id="newTabLink" href="#" target="_blank" rel="noopener">↗ В новой вкладке</a>
+      </div>
+    </div>
+
+    <div class="window-body">
+      <!-- Слой загрузки -->
+      <div class="loader" id="loader">
+        <div class="spinner"></div>
+        <div class="loader-text">
+          Загрузка<span class="dots"><span>.</span><span>.</span><span>.</span></span>
+        </div>
+      </div>
+
+      <!-- Просмотрщик PDF -->
+      <iframe id="pdfFrame" src="about:blank" title="Презентация" allowfullscreen></iframe>
+    </div>
+  </div>
+
+  <script>
+    // ===== НАСТРОЙКИ =====
+    // Прямая ссылка на PDF (для скачивания и открытия в новой вкладке)
+    const PDF_URL = 'presentation.pdf';
+
+    // Ссылка для Google Docs Viewer (он рендерит PDF внутри iframe)
+    // Нужен полный URL, поэтому собираем от текущего адреса страницы
+    const ABSOLUTE_PDF_URL = new URL(PDF_URL, window.location.href).href;
+    const VIEWER_URL = 'https://docs.google.com/viewer?url=' +
+                       encodeURIComponent(ABSOLUTE_PDF_URL) +
+                       '&embedded=true';
+
+    // ===== ЭЛЕМЕНТЫ =====
+    const frame = document.getElementById('pdfFrame');
+    const loader = document.getElementById('loader');
+    const downloadLink = document.getElementById('downloadLink');
+    const newTabLink = document.getElementById('newTabLink');
+
+    // Подставляем ссылки в кнопки
+    downloadLink.href = PDF_URL;
+    newTabLink.href = PDF_URL;
+
+    // ===== ЗАГРУЗКА =====
+    frame.src = VIEWER_URL;
+
+    // Когда iframe загрузился — прячем спиннер, показываем PDF
+    frame.addEventListener('load', () => {
+      // Небольшая задержка, чтобы Google Viewer успел отрисовать документ
+      setTimeout(() => {
+        loader.classList.add('hidden');
+        frame.classList.add('loaded');
+      }, 600);
+    });
+
+    // Страховка: если по какой-то причине load не сработал за 12 секунд,
+    // всё равно скрываем спиннер, чтобы пользователь не сидел в бесконечной загрузке
+    setTimeout(() => {
+      if (!frame.classList.contains('loaded')) {
+        loader.classList.add('hidden');
+        frame.classList.add('loaded');
+      }
+    }, 12000);
+  </script>
+</body>
+</html>
