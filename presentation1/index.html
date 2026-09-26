@@ -2,21 +2,27 @@
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#0d0620">
 <title>Презентация — Vindim</title>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
 
   html, body {
-    width: 100%; height: 100%;
+    width: 100%;
+    height: 100%;
     overflow: hidden;
     font-family: 'Segoe UI', sans-serif;
     background: #0d0620;
     color: #fff;
+    -webkit-text-size-adjust: 100%;
+    -webkit-tap-highlight-color: transparent;
   }
 
   /* ===== Звёздный фон ===== */
   .stars, .stars2, .stars3 {
-    position: fixed; top: 0; left: 0;
+    position: fixed;
+    top: 0; left: 0;
     width: 100%; height: 100%;
     pointer-events: none;
     z-index: 0;
@@ -62,82 +68,140 @@
 
   body::before {
     content: '';
-    position: fixed; inset: 0;
+    position: fixed;
+    inset: 0;
     background:
       radial-gradient(circle at 30% 40%, rgba(120, 40, 200, 0.35), transparent 60%),
       radial-gradient(circle at 70% 70%, rgba(80, 20, 160, 0.4), transparent 60%),
       linear-gradient(160deg, #1a0733 0%, #0d0620 50%, #1f0a3d 100%);
     z-index: 0;
+    pointer-events: none;
   }
 
-  /* ===== Обёртка окна ===== */
+  /* ===== Кнопка Назад (левый верхний угол) ===== */
+  .back-btn {
+    position: fixed;
+    top: 16px;
+    left: 16px;
+    z-index: 20;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 22px 12px 18px;
+    font-size: 16px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    color: #e8d5ff;
+    text-decoration: none;
+    border-radius: 50px;
+    background: rgba(60, 20, 120, 0.55);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(180, 130, 255, 0.45);
+    box-shadow:
+      0 4px 20px rgba(120, 40, 200, 0.4),
+      inset 0 1px 0 rgba(255, 255, 255, 0.15);
+    transition: all 0.3s ease;
+    min-height: 48px;
+    touch-action: manipulation;
+  }
+  .back-btn:hover {
+    background: rgba(120, 50, 200, 0.7);
+    border-color: rgba(220, 180, 255, 0.7);
+    box-shadow:
+      0 6px 28px rgba(180, 100, 255, 0.7),
+      0 0 40px rgba(140, 60, 220, 0.4),
+      inset 0 1px 0 rgba(255, 255, 255, 0.25);
+  }
+  .back-btn:active {
+    transform: scale(0.96);
+  }
+  .back-btn .back-arrow {
+    display: inline-block;
+    font-size: 18px;
+    line-height: 1;
+  }
+
+  /* ===== Окно с презентацией ===== */
   .window {
     position: relative;
     z-index: 5;
     width: 100vw;
     height: 100vh;
+    height: 100dvh;
     display: flex;
     flex-direction: column;
-    padding: 20px;
-    gap: 14px;
+    padding: 80px 20px 20px;
+    gap: 0;
   }
 
-  /* Шапка окна (без крестика) */
   .window-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 12px 22px;
-    border-radius: 16px 16px 0 0;
-    background: rgba(60, 20, 120, 0.35);
-    backdrop-filter: blur(10px);
+    gap: 10px;
+    padding: 14px 18px;
+    border-radius: 18px 18px 0 0;
+    background: rgba(60, 20, 120, 0.45);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
     border: 1px solid rgba(180, 130, 255, 0.35);
     border-bottom: none;
     flex-shrink: 0;
   }
   .window-title {
     font-family: 'Segoe Script', cursive;
-    font-size: 22px;
+    font-size: 20px;
     color: #e8d5ff;
     text-shadow: 0 0 10px rgba(180, 100, 255, 0.7);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
   .window-actions {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 8px;
+    flex-shrink: 0;
   }
   .window-link {
     display: inline-flex;
     align-items: center;
+    justify-content: center;
     gap: 6px;
-    padding: 8px 16px;
+    padding: 10px 16px;
     font-size: 14px;
-    font-weight: 500;
+    font-weight: 600;
     color: #e8d5ff;
     text-decoration: none;
-    background: rgba(168, 85, 247, 0.25);
-    border: 1px solid rgba(180, 130, 255, 0.4);
+    background: rgba(168, 85, 247, 0.3);
+    border: 1px solid rgba(180, 130, 255, 0.45);
     border-radius: 50px;
     transition: all 0.25s ease;
     white-space: nowrap;
+    min-height: 44px;
+    touch-action: manipulation;
   }
   .window-link:hover {
-    background: rgba(168, 85, 247, 0.5);
+    background: rgba(168, 85, 247, 0.55);
     box-shadow: 0 0 15px rgba(200, 120, 255, 0.6);
   }
+  .window-link:active {
+    transform: scale(0.96);
+  }
 
-  /* Тело окна с PDF */
   .window-body {
     position: relative;
     flex: 1;
-    border-radius: 0 0 16px 16px;
-    background: linear-gradient(160deg, #1a0733 0%, #0d0620 60%, #1f0a3d 100%);
+    border-radius: 0 0 18px 18px;
+    background: #150826;
     border: 1px solid rgba(180, 130, 255, 0.35);
     box-shadow:
       0 0 40px rgba(168, 85, 247, 0.45),
       0 0 80px rgba(124, 58, 237, 0.3),
       inset 0 0 60px rgba(120, 40, 200, 0.15);
     overflow: hidden;
+    min-height: 0;
   }
   .window-body iframe {
     width: 100%;
@@ -213,7 +277,6 @@
     50% { opacity: 1; }
   }
 
-  /* Точки после "Загрузка" */
   .loader-text .dots span {
     display: inline-block;
     animation: dotJump 1.4s infinite;
@@ -225,14 +288,66 @@
     30% { transform: translateY(-6px); opacity: 1; }
   }
 
-  /* Адаптив */
-  @media (max-width: 600px) {
-    .window { padding: 10px; gap: 10px; }
-    .window-title { font-size: 18px; }
-    .window-link { padding: 6px 10px; font-size: 12px; }
-    .window-header { padding: 10px 14px; }
-    .spinner { width: 60px; height: 60px; }
-    .loader-text { font-size: 18px; }
+  /* ===== Мобильная адаптация ===== */
+  @media (max-width: 700px) {
+    .back-btn {
+      top: 12px;
+      left: 12px;
+      padding: 10px 18px 10px 14px;
+      font-size: 15px;
+      min-height: 46px;
+    }
+
+    .window {
+      padding: 72px 10px 10px;
+    }
+
+    .window-header {
+      padding: 12px 14px;
+      border-radius: 16px 16px 0 0;
+      flex-wrap: nowrap;
+    }
+    .window-title {
+      font-size: 17px;
+      flex-shrink: 1;
+      min-width: 0;
+    }
+    .window-actions {
+      gap: 6px;
+    }
+    .window-link {
+      padding: 10px 12px;
+      font-size: 13px;
+      min-height: 46px;
+      gap: 4px;
+    }
+    /* Скрываем текст на самых узких экранах, оставляем иконку */
+    .window-link .link-text {
+      display: none;
+    }
+    .window-link .link-icon {
+      font-size: 18px;
+    }
+    .window-body {
+      border-radius: 0 0 16px 16px;
+    }
+
+    .spinner { width: 64px; height: 64px; }
+    .loader-text { font-size: 19px; }
+  }
+
+  /* ===== Очень узкие экраны ===== */
+  @media (max-width: 380px) {
+    .back-btn {
+      padding: 9px 14px 9px 12px;
+      font-size: 14px;
+      min-height: 44px;
+    }
+    .window { padding: 68px 8px 8px; }
+    .window-title { font-size: 15px; }
+    .window-link { padding: 9px 10px; min-height: 44px; }
+    .spinner { width: 56px; height: 56px; }
+    .loader-text { font-size: 17px; }
   }
 </style>
 </head>
@@ -241,17 +356,28 @@
   <div class="stars2"></div>
   <div class="stars3"></div>
 
+  <!-- Кнопка Назад -->
+  <a href="https://vadimtychkov17-a11y.github.io/choice" class="back-btn">
+    <span class="back-arrow">←</span>
+    Назад
+  </a>
+
   <div class="window">
     <div class="window-header">
       <span class="window-title">Презентация</span>
       <div class="window-actions">
-        <a class="window-link" id="downloadLink" href="#" download>⬇ Скачать</a>
-        <a class="window-link" id="newTabLink" href="#" target="_blank" rel="noopener">↗ В новой вкладке</a>
+        <a class="window-link" id="downloadLink" href="#" download>
+          <span class="link-icon">⬇</span>
+          <span class="link-text">Скачать</span>
+        </a>
+        <a class="window-link" id="newTabLink" href="#" target="_blank" rel="noopener">
+          <span class="link-icon">↗</span>
+          <span class="link-text">В новой вкладке</span>
+        </a>
       </div>
     </div>
 
     <div class="window-body">
-      <!-- Слой загрузки -->
       <div class="loader" id="loader">
         <div class="spinner"></div>
         <div class="loader-text">
@@ -259,18 +385,15 @@
         </div>
       </div>
 
-      <!-- Просмотрщик PDF -->
       <iframe id="pdfFrame" src="about:blank" title="Презентация" allowfullscreen></iframe>
     </div>
   </div>
 
   <script>
     // ===== НАСТРОЙКИ =====
-    // Прямая ссылка на PDF (для скачивания и открытия в новой вкладке)
-    const PDF_URL = 'presentation.pdf';
+    const PDF_URL = 'presentation.pdf';       // для просмотра в окне
+    const PPTX_URL = 'presentation.pptx';     // для скачивания (оригинал)
 
-    // Ссылка для Google Docs Viewer (он рендерит PDF внутри iframe)
-    // Нужен полный URL, поэтому собираем от текущего адреса страницы
     const ABSOLUTE_PDF_URL = new URL(PDF_URL, window.location.href).href;
     const VIEWER_URL = 'https://docs.google.com/viewer?url=' +
                        encodeURIComponent(ABSOLUTE_PDF_URL) +
@@ -282,24 +405,21 @@
     const downloadLink = document.getElementById('downloadLink');
     const newTabLink = document.getElementById('newTabLink');
 
-    // Подставляем ссылки в кнопки
-    downloadLink.href = PDF_URL;
+    // Скачивание — оригинал PPTX, в новой вкладке — PDF
+    downloadLink.href = PPTX_URL;
     newTabLink.href = PDF_URL;
 
     // ===== ЗАГРУЗКА =====
     frame.src = VIEWER_URL;
 
-    // Когда iframe загрузился — прячем спиннер, показываем PDF
     frame.addEventListener('load', () => {
-      // Небольшая задержка, чтобы Google Viewer успел отрисовать документ
       setTimeout(() => {
         loader.classList.add('hidden');
         frame.classList.add('loaded');
       }, 600);
     });
 
-    // Страховка: если по какой-то причине load не сработал за 12 секунд,
-    // всё равно скрываем спиннер, чтобы пользователь не сидел в бесконечной загрузке
+    // Страховка: если долго не загружается — скрываем спиннер через 12 секунд
     setTimeout(() => {
       if (!frame.classList.contains('loaded')) {
         loader.classList.add('hidden');
