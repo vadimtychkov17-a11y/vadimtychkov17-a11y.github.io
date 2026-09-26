@@ -2,23 +2,30 @@
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#0d0620">
 <title>Vindim</title>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
 
   html, body {
-    width: 100%; height: 100%;
-    overflow: hidden;
+    width: 100%;
+    min-height: 100%;
+    overflow-x: hidden;
     font-family: 'Segoe UI', sans-serif;
     background: #0d0620;
     color: #fff;
+    -webkit-text-size-adjust: 100%;
+    -webkit-tap-highlight-color: transparent;
   }
 
   /* ===== Звёздный фон ===== */
   .stars, .stars2, .stars3 {
-    position: fixed; top: 0; left: 0;
+    position: fixed;
+    top: 0; left: 0;
     width: 100%; height: 100%;
     pointer-events: none;
+    z-index: 0;
   }
   .stars {
     background:
@@ -61,71 +68,106 @@
 
   body::before {
     content: '';
-    position: fixed; inset: 0;
+    position: fixed;
+    inset: 0;
     background:
       radial-gradient(circle at 30% 40%, rgba(120, 40, 200, 0.35), transparent 60%),
       radial-gradient(circle at 70% 70%, rgba(80, 20, 160, 0.4), transparent 60%),
       linear-gradient(160deg, #1a0733 0%, #0d0620 50%, #1f0a3d 100%);
-    z-index: -1;
+    z-index: 0;
+    pointer-events: none;
   }
 
-  /* ===== Шапка ===== */
+  /* ===== Шапка (Vindim) ===== */
   .header {
-    position: fixed; top: 20px; right: 30px;
-    display: flex; align-items: center; gap: 12px;
-    z-index: 10; padding: 8px 16px;
+    position: fixed;
+    top: 16px;
+    right: 16px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    z-index: 10;
+    padding: 8px 16px 8px 14px;
     border-radius: 50px;
-    background: rgba(60, 20, 120, 0.25);
-    backdrop-filter: blur(10px);
-    border: 1px solid rgba(180, 130, 255, 0.3);
-    box-shadow: 0 4px 20px rgba(120, 40, 200, 0.3);
+    background: rgba(60, 20, 120, 0.35);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(180, 130, 255, 0.35);
+    box-shadow: 0 4px 20px rgba(120, 40, 200, 0.35);
   }
   .header img {
-    width: 40px; height: 40px;
-    border-radius: 50%; object-fit: cover;
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    object-fit: cover;
     border: 2px solid rgba(200, 150, 255, 0.6);
     box-shadow: 0 0 12px rgba(180, 100, 255, 0.6);
+    flex-shrink: 0;
   }
   .header .brand {
     font-family: 'Segoe Script', cursive;
-    font-size: 26px; color: #e8d5ff;
+    font-size: 24px;
+    color: #e8d5ff;
     text-shadow: 0 0 12px rgba(180, 100, 255, 0.8),
                  0 0 20px rgba(140, 60, 220, 0.5);
     letter-spacing: 1px;
+    line-height: 1;
   }
 
   /* ===== Центр ===== */
   .center {
-    position: absolute; top: 50%; left: 50%;
-    transform: translate(-50%, -50%);
-    text-align: center; z-index: 5;
+    position: relative;
+    z-index: 5;
+    min-height: 100vh;
+    min-height: 100dvh; /* корректная высота на мобильных с учётом адресной строки */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 100px 24px 60px;
   }
+
   .center h1 {
     font-family: 'Segoe Script', cursive;
-    font-size: clamp(36px, 6vw, 72px);
+    font-size: clamp(38px, 9vw, 72px);
     color: #f3e4ff;
     text-shadow: 0 0 20px rgba(180, 100, 255, 0.9),
                  0 0 40px rgba(140, 60, 220, 0.7),
                  0 0 60px rgba(90, 20, 180, 0.5);
-    margin-bottom: 40px; letter-spacing: 2px;
+    margin-bottom: 36px;
+    letter-spacing: 2px;
+    line-height: 1.15;
+    max-width: 90vw;
   }
 
+  /* ===== Кнопки ===== */
   .btn {
-    display: inline-block;
-    padding: 18px 44px;
-    font-size: 18px; font-weight: 600;
-    letter-spacing: 1px; color: #fff;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 20px 40px;
+    font-size: 18px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    color: #fff;
     text-decoration: none;
     background: linear-gradient(135deg, #7c3aed 0%, #a855f7 50%, #7c3aed 100%);
     background-size: 200% 200%;
     border: 1px solid rgba(220, 180, 255, 0.5);
-    border-radius: 50px; cursor: pointer;
+    border-radius: 50px;
+    cursor: pointer;
     box-shadow:
       0 0 25px rgba(168, 85, 247, 0.7),
       0 0 50px rgba(124, 58, 237, 0.4),
       inset 0 1px 0 rgba(255, 255, 255, 0.3);
     transition: all 0.35s ease;
     animation: pulse 3s ease-in-out infinite;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+    min-height: 56px; /* удобный размер для пальца */
+    max-width: 90vw;
   }
   .btn:hover {
     transform: translateY(-3px) scale(1.05);
@@ -151,12 +193,54 @@
     }
   }
 
+  /* Блок кнопок */
+  .buttons {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 18px;
+    width: 100%;
+    max-width: 420px;
+  }
+
+  /* ===== Мобильная адаптация ===== */
   @media (max-width: 600px) {
-    .header { top: 12px; right: 12px; padding: 6px 12px; }
+    .header {
+      top: 12px;
+      right: 12px;
+      padding: 7px 14px 7px 10px;
+      gap: 8px;
+    }
+    .header img { width: 34px; height: 34px; }
     .header .brand { font-size: 20px; }
-    .header img { width: 32px; height: 32px; }
-    .center h1 { margin-bottom: 28px; }
-    .btn { padding: 14px 32px; font-size: 16px; }
+
+    .center {
+      padding: 90px 20px 40px;
+    }
+
+    .center h1 {
+      margin-bottom: 32px;
+      font-size: clamp(34px, 11vw, 54px);
+    }
+
+    .btn {
+      padding: 18px 32px;
+      font-size: 17px;
+      width: 100%;
+      min-height: 60px;
+    }
+
+    .buttons {
+      max-width: 100%;
+      gap: 14px;
+    }
+  }
+
+  /* Очень узкие экраны (маленькие телефоны) */
+  @media (max-width: 380px) {
+    .center h1 { font-size: 32px; }
+    .btn { font-size: 16px; padding: 16px 24px; }
+    .header .brand { font-size: 18px; }
   }
 </style>
 </head>
@@ -172,9 +256,9 @@
 
   <div class="center">
     <h1>Добро пожаловать</h1>
-    <a href="https://vadimtychkov17-a11y.github.io/choice" class="btn">
-      Выбрать презентацию
-    </a>
+    <div class="buttons">
+      <a href="choice/" class="btn">📚 Презентации</a>
+    </div>
   </div>
 </body>
 </html>
