@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="theme-color" content="#0d0620">
-<title>Симулятор физики</title>
+<title>Симулятор физики — шарики</title>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -393,7 +393,7 @@
     <span class="brand">Vindim</span>
   </div>
   <div class="bottom-bar">
-    <input class="count-input" id="countInput" type="number" min="1" max="100" value="1" inputmode="numeric" aria-label="Сколько кубиков">
+    <input class="count-input" id="countInput" type="number" min="1" max="100" value="1" inputmode="numeric" aria-label="Сколько шариков">
     <button class="btn btn-create" id="createBtn">Создать</button>
     <button class="btn btn-clear" id="clearBtn">Очистить</button>
   </div>
@@ -402,7 +402,7 @@
 <div class="overflow-screen" id="overflowScreen">
   <div class="content">
     <span class="emoji">🚫</span>
-    <h2>Нельзя так много кубиков чел</h2>
+    <h2>Нельзя так много шариков чел</h2>
     <p>Максимум 1000. Сейчас всё уберём.</p>
     <div class="counter" id="overflowCounter"></div>
   </div>
@@ -434,8 +434,8 @@
   const GRAVITY       = 1800;
   const SUBSTEP       = 1 / 120;
   const MAX_STEPS     = 5;
-  const RESTITUTION   = 0.05;
-  const FRICTION      = 0.55;
+  const RESTITUTION   = 0.15;
+  const FRICTION      = 0.4;
   const LINEAR_DAMP   = 0.999;
   const ANGULAR_DAMP  = 0.995;
 
@@ -446,23 +446,22 @@
   const FORCE_SLEEP_LINEAR  = 8;
   const FORCE_SLEEP_ANGULAR = 0.15;
 
-  const POS_CORRECT   = 0.6;
   const SLOP          = 0.5;
 
   const MIN_IMPACT_SPEED = 25;
 
   const MAX_BOXES = 1000;
 
-  function Body(x, y, hw, hh, opts) {
+  /* ---------- Круглое тело ---------- */
+  function Ball(x, y, r, opts) {
     opts = opts || {};
     this.x = x;
     this.y = y;
     this.vx = 0;
     this.vy = 0;
-    this.angle = 0;
+    this.angle = 0;      // только для визуала — рисуем блик с поворотом
     this.va = 0;
-    this.hw = hw;
-    this.hh = hh;
+    this.r = r;
     this.isStatic = !!opts.static;
     this.color = opts.color || '#a78bfa';
     this.sleepTimer = 0;
@@ -472,267 +471,191 @@
       this.invMass = 0;
       this.invInertia = 0;
     } else {
-      const m = (hw * 2) * (hh * 2) * 0.001;
+      const m = Math.PI * r * r * 0.001;
       this.invMass = 1 / m;
-      const w = hw * 2, h = hh * 2;
-      const I = m * (w * w + h * h) / 12;
+      const I = 0.5 * m * r * r;
       this.invInertia = 1 / I;
     }
-
-    this.localVerts = [
-      { x: -hw, y: -hh },
-      { x:  hw, y: -hh },
-      { x:  hw, y:  hh },
-      { x: -hw, y:  hh }
-    ];
   }
 
-  Body.prototype.worldVerts = function () {
-    const c = Math.cos(this.angle);
-    const s = Math.sin(this.angle);
-    const out = [];
-    for (let i = 0; i < 4; i++) {
-      const p = this.localVerts[i];
-      out.push({
-        x: this.x + p.x * c - p.y * s,
-        y: this.y + p.x * s + p.y * c
-      });
-    }
-    return out;
-  };
-
-  Body.prototype.applyImpulse = function (jx, jy, rx, ry) {
+  Ball.prototype.applyImpulse = function (jx, jy, rx, ry) {
     if (this.isStatic) return;
     this.vx += jx * this.invMass;
     this.vy += jy * this.invMass;
     this.va += (rx * jy - ry * jx) * this.invInertia;
   };
 
-  Body.prototype.wake = function () {
+  Ball.prototype.wake = function () {
     this.sleeping = false;
     this.sleepTimer = 0;
   };
 
-  const bodies = [];
-  const staticBodies = [];
+  /* ---------- Мир ---------- */
+  const balls = [];
+  const staticBalls = [];
 
   function buildWalls() {
-    staticBodies.length = 0;
+    staticBalls.length = 0;
     const T = 200;
-    staticBodies.push(new Body(W / 2, H + T / 2, W / 2 + T, T / 2, { static: true }));
-    staticBodies.push(new Body(-T / 2, H / 2, T / 2, H, { static: true }));
-    staticBodies.push(new Body(W + T / 2, H / 2, T / 2, H, { static: true }));
-    staticBodies.push(new Body(W / 2, -T / 2, W / 2 + T, T / 2, { static: true }));
+    // Пол — плоский сверху (рисуем как «платформу» — но это круг радиуса W)
+    // Для кругов делаем стены как очень большие круги, но проще — прямоугольники не нужны.
+    // Однако у нас всё круглое. Поэтому стены делаем как огромные круги далеко за экраном.
+    // Это работает, потому что столкновение круг-круг — просто расстояние.
+
+    const wallR = 3000;
+    // Пол — гигантский круг под экраном
+    staticBalls.push(new Ball(W / 2, H + wallR - 4, wallR, { static: true }));
+    // Левая стена
+    staticBalls.push(new Ball(-wallR + 4, H / 2, wallR, { static: true }));
+    // Правая стена
+    staticBalls.push(new Ball(W + wallR - 4, H / 2, wallR, { static: true }));
+    // Потолок
+    staticBalls.push(new Ball(W / 2, -wallR + 4, wallR, { static: true }));
   }
   buildWalls();
   window.addEventListener('resize', buildWalls);
 
-  function project(verts, ax, ay) {
-    let mn = Infinity, mx = -Infinity;
-    for (let i = 0; i < verts.length; i++) {
-      const d = verts[i].x * ax + verts[i].y * ay;
-      if (d < mn) mn = d;
-      if (d > mx) mx = d;
-    }
-    return { mn: mn, mx: mx };
-  }
-
-  function edgeNormals(verts) {
-    const out = [];
-    for (let i = 0; i < verts.length; i++) {
-      const a = verts[i];
-      const b = verts[(i + 1) % verts.length];
-      const ex = b.x - a.x;
-      const ey = b.y - a.y;
-      const len = Math.hypot(ex, ey) || 1;
-      out.push({ x: -ey / len, y: ex / len });
-    }
-    return out;
-  }
-
-  function sat(aV, bV) {
-    const axes = edgeNormals(aV).concat(edgeNormals(bV));
-    let bestDepth = Infinity;
-    let bestNx = 0, bestNy = 0;
-    for (let i = 0; i < axes.length; i++) {
-      const ax = axes[i];
-      const A = project(aV, ax.x, ax.y);
-      const B = project(bV, ax.x, ax.y);
-      const overlap = Math.min(A.mx, B.mx) - Math.max(A.mn, B.mn);
-      if (overlap <= 0) return null;
-      if (overlap < bestDepth) {
-        bestDepth = overlap;
-        bestNx = ax.x;
-        bestNy = ax.y;
-      }
-    }
-    return { nx: bestNx, ny: bestNy, depth: bestDepth };
-  }
-
-  function orientNormal(n, aPos, bPos) {
-    const dx = bPos.x - aPos.x;
-    const dy = bPos.y - aPos.y;
-    if (dx * n.x + dy * n.y < 0) {
-      n.x = -n.x;
-      n.y = -n.y;
-    }
-    return n;
-  }
-
-  function pointInRect(px, py, body) {
-    const c = Math.cos(-body.angle);
-    const s = Math.sin(-body.angle);
-    const dx = px - body.x;
-    const dy = py - body.y;
-    const lx = dx * c - dy * s;
-    const ly = dx * s + dy * c;
-    return Math.abs(lx) <= body.hw + 0.5 && Math.abs(ly) <= body.hh + 0.5;
-  }
-
-  function findContacts(a, b, aV, bV) {
-    const contacts = [];
-    for (let i = 0; i < aV.length; i++) {
-      if (pointInRect(aV[i].x, aV[i].y, b)) contacts.push({ x: aV[i].x, y: aV[i].y });
-    }
-    for (let i = 0; i < bV.length; i++) {
-      if (pointInRect(bV[i].x, bV[i].y, a)) contacts.push({ x: bV[i].x, y: bV[i].y });
-    }
-    return contacts;
-  }
-
+  /* ---------- Столкновение круг-круг ---------- */
   function resolvePair(a, b) {
     if (a.invMass === 0 && b.invMass === 0) return;
     if (a.sleeping && b.sleeping) return;
 
-    const aV = a.worldVerts();
-    const bV = b.worldVerts();
-    const hit = sat(aV, bV);
-    if (!hit) return;
+    const dx = b.x - a.x;
+    const dy = b.y - a.y;
+    const distSq = dx * dx + dy * dy;
+    const rSum = a.r + b.r;
+    const rSumSq = rSum * rSum;
+    if (distSq >= rSumSq) return;
 
-    const n = orientNormal({ x: hit.nx, y: hit.ny }, a, b);
-    const depth = hit.depth;
+    let dist = Math.sqrt(distSq);
+    if (dist < 0.0001) {
+      // Совпали центры — расталкиваем по случайной оси
+      dist = 0.0001;
+    }
 
+    const nx = dx / dist;
+    const ny = dy / dist;
+    const depth = rSum - dist;
+
+    // Позиционная коррекция
     const invSum = a.invMass + b.invMass;
     if (invSum > 0) {
-      const correction = Math.max(depth - SLOP, 0) / invSum * POS_CORRECT;
-      a.x -= n.x * correction * a.invMass;
-      a.y -= n.y * correction * a.invMass;
-      b.x += n.x * correction * b.invMass;
-      b.y += n.y * correction * b.invMass;
+      const correction = Math.max(depth - SLOP, 0) / invSum * 0.6;
+      a.x -= nx * correction * a.invMass;
+      a.y -= ny * correction * a.invMass;
+      b.x += nx * correction * b.invMass;
+      b.y += ny * correction * b.invMass;
     }
 
-    let contacts = findContacts(a, b, aV, bV);
-    if (contacts.length === 0) {
-      contacts = [{ x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 }];
-    }
-    if (contacts.length > 4) contacts = contacts.slice(0, 4);
-    const invCount = 1 / contacts.length;
+    // Точка контакта — на границе кругов
+    const contactX = a.x + nx * a.r;
+    const contactY = a.y + ny * a.r;
 
-    for (let k = 0; k < contacts.length; k++) {
-      const px = contacts[k].x;
-      const py = contacts[k].y;
-      const rax = px - a.x, ray = py - a.y;
-      const rbx = px - b.x, rby = py - b.y;
+    const rax = contactX - a.x;
+    const ray = contactY - a.y;
+    const rbx = contactX - b.x;
+    const rby = contactY - b.y;
 
-      const rvx = (b.vx - b.va * rby) - (a.vx - a.va * ray);
-      const rvy = (b.vy + b.va * rbx) - (a.vy + a.va * rax);
-      const vn = rvx * n.x + rvy * n.y;
+    const rvx = (b.vx - b.va * rby) - (a.vx - a.va * ray);
+    const rvy = (b.vy + b.va * rbx) - (a.vy + a.va * rax);
+    const vn = rvx * nx + rvy * ny;
 
-      if (vn > 0) continue;
-      if (Math.abs(vn) < MIN_IMPACT_SPEED) continue;
+    if (vn > 0) return;
+    if (Math.abs(vn) < MIN_IMPACT_SPEED) return;
 
-      if (a.sleeping) a.wake();
-      if (b.sleeping) b.wake();
+    if (a.sleeping) a.wake();
+    if (b.sleeping) b.wake();
 
-      const raCrossN = rax * n.y - ray * n.x;
-      const rbCrossN = rbx * n.y - rby * n.x;
-      const invMassSum = a.invMass + b.invMass +
-                         raCrossN * raCrossN * a.invInertia +
-                         rbCrossN * rbCrossN * b.invInertia;
-      if (invMassSum === 0) continue;
+    const raCrossN = rax * ny - ray * nx;
+    const rbCrossN = rbx * ny - rby * nx;
+    const invMassSum = a.invMass + b.invMass +
+                       raCrossN * raCrossN * a.invInertia +
+                       rbCrossN * rbCrossN * b.invInertia;
+    if (invMassSum === 0) return;
 
-      const e = (Math.abs(vn) < 100) ? 0 : RESTITUTION;
-      const jn = -(1 + e) * vn / invMassSum * invCount;
+    const e = (Math.abs(vn) < 100) ? 0 : RESTITUTION;
+    const jn = -(1 + e) * vn / invMassSum;
 
-      const jnx = n.x * jn;
-      const jny = n.y * jn;
-      a.applyImpulse(-jnx, -jny, rax, ray);
-      b.applyImpulse(jnx, jny, rbx, rby);
+    const jnx = nx * jn;
+    const jny = ny * jn;
+    a.applyImpulse(-jnx, -jny, rax, ray);
+    b.applyImpulse(jnx, jny, rbx, rby);
 
-      const rvx2 = (b.vx - b.va * rby) - (a.vx - a.va * ray);
-      const rvy2 = (b.vy + b.va * rbx) - (a.vy + a.va * rax);
-      let tx = rvx2 - (rvx2 * n.x + rvy2 * n.y) * n.x;
-      let ty = rvy2 - (rvx2 * n.x + rvy2 * n.y) * n.y;
-      const tLen = Math.hypot(tx, ty);
-      if (tLen > 1e-4) {
-        tx /= tLen;
-        ty /= tLen;
-        const raCrossT = rax * ty - ray * tx;
-        const rbCrossT = rbx * ty - rby * tx;
-        const invMassSumT = a.invMass + b.invMass +
-                            raCrossT * raCrossT * a.invInertia +
-                            rbCrossT * rbCrossT * b.invInertia;
-        let jt = -(rvx2 * tx + rvy2 * ty) / invMassSumT * invCount;
-        const maxF = FRICTION * Math.abs(jn);
-        if (jt >  maxF) jt =  maxF;
-        if (jt < -maxF) jt = -maxF;
-        a.applyImpulse(-tx * jt, -ty * jt, rax, ray);
-        b.applyImpulse( tx * jt,  ty * jt, rbx, rby);
-      }
+    // Трение
+    const rvx2 = (b.vx - b.va * rby) - (a.vx - a.va * ray);
+    const rvy2 = (b.vy + b.va * rbx) - (a.vy + a.va * rax);
+    let tx = rvx2 - (rvx2 * nx + rvy2 * ny) * nx;
+    let ty = rvy2 - (rvx2 * nx + rvy2 * ny) * ny;
+    const tLen = Math.hypot(tx, ty);
+    if (tLen > 1e-4) {
+      tx /= tLen;
+      ty /= tLen;
+      const raCrossT = rax * ty - ray * tx;
+      const rbCrossT = rbx * ty - rby * tx;
+      const invMassSumT = a.invMass + b.invMass +
+                          raCrossT * raCrossT * a.invInertia +
+                          rbCrossT * rbCrossT * b.invInertia;
+      let jt = -(rvx2 * tx + rvy2 * ty) / invMassSumT;
+      const maxF = FRICTION * Math.abs(jn);
+      if (jt >  maxF) jt =  maxF;
+      if (jt < -maxF) jt = -maxF;
+      a.applyImpulse(-tx * jt, -ty * jt, rax, ray);
+      b.applyImpulse( tx * jt,  ty * jt, rbx, rby);
     }
   }
 
-  function integrate(body, dt) {
-    if (body.isStatic || body.sleeping) return;
-    if (body === dragged) return;
+  function integrate(ball, dt) {
+    if (ball.isStatic || ball.sleeping) return;
+    if (ball === dragged) return;
 
-    body.vy += GRAVITY * dt;
-    body.vx *= LINEAR_DAMP;
-    body.vy *= LINEAR_DAMP;
-    body.va *= ANGULAR_DAMP;
+    ball.vy += GRAVITY * dt;
+    ball.vx *= LINEAR_DAMP;
+    ball.vy *= LINEAR_DAMP;
+    ball.va *= ANGULAR_DAMP;
 
-    body.x += body.vx * dt;
-    body.y += body.vy * dt;
-    body.angle += body.va * dt;
+    ball.x += ball.vx * dt;
+    ball.y += ball.vy * dt;
+    ball.angle += ball.va * dt;
 
-    const speed = Math.hypot(body.vx, body.vy);
+    const speed = Math.hypot(ball.vx, ball.vy);
 
-    if (speed < FORCE_SLEEP_LINEAR && Math.abs(body.va) < FORCE_SLEEP_ANGULAR) {
-      body.sleeping = true;
-      body.vx = 0;
-      body.vy = 0;
-      body.va = 0;
-      body.sleepTimer = 0;
+    if (speed < FORCE_SLEEP_LINEAR && Math.abs(ball.va) < FORCE_SLEEP_ANGULAR) {
+      ball.sleeping = true;
+      ball.vx = 0;
+      ball.vy = 0;
+      ball.va = 0;
+      ball.sleepTimer = 0;
       return;
     }
 
-    if (speed < SLEEP_LINEAR && Math.abs(body.va) < SLEEP_ANGULAR) {
-      body.sleepTimer += dt;
-      if (body.sleepTimer > SLEEP_TIME) {
-        body.sleeping = true;
-        body.vx = 0;
-        body.vy = 0;
-        body.va = 0;
+    if (speed < SLEEP_LINEAR && Math.abs(ball.va) < SLEEP_ANGULAR) {
+      ball.sleepTimer += dt;
+      if (ball.sleepTimer > SLEEP_TIME) {
+        ball.sleeping = true;
+        ball.vx = 0;
+        ball.vy = 0;
+        ball.va = 0;
       }
     } else {
-      body.sleepTimer = 0;
+      ball.sleepTimer = 0;
     }
   }
 
   function step(dt) {
-    for (let i = 0; i < bodies.length; i++) integrate(bodies[i], dt);
+    for (let i = 0; i < balls.length; i++) integrate(balls[i], dt);
 
-    for (let i = 0; i < bodies.length; i++) {
-      const a = bodies[i];
-      for (let s = 0; s < staticBodies.length; s++) {
-        resolvePair(a, staticBodies[s]);
+    for (let i = 0; i < balls.length; i++) {
+      const a = balls[i];
+      for (let s = 0; s < staticBalls.length; s++) {
+        resolvePair(a, staticBalls[s]);
       }
-      for (let j = i + 1; j < bodies.length; j++) {
-        resolvePair(a, bodies[j]);
+      for (let j = i + 1; j < balls.length; j++) {
+        resolvePair(a, balls[j]);
       }
     }
   }
 
+  /* ---------- Драг ---------- */
   let dragged = null;
   const dragLocal = { x: 0, y: 0 };
   const dragTarget = { x: 0, y: 0 };
@@ -746,14 +669,10 @@
     return { x: t.clientX - rect.left, y: t.clientY - rect.top };
   }
 
-  function pointInBody(px, py, body) {
-    const c = Math.cos(-body.angle);
-    const s = Math.sin(-body.angle);
-    const dx = px - body.x;
-    const dy = py - body.y;
-    const lx = dx * c - dy * s;
-    const ly = dx * s + dy * c;
-    return Math.abs(lx) <= body.hw && Math.abs(ly) <= body.hh;
+  function pointInBall(px, py, ball) {
+    const dx = px - ball.x;
+    const dy = py - ball.y;
+    return dx * dx + dy * dy <= ball.r * ball.r;
   }
 
   function onDown(e) {
@@ -765,17 +684,13 @@
     pointerVel.y = 0;
     pointerTime = performance.now();
 
-    for (let i = bodies.length - 1; i >= 0; i--) {
-      const b = bodies[i];
-      if (pointInBody(p.x, p.y, b)) {
+    for (let i = balls.length - 1; i >= 0; i--) {
+      const b = balls[i];
+      if (pointInBall(p.x, p.y, b)) {
         dragged = b;
         b.wake();
-        const c = Math.cos(-b.angle);
-        const s = Math.sin(-b.angle);
-        const dx = p.x - b.x;
-        const dy = p.y - b.y;
-        dragLocal.x = dx * c - dy * s;
-        dragLocal.y = dx * s + dy * c;
+        dragLocal.x = p.x - b.x;
+        dragLocal.y = p.y - b.y;
         dragTarget.x = p.x;
         dragTarget.y = p.y;
         canvas.classList.add('grabbing');
@@ -823,10 +738,8 @@
     if (!dragged) return;
     dragged.wake();
 
-    const c = Math.cos(dragged.angle);
-    const s = Math.sin(dragged.angle);
-    const wx = dragTarget.x - (dragLocal.x * c - dragLocal.y * s);
-    const wy = dragTarget.y - (dragLocal.x * s + dragLocal.y * c);
+    const wx = dragTarget.x - dragLocal.x;
+    const wy = dragTarget.y - dragLocal.y;
 
     const k = 25;
     const maxSpeed = 2400;
@@ -846,7 +759,7 @@
 
   function checkOverflow() {
     if (overflowTriggered) return;
-    if (bodies.length >= MAX_BOXES) {
+    if (balls.length >= MAX_BOXES) {
       overflowTriggered = true;
       triggerOverflow();
     }
@@ -863,7 +776,7 @@
     canvas.classList.remove('grabbing');
 
     const totalTime = 10000;
-    const startCount = bodies.length;
+    const startCount = balls.length;
     const startTime = performance.now();
 
     function removeStep() {
@@ -871,18 +784,18 @@
       const progress = Math.min(elapsed / totalTime, 1);
 
       const targetCount = Math.floor(startCount * (1 - progress));
-      const toRemove = bodies.length - targetCount;
+      const toRemove = balls.length - targetCount;
 
       if (toRemove > 0) {
-        bodies.splice(0, toRemove);
+        balls.splice(0, toRemove);
       }
 
-      counterEl.textContent = 'Осталось: ' + bodies.length;
+      counterEl.textContent = 'Осталось: ' + balls.length;
 
       if (progress < 1) {
         requestAnimationFrame(removeStep);
       } else {
-        bodies.length = 0;
+        balls.length = 0;
         counterEl.textContent = '';
         screen.classList.remove('active');
         document.body.classList.remove('danger');
@@ -896,22 +809,21 @@
 
   const PALETTE = ['#a78bfa', '#8b5cf6', '#c4b5fd', '#7c3aed', '#b39ddb', '#9575cd'];
 
-  function spawnBox() {
-    if (bodies.length >= MAX_BOXES) {
+  function spawnBall() {
+    if (balls.length >= MAX_BOXES) {
       checkOverflow();
       return;
     }
 
-    const size = 50 + Math.random() * 40;
-    const hw = size / 2;
+    const r = 25 + Math.random() * 20;
     const x = W * 0.25 + Math.random() * W * 0.5;
-    const y = -size - Math.random() * 100;
+    const y = -r - Math.random() * 100;
     const color = PALETTE[Math.floor(Math.random() * PALETTE.length)];
-    const b = new Body(x, y, hw, hw, { color: color });
+    const b = new Ball(x, y, r, { color: color });
     b.vx = (Math.random() - 0.5) * 100;
     b.vy = 100 + Math.random() * 100;
-    b.va = (Math.random() - 0.5) * 2;
-    bodies.push(b);
+    b.va = (Math.random() - 0.5) * 4;
+    balls.push(b);
 
     checkOverflow();
   }
@@ -936,20 +848,52 @@
 
     ctx.clearRect(0, 0, W, H);
 
-    for (let i = 0; i < bodies.length; i++) {
-      const b = bodies[i];
+    for (let i = 0; i < balls.length; i++) {
+      const b = balls[i];
+
+      // Основной круг с градиентом
+      const grad = ctx.createRadialGradient(
+        b.x - b.r * 0.3, b.y - b.r * 0.3, b.r * 0.1,
+        b.x, b.y, b.r
+      );
+      grad.addColorStop(0, '#ffffff');
+      grad.addColorStop(0.15, b.color);
+      grad.addColorStop(1, shadeColor(b.color, -30));
+
+      ctx.beginPath();
+      ctx.arc(b.x, b.y, b.r, 0, Math.PI * 2);
+      ctx.fillStyle = grad;
+      ctx.fill();
+
+      // Тонкая обводка
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.35)';
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+
+      // Блик сверху — вращается вместе с angle, чтобы было видно, что шар крутится
       ctx.save();
       ctx.translate(b.x, b.y);
       ctx.rotate(b.angle);
-      ctx.fillStyle = b.color;
-      ctx.fillRect(-b.hw, -b.hh, b.hw * 2, b.hh * 2);
-      ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
-      ctx.lineWidth = 1;
-      ctx.strokeRect(-b.hw, -b.hh, b.hw * 2, b.hh * 2);
+      ctx.beginPath();
+      ctx.arc(-b.r * 0.35, -b.r * 0.35, b.r * 0.18, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
+      ctx.fill();
       ctx.restore();
     }
 
     requestAnimationFrame(loop);
+  }
+
+  // Затемнение цвета для нижней части градиента
+  function shadeColor(hex, percent) {
+    const num = parseInt(hex.replace('#', ''), 16);
+    let r = (num >> 16) + percent;
+    let g = ((num >> 8) & 0x00FF) + percent;
+    let b = (num & 0x0000FF) + percent;
+    r = Math.max(0, Math.min(255, r));
+    g = Math.max(0, Math.min(255, g));
+    b = Math.max(0, Math.min(255, b));
+    return '#' + (r << 16 | g << 8 | b).toString(16).padStart(6, '0');
   }
 
   requestAnimationFrame(loop);
@@ -973,7 +917,7 @@
       (function (index) {
         setTimeout(function () {
           if (overflowTriggered) return;
-          spawnBox();
+          spawnBall();
         }, index * 80);
       })(i);
     }
@@ -1003,7 +947,7 @@
         resetConfirm();
       }, 3000);
     } else {
-      bodies.length = 0;
+      balls.length = 0;
       resetConfirm();
     }
   });
@@ -1018,8 +962,8 @@
     clearBtn.classList.remove('confirming');
   }
 
-  setTimeout(spawnBox, 400);
-  setTimeout(spawnBox, 800);
+  setTimeout(spawnBall, 400);
+  setTimeout(spawnBall, 800);
 
 })();
 </script>
