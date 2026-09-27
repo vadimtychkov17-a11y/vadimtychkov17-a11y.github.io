@@ -63,6 +63,25 @@
       linear-gradient(160deg, #1a0733 0%, #0d0620 50%, #1f0a3d 100%);
     z-index: 0;
     pointer-events: none;
+    transition: background 0.3s ease;
+  }
+
+  /* Красный оттенок всей страницы при перегрузе */
+  body.danger::before {
+    background:
+      radial-gradient(circle at 30% 40%, rgba(220, 40, 60, 0.35), transparent 60%),
+      radial-gradient(circle at 70% 70%, rgba(180, 20, 40, 0.4), transparent 60%),
+      linear-gradient(160deg, #3a0a12 0%, #2a0510 50%, #3d0a18 100%);
+  }
+  body.danger .stars,
+  body.danger .stars2 {
+    opacity: 0.5;
+    filter: hue-rotate(-30deg) saturate(1.5);
+  }
+  body.danger .hint,
+  body.danger .header,
+  body.danger .bottom-bar {
+    filter: brightness(0.85) hue-rotate(-20deg);
   }
 
   #stage {
@@ -133,9 +152,39 @@
     bottom: 24px;
     transform: translateX(-50%);
     display: flex;
-    gap: 12px;
+    align-items: stretch;
+    gap: 10px;
     z-index: 10;
     padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  .count-input {
+    width: 78px;
+    padding: 16px 8px;
+    font-family: inherit;
+    font-size: 16px;
+    font-weight: 700;
+    text-align: center;
+    color: #fff;
+    background: rgba(60, 20, 120, 0.55);
+    border: 1px solid rgba(180, 130, 255, 0.5);
+    border-radius: 50px;
+    outline: none;
+    -webkit-appearance: none;
+    -moz-appearance: textfield;
+    appearance: none;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    min-height: 56px;
+    touch-action: manipulation;
+  }
+  .count-input::-webkit-outer-spin-button,
+  .count-input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+  .count-input:focus {
+    border-color: #c084fc;
+    box-shadow: 0 0 0 3px rgba(168, 85, 247, 0.3);
   }
 
   .btn {
@@ -143,7 +192,7 @@
     align-items: center;
     justify-content: center;
     gap: 8px;
-    padding: 16px 32px;
+    padding: 16px 28px;
     font-family: inherit;
     font-size: 16px;
     font-weight: 700;
@@ -212,6 +261,73 @@
     }
   }
 
+  /* ===== Оверлей "Нельзя так много кубиков чел" ===== */
+  .overflow-screen {
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    background: rgba(120, 10, 30, 0.85);
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+    text-align: center;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.35s ease;
+  }
+  .overflow-screen.active {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .overflow-screen .content {
+    max-width: 520px;
+    padding: 40px 32px;
+    background: linear-gradient(160deg, rgba(200, 30, 60, 0.4), rgba(140, 10, 40, 0.5));
+    border: 1px solid rgba(255, 120, 140, 0.5);
+    border-radius: 24px;
+    box-shadow:
+      0 20px 60px rgba(200, 30, 60, 0.5),
+      inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    transform: scale(0.92);
+    transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  .overflow-screen.active .content {
+    transform: scale(1);
+  }
+
+  .overflow-screen .emoji {
+    font-size: 64px;
+    line-height: 1;
+    display: block;
+    margin-bottom: 20px;
+    animation: shake 0.6s ease-in-out infinite;
+  }
+  @keyframes shake {
+    0%, 100% { transform: rotate(-4deg); }
+    50%      { transform: rotate(4deg); }
+  }
+
+  .overflow-screen h2 {
+    font-family: 'Segoe Script', 'Brush Script MT', cursive;
+    font-size: clamp(24px, 5vw, 38px);
+    color: #fff;
+    line-height: 1.25;
+    margin-bottom: 16px;
+    text-shadow: 0 4px 20px rgba(255, 100, 120, 0.7);
+  }
+
+  .overflow-screen p {
+    font-size: clamp(14px, 2.5vw, 17px);
+    color: #ffd5dd;
+    line-height: 1.5;
+    opacity: 0.95;
+  }
+
+  /* ===== Мобильная адаптация ===== */
   @media (max-width: 600px) {
     .hint {
       top: 14px;
@@ -227,26 +343,34 @@
     }
     .bottom-bar {
       bottom: 16px;
-      gap: 10px;
-      width: calc(100% - 28px);
+      gap: 8px;
+      width: calc(100% - 24px);
       justify-content: center;
+    }
+    .count-input {
+      width: 62px;
+      padding: 14px 6px;
+      font-size: 15px;
+      min-height: 52px;
     }
     .btn {
       flex: 1;
-      padding: 14px 16px;
+      padding: 14px 12px;
       font-size: 15px;
       min-height: 52px;
-      max-width: 200px;
+      max-width: 180px;
     }
   }
 
   @media (max-width: 380px) {
-    .btn { padding: 12px 10px; font-size: 14px; }
+    .count-input { width: 54px; font-size: 14px; }
+    .btn { padding: 12px 8px; font-size: 14px; }
   }
 
   @media (prefers-reduced-motion: reduce) {
     .stars, .stars2 { animation: none !important; }
     .btn, .btn-clear.confirming { animation: none !important; transition: none !important; }
+    .overflow-screen .emoji { animation: none !important; }
   }
 </style>
 </head>
@@ -258,13 +382,23 @@
 <canvas id="stage"></canvas>
 
 <div class="ui">
-  <div class="hint">Нажми кнопку и перетаскивай кубики</div>
+  <div class="hint">Введи число и нажми «Создать»</div>
   <div class="header">
     <span class="brand">Vindim</span>
   </div>
   <div class="bottom-bar">
-    <button class="btn btn-create" id="createBtn">Создать кубик</button>
+    <input class="count-input" id="countInput" type="number" min="1" max="100" value="1" inputmode="numeric" aria-label="Сколько кубиков">
+    <button class="btn btn-create" id="createBtn">Создать</button>
     <button class="btn btn-clear" id="clearBtn">Очистить</button>
+  </div>
+</div>
+
+<!-- Оверлей перегруза -->
+<div class="overflow-screen" id="overflowScreen">
+  <div class="content">
+    <span class="emoji">🚫</span>
+    <h2>Нельзя так много кубиков чел</h2>
+    <p>Максимум 1000. Страница сейчас перезагрузится.</p>
   </div>
 </div>
 
@@ -274,10 +408,6 @@
 
   /* ============================================================
      ФИЗИКА — твёрдые квадраты с вращением
-     - Фиксированный шаг 1/120 с накоплением времени
-     - SAT-столкновения, контактные точки по вершинам
-     - Импульсы + трение Кулона + позиционная коррекция
-     - Сон: тела полностью замирают, просыпаются только от удара/драга
      ============================================================ */
 
   const canvas = document.getElementById('stage');
@@ -299,7 +429,6 @@
   resize();
   window.addEventListener('resize', resize);
 
-  /* ---------- Константы физики ---------- */
   const GRAVITY       = 1800;
   const SUBSTEP       = 1 / 120;
   const MAX_STEPS     = 5;
@@ -308,20 +437,20 @@
   const LINEAR_DAMP   = 0.999;
   const ANGULAR_DAMP  = 0.995;
 
-  // Пороги сна — мягче, чтобы тела засыпали быстро
-  const SLEEP_LINEAR  = 25;    // px/s
-  const SLEEP_ANGULAR = 0.4;   // rad/s
-  const SLEEP_TIME    = 0.25;  // сек
+  const SLEEP_LINEAR  = 25;
+  const SLEEP_ANGULAR = 0.4;
+  const SLEEP_TIME    = 0.25;
 
-  // «Жёсткий сон» — если тело почти стоит, усыпляем мгновенно
   const FORCE_SLEEP_LINEAR  = 8;
   const FORCE_SLEEP_ANGULAR = 0.15;
 
   const POS_CORRECT   = 0.6;
   const SLOP          = 0.5;
 
-  // Минимальная скорость удара, ниже которой импульс не применяется вовсе
   const MIN_IMPACT_SPEED = 25;
+
+  /* Максимум кубиков — при превышении сработает защита */
+  const MAX_BOXES = 1000;
 
   /* ---------- Класс тела ---------- */
   function Body(x, y, hw, hh, opts) {
@@ -476,8 +605,6 @@
   /* ---------- Разрешение пары ---------- */
   function resolvePair(a, b) {
     if (a.invMass === 0 && b.invMass === 0) return;
-
-    // Оба спят — не трогаем, ничего не делаем
     if (a.sleeping && b.sleeping) return;
 
     const aV = a.worldVerts();
@@ -488,7 +615,6 @@
     const n = orientNormal({ x: hit.nx, y: hit.ny }, a, b);
     const depth = hit.depth;
 
-    // Позиционная коррекция — выталкиваем из проникновения
     const invSum = a.invMass + b.invMass;
     if (invSum > 0) {
       const correction = Math.max(depth - SLOP, 0) / invSum * POS_CORRECT;
@@ -497,9 +623,6 @@
       b.x += n.x * correction * b.invMass;
       b.y += n.y * correction * b.invMass;
     }
-
-    // Сон может «сбиваться» при позиционной коррекции — проверим ниже
-    let wokeSomething = false;
 
     let contacts = findContacts(a, b, aV, bV);
     if (contacts.length === 0) {
@@ -518,18 +641,11 @@
       const rvy = (b.vy + b.va * rbx) - (a.vy + a.va * rax);
       const vn = rvx * n.x + rvy * n.y;
 
-      // Если разлетаются — не трогаем
       if (vn > 0) continue;
+      if (Math.abs(vn) < MIN_IMPACT_SPEED) continue;
 
-      // Если скорость удара слишком маленькая — не применяем импульс.
-      // Это ГЛАВНОЕ исправление от дрожания.
-      if (Math.abs(vn) < MIN_IMPACT_SPEED) {
-        continue;
-      }
-
-      // Оба спят, но удар сильный — будим их
-      if (a.sleeping) { a.wake(); wokeSomething = true; }
-      if (b.sleeping) { b.wake(); wokeSomething = true; }
+      if (a.sleeping) a.wake();
+      if (b.sleeping) b.wake();
 
       const raCrossN = rax * n.y - ray * n.x;
       const rbCrossN = rbx * n.y - rby * n.x;
@@ -546,7 +662,6 @@
       a.applyImpulse(-jnx, -jny, rax, ray);
       b.applyImpulse(jnx, jny, rbx, rby);
 
-      // Трение
       const rvx2 = (b.vx - b.va * rby) - (a.vx - a.va * ray);
       const rvy2 = (b.vy + b.va * rbx) - (a.vy + a.va * rax);
       let tx = rvx2 - (rvx2 * n.x + rvy2 * n.y) * n.x;
@@ -573,9 +688,6 @@
   /* ---------- Интеграция ---------- */
   function integrate(body, dt) {
     if (body.isStatic || body.sleeping) return;
-
-    // Если тело зажато мышкой — не применяем к нему гравитацию,
-    // им управляет applyDrag
     if (body === dragged) return;
 
     body.vy += GRAVITY * dt;
@@ -589,7 +701,6 @@
 
     const speed = Math.hypot(body.vx, body.vy);
 
-    // Если тело совсем медленное — усыпляем принудительно и обнуляем скорости
     if (speed < FORCE_SLEEP_LINEAR && Math.abs(body.va) < FORCE_SLEEP_ANGULAR) {
       body.sleeping = true;
       body.vx = 0;
@@ -599,7 +710,6 @@
       return;
     }
 
-    // Обычный таймер сна
     if (speed < SLEEP_LINEAR && Math.abs(body.va) < SLEEP_ANGULAR) {
       body.sleepTimer += dt;
       if (body.sleepTimer > SLEEP_TIME) {
@@ -698,7 +808,6 @@
 
   function onUp() {
     if (!dragged) return;
-    // Передаём инерцию броска, но чуть гасим — чтобы тела успокаивались
     dragged.vx = pointerVel.x * 0.6;
     dragged.vy = pointerVel.y * 0.6;
     dragged.wake();
@@ -737,10 +846,41 @@
     dragged.va *= 0.85;
   }
 
+  /* ---------- Проверка перегруза ---------- */
+  let overflowTriggered = false;
+
+  function checkOverflow() {
+    if (overflowTriggered) return;
+    if (bodies.length >= MAX_BOXES) {
+      overflowTriggered = true;
+      triggerOverflow();
+    }
+  }
+
+  function triggerOverflow() {
+    // Красный оттенок всей страницы
+    document.body.classList.add('danger');
+
+    // Показываем оверлей
+    const screen = document.getElementById('overflowScreen');
+    screen.classList.add('active');
+
+    // Через 1.8 секунды — перезагрузка
+    setTimeout(function () {
+      location.reload();
+    }, 1800);
+  }
+
   /* ---------- Спавн ---------- */
   const PALETTE = ['#a78bfa', '#8b5cf6', '#c4b5fd', '#7c3aed', '#b39ddb', '#9575cd'];
 
   function spawnBox() {
+    // Защита: если уже максимум — не спавним
+    if (bodies.length >= MAX_BOXES) {
+      checkOverflow();
+      return;
+    }
+
     const size = 50 + Math.random() * 40;
     const hw = size / 2;
     const x = W * 0.25 + Math.random() * W * 0.5;
@@ -751,6 +891,9 @@
     b.vy = 100 + Math.random() * 100;
     b.va = (Math.random() - 0.5) * 2;
     bodies.push(b);
+
+    // Проверяем лимит
+    checkOverflow();
   }
 
   /* ---------- Главный цикл ---------- */
@@ -795,15 +938,45 @@
   /* ---------- Кнопки ---------- */
   const createBtn = document.getElementById('createBtn');
   const clearBtn = document.getElementById('clearBtn');
+  const countInput = document.getElementById('countInput');
   let confirmTimer = null;
   let isConfirming = false;
 
   createBtn.addEventListener('click', function () {
+    if (overflowTriggered) return;
     resetConfirm();
-    spawnBox();
+
+    let count = parseInt(countInput.value, 10);
+    if (isNaN(count) || count < 1) count = 1;
+    if (count > 100) count = 100;
+    countInput.value = count;
+
+    for (let i = 0; i < count; i++) {
+      (function (index) {
+        setTimeout(function () {
+          if (overflowTriggered) return;
+          spawnBox();
+        }, index * 80);
+      })(i);
+    }
+  });
+
+  countInput.addEventListener('keydown', function (e) {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      createBtn.click();
+    }
+  });
+
+  countInput.addEventListener('input', function () {
+    let val = parseInt(countInput.value, 10);
+    if (isNaN(val)) return;
+    if (val > 100) countInput.value = 100;
+    if (val < 1 && countInput.value !== '') countInput.value = 1;
   });
 
   clearBtn.addEventListener('click', function () {
+    if (overflowTriggered) return;
     if (!isConfirming) {
       isConfirming = true;
       clearBtn.textContent = 'Точно?';
