@@ -20,7 +20,6 @@
     overscroll-behavior: none;
   }
 
-  /* ===== Звёздный фон ===== */
   .stars, .stars2 {
     position: fixed;
     top: 0; left: 0;
@@ -66,7 +65,6 @@
     pointer-events: none;
   }
 
-  /* ===== Canvas ===== */
   #stage {
     position: fixed;
     inset: 0;
@@ -77,7 +75,6 @@
   }
   #stage.grabbing { cursor: grabbing; }
 
-  /* ===== UI-слой ===== */
   .ui {
     position: fixed;
     inset: 0;
@@ -86,7 +83,6 @@
   }
   .ui > * { pointer-events: auto; }
 
-  /* ===== Шапка ===== */
   .header {
     position: fixed;
     top: 16px;
@@ -112,7 +108,6 @@
     line-height: 1;
   }
 
-  /* ===== Подсказка сверху ===== */
   .hint {
     position: fixed;
     top: 20px;
@@ -132,7 +127,6 @@
     line-height: 1.35;
   }
 
-  /* ===== Панель кнопок внизу ===== */
   .bottom-bar {
     position: fixed;
     left: 50%;
@@ -181,9 +175,7 @@
       0 0 60px rgba(140, 60, 220, 0.5),
       inset 0 1px 0 rgba(255, 255, 255, 0.5);
   }
-  .btn-create:active {
-    transform: translateY(-1px) scale(1.0);
-  }
+  .btn-create:active { transform: translateY(-1px) scale(1.0); }
 
   .btn-clear {
     background: linear-gradient(135deg, #dc4a5a 0%, #e6397a 100%);
@@ -199,11 +191,8 @@
       0 0 60px rgba(200, 60, 120, 0.5),
       inset 0 1px 0 rgba(255, 255, 255, 0.45);
   }
-  .btn-clear:active {
-    transform: translateY(-1px) scale(1.0);
-  }
+  .btn-clear:active { transform: translateY(-1px) scale(1.0); }
 
-  /* Состояние "точно?" — кнопка становится ярче и пульсирует */
   .btn-clear.confirming {
     background: linear-gradient(135deg, #ff3b3b 0%, #d93025 100%);
     animation: confirmPulse 0.8s ease-in-out infinite;
@@ -223,7 +212,6 @@
     }
   }
 
-  /* ===== Мобильная адаптация ===== */
   @media (max-width: 600px) {
     .hint {
       top: 14px;
@@ -232,20 +220,17 @@
       padding: 6px 10px;
       max-width: 160px;
     }
-
     .header {
       top: 14px;
       right: 14px;
       padding: 6px 12px 6px 10px;
     }
-
     .bottom-bar {
       bottom: 16px;
       gap: 10px;
       width: calc(100% - 28px);
       justify-content: center;
     }
-
     .btn {
       flex: 1;
       padding: 14px 16px;
@@ -256,10 +241,7 @@
   }
 
   @media (max-width: 380px) {
-    .btn {
-      padding: 12px 10px;
-      font-size: 14px;
-    }
+    .btn { padding: 12px 10px; font-size: 14px; }
   }
 
   @media (prefers-reduced-motion: reduce) {
@@ -276,18 +258,14 @@
 <canvas id="stage"></canvas>
 
 <div class="ui">
-
   <div class="hint">Нажми кнопку и перетаскивай кубики</div>
-
   <div class="header">
     <span class="brand">Vindim</span>
   </div>
-
   <div class="bottom-bar">
     <button class="btn btn-create" id="createBtn">Создать кубик</button>
     <button class="btn btn-clear" id="clearBtn">Очистить</button>
   </div>
-
 </div>
 
 <script>
@@ -296,12 +274,10 @@
 
   /* ============================================================
      ФИЗИКА — твёрдые квадраты с вращением
-     - Фиксированный шаг (1/120) с накоплением времени
-     - SAT (Separating Axis Theorem) для столкновений
-     - Контактные точки по вершинам, до 4 на пару
-     - Импульсы с трением Кулона
-     - Позиционная коррекция с допуском (slop)
-     - Сон медленных тел, чтобы не дрожали
+     - Фиксированный шаг 1/120 с накоплением времени
+     - SAT-столкновения, контактные точки по вершинам
+     - Импульсы + трение Кулона + позиционная коррекция
+     - Сон: тела полностью замирают, просыпаются только от удара/драга
      ============================================================ */
 
   const canvas = document.getElementById('stage');
@@ -326,16 +302,26 @@
   /* ---------- Константы физики ---------- */
   const GRAVITY       = 1800;
   const SUBSTEP       = 1 / 120;
-  const MAX_STEPS     = 5;      // максимум подшагов за кадр — защита от лагов без потери точности
+  const MAX_STEPS     = 5;
   const RESTITUTION   = 0.05;
   const FRICTION      = 0.55;
   const LINEAR_DAMP   = 0.999;
   const ANGULAR_DAMP  = 0.995;
-  const SLEEP_LINEAR  = 6;
-  const SLEEP_ANGULAR = 0.12;
-  const SLEEP_TIME    = 0.5;
+
+  // Пороги сна — мягче, чтобы тела засыпали быстро
+  const SLEEP_LINEAR  = 25;    // px/s
+  const SLEEP_ANGULAR = 0.4;   // rad/s
+  const SLEEP_TIME    = 0.25;  // сек
+
+  // «Жёсткий сон» — если тело почти стоит, усыпляем мгновенно
+  const FORCE_SLEEP_LINEAR  = 8;
+  const FORCE_SLEEP_ANGULAR = 0.15;
+
   const POS_CORRECT   = 0.6;
   const SLOP          = 0.5;
+
+  // Минимальная скорость удара, ниже которой импульс не применяется вовсе
+  const MIN_IMPACT_SPEED = 25;
 
   /* ---------- Класс тела ---------- */
   function Body(x, y, hw, hh, opts) {
@@ -405,10 +391,10 @@
   function buildWalls() {
     staticBodies.length = 0;
     const T = 200;
-    staticBodies.push(new Body(W / 2, H + T / 2, W / 2 + T, T / 2, { static: true }));   // пол
-    staticBodies.push(new Body(-T / 2, H / 2, T / 2, H, { static: true }));              // левая
-    staticBodies.push(new Body(W + T / 2, H / 2, T / 2, H, { static: true }));           // правая
-    staticBodies.push(new Body(W / 2, -T / 2, W / 2 + T, T / 2, { static: true }));      // потолок
+    staticBodies.push(new Body(W / 2, H + T / 2, W / 2 + T, T / 2, { static: true }));
+    staticBodies.push(new Body(-T / 2, H / 2, T / 2, H, { static: true }));
+    staticBodies.push(new Body(W + T / 2, H / 2, T / 2, H, { static: true }));
+    staticBodies.push(new Body(W / 2, -T / 2, W / 2 + T, T / 2, { static: true }));
   }
   buildWalls();
   window.addEventListener('resize', buildWalls);
@@ -491,6 +477,9 @@
   function resolvePair(a, b) {
     if (a.invMass === 0 && b.invMass === 0) return;
 
+    // Оба спят — не трогаем, ничего не делаем
+    if (a.sleeping && b.sleeping) return;
+
     const aV = a.worldVerts();
     const bV = b.worldVerts();
     const hit = sat(aV, bV);
@@ -499,7 +488,7 @@
     const n = orientNormal({ x: hit.nx, y: hit.ny }, a, b);
     const depth = hit.depth;
 
-    // Позиционная коррекция
+    // Позиционная коррекция — выталкиваем из проникновения
     const invSum = a.invMass + b.invMass;
     if (invSum > 0) {
       const correction = Math.max(depth - SLOP, 0) / invSum * POS_CORRECT;
@@ -509,8 +498,8 @@
       b.y += n.y * correction * b.invMass;
     }
 
-    a.wake();
-    b.wake();
+    // Сон может «сбиваться» при позиционной коррекции — проверим ниже
+    let wokeSomething = false;
 
     let contacts = findContacts(a, b, aV, bV);
     if (contacts.length === 0) {
@@ -528,7 +517,19 @@
       const rvx = (b.vx - b.va * rby) - (a.vx - a.va * ray);
       const rvy = (b.vy + b.va * rbx) - (a.vy + a.va * rax);
       const vn = rvx * n.x + rvy * n.y;
+
+      // Если разлетаются — не трогаем
       if (vn > 0) continue;
+
+      // Если скорость удара слишком маленькая — не применяем импульс.
+      // Это ГЛАВНОЕ исправление от дрожания.
+      if (Math.abs(vn) < MIN_IMPACT_SPEED) {
+        continue;
+      }
+
+      // Оба спят, но удар сильный — будим их
+      if (a.sleeping) { a.wake(); wokeSomething = true; }
+      if (b.sleeping) { b.wake(); wokeSomething = true; }
 
       const raCrossN = rax * n.y - ray * n.x;
       const rbCrossN = rbx * n.y - rby * n.x;
@@ -573,6 +574,10 @@
   function integrate(body, dt) {
     if (body.isStatic || body.sleeping) return;
 
+    // Если тело зажато мышкой — не применяем к нему гравитацию,
+    // им управляет applyDrag
+    if (body === dragged) return;
+
     body.vy += GRAVITY * dt;
     body.vx *= LINEAR_DAMP;
     body.vy *= LINEAR_DAMP;
@@ -583,6 +588,18 @@
     body.angle += body.va * dt;
 
     const speed = Math.hypot(body.vx, body.vy);
+
+    // Если тело совсем медленное — усыпляем принудительно и обнуляем скорости
+    if (speed < FORCE_SLEEP_LINEAR && Math.abs(body.va) < FORCE_SLEEP_ANGULAR) {
+      body.sleeping = true;
+      body.vx = 0;
+      body.vy = 0;
+      body.va = 0;
+      body.sleepTimer = 0;
+      return;
+    }
+
+    // Обычный таймер сна
     if (speed < SLEEP_LINEAR && Math.abs(body.va) < SLEEP_ANGULAR) {
       body.sleepTimer += dt;
       if (body.sleepTimer > SLEEP_TIME) {
@@ -681,8 +698,9 @@
 
   function onUp() {
     if (!dragged) return;
-    dragged.vx = pointerVel.x * 0.8;
-    dragged.vy = pointerVel.y * 0.8;
+    // Передаём инерцию броска, но чуть гасим — чтобы тела успокаивались
+    dragged.vx = pointerVel.x * 0.6;
+    dragged.vy = pointerVel.y * 0.6;
     dragged.wake();
     dragged = null;
     canvas.classList.remove('grabbing');
@@ -752,10 +770,8 @@
       accumulator -= SUBSTEP;
       steps++;
     }
-    // Если не успели обработать всё — сбрасываем остаток, чтобы не накапливалось
     if (accumulator > SUBSTEP * 2) accumulator = 0;
 
-    // Рендер
     ctx.clearRect(0, 0, W, H);
 
     for (let i = 0; i < bodies.length; i++) {
@@ -783,22 +799,19 @@
   let isConfirming = false;
 
   createBtn.addEventListener('click', function () {
-    // Если была активна кнопка "точно?" — сбрасываем
     resetConfirm();
     spawnBox();
   });
 
   clearBtn.addEventListener('click', function () {
     if (!isConfirming) {
-      // Первый клик — просим подтверждение
       isConfirming = true;
       clearBtn.textContent = 'Точно?';
       clearBtn.classList.add('confirming');
-      clearTimer = setTimeout(function () {
+      confirmTimer = setTimeout(function () {
         resetConfirm();
       }, 3000);
     } else {
-      // Второй клик — очищаем
       bodies.length = 0;
       resetConfirm();
     }
