@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#0d0620">
+<title>Vindim</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html, body {
+    width: 100%;
+    min-height: 100%;
+    overflow-x: hidden;
+    font-family: 'Segoe UI', sans-serif;
+    background: #0d0620;
+    color: #fff;
+    -webkit-tap-highlight-color: transparent;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  /* ===== Звёздный фон ===== */
+  .stars, .stars2, .stars3 {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    pointer-events: none;
+    z-index: 0;
+  }
+  .stars {
+    background:
+      radial-gradient(2px 2px at 20px 30px, #fff, transparent),
+      radial-gradient(2px 2px at 40px 70px, #fff, transparent),
+      radial-gradient(1px 1px at 90px 40px, #fff, transparent),
+      radial-gradient(1px 1px at 130px 80px, #fff, transparent),
+      radial-gradient(2px 2px at 160px 120px, #fff, transparent),
+      radial-gradient(1px 1px at 200px 50px, #fff, transparent),
+      radial-gradient(1px 1px at 250px 150px, #fff, transparent),
+      radial-gradient(2px 2px at 300px 90px, #fff, transparent);
+    background-repeat: repeat;
+    background-size: 350px 200px;
+    animation: twinkle 4s infinite;
+  }
+  .stars2 {
+    background:
+      radial-gradient(1px 1px at 50px 20px, #d8b4ff, transparent),
+      radial-gradient(1px 1px at 120px 60px, #d8b4ff, transparent),
+      radial-gradient(1px 1px at 200px 30px, #d8b4ff, transparent),
+      radial-gradient(1px 1px at 280px 100px, #d8b4ff, transparent);
+    background-repeat: repeat;
+    background-size: 400px 150px;
+    animation: twinkle 6s infinite 1s;
+  }
+  .stars3 {
+    background:
+      radial-gradient(1px 1px at 30px 40px, #f0abff, transparent),
+      radial-gradient(1px 1px at 180px 20px, #f0abff, transparent),
+      radial-gradient(2px 2px at 260px 130px, #f0abff, transparent),
+      radial-gradient(1px 1px at 380px 90px, #f0abff, transparent);
+    background-repeat: repeat;
+    background-size: 450px 250px;
+    animation: twinkle 8s infinite 2s;
+  }
+  @keyframes twinkle {
+    0%, 100% { opacity: 0.4; }
+    50%      { opacity: 1; }
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background:
+      radial-gradient(circle at 30% 40%, rgba(120, 40, 200, 0.35), transparent 60%),
+      radial-gradient(circle at 70% 70%, rgba(80, 20, 160, 0.4), transparent 60%),
+      linear-gradient(160deg, #1a0733 0%, #0d0620 50%, #1f0a3d 100%);
+    z-index: 0;
+    pointer-events: none;
+  }
+
+  /* ===== Шапка (Vindim) ===== */
+  .header {
+    position: fixed;
+    top: 16px;
+    right: 16px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    z-index: 10;
+    padding: 8px 16px 8px 14px;
+    border-radius: 50px;
+    background: rgba(60, 20, 120, 0.35);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(180, 130, 255, 0.35);
+    box-shadow: 0 4px 20px rgba(120, 40, 200, 0.35);
+  }
+  .header img {
+    width: clamp(34px, 7vw, 40px);
+    height: clamp(34px, 7vw, 40px);
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid rgba(200, 150, 255, 0.6);
+    box-shadow: 0 0 12px rgba(180, 100, 255, 0.6);
+    flex-shrink: 0;
+  }
+  .header .brand {
+    font-family: 'Segoe Script', 'Brush Script MT', cursive;
+    font-size: clamp(20px, 4vw, 26px);
+    color: #e8d5ff;
+    text-shadow: 0 0 12px rgba(180, 100, 255, 0.8),
+                 0 0 20px rgba(140, 60, 220, 0.5);
+    letter-spacing: 1px;
+    line-height: 1;
+  }
+
+  /* ===== Заголовок страницы ===== */
+  .page-title {
+    position: relative;
+    z-index: 5;
+    text-align: center;
+    padding: 120px 20px 30px;
+  }
+  .page-title h1 {
+    font-family: 'Segoe Script', 'Brush Script MT', cursive;
+    font-size: clamp(34px, 8vw, 68px);
+    color: #f3e4ff;
+    text-shadow:
+      0 0 20px rgba(180, 100, 255, 0.9),
+      0 0 40px rgba(140, 60, 220, 0.7),
+      0 0 60px rgba(90, 20, 180, 0.5);
+    letter-spacing: 2px;
+    line-height: 1.15;
+    margin-bottom: 12px;
+  }
+  .page-title p {
+    font-family: 'Segoe Script', 'Brush Script MT', cursive;
+    font-size: clamp(18px, 4vw, 26px);
+    color: #c9a9ff;
+    letter-spacing: 1px;
+    opacity: 0.9;
+  }
+
+  /* ===== Сетка карточек ===== */
+  .grid {
+    position: relative;
+    z-index: 5;
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 20px 24px 80px;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 24px;
+  }
+
+  /* ===== Карточка ===== */
+  .card {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    padding: 26px 24px 24px;
+    border-radius: 22px;
+    background: linear-gradient(160deg,
+      rgba(60, 20, 120, 0.55) 0%,
+      rgba(30, 10, 70, 0.75) 60%,
+      rgba(45, 15, 95, 0.6) 100%);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border: 1px solid rgba(180, 130, 255, 0.4);
+    box-shadow:
+      0 8px 30px rgba(80, 20, 160, 0.45),
+      0 0 0 1px rgba(255, 255, 255, 0.04) inset,
+      0 0 60px rgba(120, 40, 200, 0.15) inset;
+    overflow: hidden;
+    transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1),
+                box-shadow 0.4s ease,
+                border-color 0.4s ease;
+    animation: cardAppear 0.8s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+
+  .card:nth-child(2) { animation-delay: 0.1s; }
+
+  @keyframes cardAppear {
+    from { opacity: 0; transform: translateY(30px) scale(0.96); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
+  }
+
+  .card::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -20%;
+    width: 140%;
+    height: 100%;
+    background: radial-gradient(ellipse at top,
+      rgba(200, 150, 255, 0.22), transparent 60%);
+    pointer-events: none;
+    transition: opacity 0.4s ease;
+    opacity: 0.6;
+  }
+
+  .card:hover {
+    transform: translateY(-8px) scale(1.02);
+    border-color: rgba(220, 180, 255, 0.75);
+    box-shadow:
+      0 18px 50px rgba(140, 60, 220, 0.65),
+      0 0 0 1px rgba(255, 255, 255, 0.08) inset,
+      0 0 80px rgba(160, 80, 255, 0.35) inset,
+      0 0 60px rgba(180, 100, 255, 0.45);
+  }
+  .card:hover::before { opacity: 1; }
+
+  .card-icon {
+    width: 64px;
+    height: 64px;
+    border-radius: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 32px;
+    background: linear-gradient(135deg, #7c3aed 0%, #a855f7 100%);
+    box-shadow:
+      0 6px 20px rgba(168, 85, 247, 0.6),
+      0 0 30px rgba(140, 60, 220, 0.4),
+      inset 0 1px 0 rgba(255, 255, 255, 0.35);
+    flex-shrink: 0;
+  }
+
+  .card-tag {
+    display: inline-block;
+    align-self: flex-start;
+    padding: 5px 14px;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    color: #e8d5ff;
+    background: rgba(168, 85, 247, 0.28);
+    border: 1px solid rgba(180, 130, 255, 0.45);
+    border-radius: 50px;
+    text-transform: uppercase;
+  }
+
+  .card-title {
+    font-family: 'Segoe Script', 'Brush Script MT', cursive;
+    font-size: 26px;
+    font-weight: 700;
+    color: #f3e4ff;
+    line-height: 1.3;
+    letter-spacing: 0.5px;
+    text-shadow: 0 0 12px rgba(180, 100, 255, 0.5);
+  }
+
+  /* ===== Кнопка карточки ===== */
+  .card-btn {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 18px 24px;
+    font-family: 'Segoe Script', 'Brush Script MT', cursive;
+    font-size: 18px;
+    font-weight: 700;
+    letter-spacing: 0.8px;
+    color: #fff;
+    text-decoration: none;
+    border-radius: 50px;
+    background: linear-gradient(135deg,
+      #7c3aed 0%, #a855f7 45%, #c084fc 55%, #a855f7 65%, #7c3aed 100%);
+    background-size: 250% 250%;
+    background-position: 0% 50%;
+    border: 1px solid rgba(220, 180, 255, 0.55);
+    box-shadow:
+      0 6px 22px rgba(168, 85, 247, 0.6),
+      0 0 40px rgba(124, 58, 237, 0.35),
+      inset 0 1px 0 rgba(255, 255, 255, 0.4),
+      inset 0 -2px 8px rgba(60, 10, 120, 0.5);
+    overflow: hidden;
+    min-height: 60px;
+    touch-action: manipulation;
+    transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1),
+                background-position 0.6s ease,
+                box-shadow 0.3s ease;
+    animation: btnPulse 3s ease-in-out infinite;
+  }
+
+  @keyframes btnPulse {
+    0%, 100% {
+      box-shadow:
+        0 6px 22px rgba(168, 85, 247, 0.6),
+        0 0 40px rgba(124, 58, 237, 0.35),
+        inset 0 1px 0 rgba(255, 255, 255, 0.4),
+        inset 0 -2px 8px rgba(60, 10, 120, 0.5);
+    }
+    50% {
+      box-shadow:
+        0 8px 30px rgba(200, 120, 255, 0.85),
+        0 0 60px rgba(140, 60, 220, 0.55),
+        inset 0 1px 0 rgba(255, 255, 255, 0.5),
+        inset 0 -2px 8px rgba(60, 10, 120, 0.5);
+    }
+  }
+
+  .card-btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -75%;
+    width: 50%;
+    height: 100%;
+    background: linear-gradient(120deg,
+      transparent 0%,
+      rgba(255, 255, 255, 0.45) 50%,
+      transparent 100%);
+    transform: skewX(-20deg);
+    transition: left 0.7s ease;
+    pointer-events: none;
+  }
+
+  .card-btn:hover {
+    transform: translateY(-3px) scale(1.04);
+    background-position: 100% 50%;
+    box-shadow:
+      0 12px 36px rgba(200, 120, 255, 0.9),
+      0 0 70px rgba(160, 80, 255, 0.65),
+      inset 0 1px 0 rgba(255, 255, 255, 0.6),
+      inset 0 -2px 10px rgba(60, 10, 120, 0.6);
+  }
+  .card-btn:hover::before {
+    left: 125%;
+  }
+  .card-btn:active {
+    transform: translateY(-1px) scale(1.01);
+  }
+
+  .card-btn .arrow {
+    display: inline-block;
+    transition: transform 0.3s ease;
+  }
+  .card-btn:hover .arrow { transform: translateX(4px); }
+
+  /* ===== Мобильная адаптация ===== */
+  @media (max-width: 700px) {
+    .header {
+      top: 12px;
+      right: 12px;
+      padding: 7px 14px 7px 10px;
+      gap: 8px;
+    }
+
+    .page-title {
+      padding: 110px 20px 20px;
+    }
+
+    .grid {
+      padding: 10px 16px 60px;
+      grid-template-columns: 1fr;
+      gap: 20px;
+    }
+
+    .card {
+      padding: 22px 20px 20px;
+      border-radius: 20px;
+    }
+
+    .card-icon {
+      width: 58px;
+      height: 58px;
+      font-size: 28px;
+      border-radius: 16px;
+    }
+
+    .card-title { font-size: 22px; }
+
+    .card-btn {
+      padding: 16px 20px;
+      font-size: 17px;
+      min-height: 56px;
+    }
+  }
+
+  @media (max-width: 380px) {
+    .card-title { font-size: 20px; }
+    .card-btn { font-size: 16px; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .card,
+    .card-btn,
+    .card-btn::before,
+    .stars,
+    .stars2,
+    .stars3 {
+      animation: none !important;
+      transition: none !important;
+    }
+  }
+</style>
+</head>
+<body>
+
+<div class="stars"></div>
+<div class="stars2"></div>
+<div class="stars3"></div>
+
+<!-- Шапка -->
+<div class="header">
+  <span class="brand">Vindim</span>
+  <img src="logo.webp" alt="Vindim" onerror="this.style.display='none'">
+</div>
+
+<!-- Заголовок -->
+<div class="page-title">
+  <h1>Добро пожаловать</h1>
+  <p>Выбери мои проекты</p>
+</div>
+
+<!-- Сетка карточек -->
+<div class="grid">
+
+  <!-- Карточка: Люблю Галю Бабу -->
+  <div class="card">
+    <div class="card-icon">❤️</div>
+    <span class="card-tag">Проект</span>
+    <div class="card-title">Люблю Галю Бабу</div>
+    <a href="https://vadimtychkov17-a11y.github.io/gala" class="card-btn">
+      Открыть
+      <span class="arrow">→</span>
+    </a>
+  </div>
+
+  <!-- Карточка: Симулятор физики -->
+  <div class="card">
+    <div class="card-icon">🧊</div>
+    <span class="card-tag">Игра</span>
+    <div class="card-title">Симулятор физики</div>
+    <a href="https://vadimtychkov17-a11y.github.io/physics" class="card-btn">
+      Открыть
+      <span class="arrow">→</span>
+    </a>
+  </div>
+
+</div>
+
+</body>
+</html>
