@@ -66,7 +66,6 @@
     transition: background 0.3s ease;
   }
 
-  /* Красный оттенок всей страницы при перегрузе */
   body.danger::before {
     background:
       radial-gradient(circle at 30% 40%, rgba(220, 40, 60, 0.35), transparent 60%),
@@ -261,7 +260,6 @@
     }
   }
 
-  /* ===== Оверлей "Нельзя так много кубиков чел" ===== */
   .overflow-screen {
     position: fixed;
     inset: 0;
@@ -327,7 +325,6 @@
     opacity: 0.95;
   }
 
-  /* ===== Мобильная адаптация ===== */
   @media (max-width: 600px) {
     .hint {
       top: 14px;
@@ -393,7 +390,6 @@
   </div>
 </div>
 
-<!-- Оверлей перегруза -->
 <div class="overflow-screen" id="overflowScreen">
   <div class="content">
     <span class="emoji">🚫</span>
@@ -405,10 +401,6 @@
 <script>
 (function () {
   'use strict';
-
-  /* ============================================================
-     ФИЗИКА — твёрдые квадраты с вращением
-     ============================================================ */
 
   const canvas = document.getElementById('stage');
   const ctx = canvas.getContext('2d', { alpha: true });
@@ -449,10 +441,8 @@
 
   const MIN_IMPACT_SPEED = 25;
 
-  /* Максимум кубиков — при превышении сработает защита */
   const MAX_BOXES = 1000;
 
-  /* ---------- Класс тела ---------- */
   function Body(x, y, hw, hh, opts) {
     opts = opts || {};
     this.x = x;
@@ -513,7 +503,6 @@
     this.sleepTimer = 0;
   };
 
-  /* ---------- Мир ---------- */
   const bodies = [];
   const staticBodies = [];
 
@@ -528,7 +517,6 @@
   buildWalls();
   window.addEventListener('resize', buildWalls);
 
-  /* ---------- SAT ---------- */
   function project(verts, ax, ay) {
     let mn = Infinity, mx = -Infinity;
     for (let i = 0; i < verts.length; i++) {
@@ -602,7 +590,6 @@
     return contacts;
   }
 
-  /* ---------- Разрешение пары ---------- */
   function resolvePair(a, b) {
     if (a.invMass === 0 && b.invMass === 0) return;
     if (a.sleeping && b.sleeping) return;
@@ -685,7 +672,6 @@
     }
   }
 
-  /* ---------- Интеграция ---------- */
   function integrate(body, dt) {
     if (body.isStatic || body.sleeping) return;
     if (body === dragged) return;
@@ -723,7 +709,6 @@
     }
   }
 
-  /* ---------- Шаг мира ---------- */
   function step(dt) {
     for (let i = 0; i < bodies.length; i++) integrate(bodies[i], dt);
 
@@ -738,7 +723,6 @@
     }
   }
 
-  /* ---------- Драг ---------- */
   let dragged = null;
   const dragLocal = { x: 0, y: 0 };
   const dragTarget = { x: 0, y: 0 };
@@ -846,7 +830,6 @@
     dragged.va *= 0.85;
   }
 
-  /* ---------- Проверка перегруза ---------- */
   let overflowTriggered = false;
 
   function checkOverflow() {
@@ -858,24 +841,35 @@
   }
 
   function triggerOverflow() {
-    // Красный оттенок всей страницы
     document.body.classList.add('danger');
-
-    // Показываем оверлей
     const screen = document.getElementById('overflowScreen');
     screen.classList.add('active');
 
-    // Через 1.8 секунды — перезагрузка
     setTimeout(function () {
-      location.reload();
+      // Три способа перезагрузки — сработает хотя бы один
+      try {
+        location.reload();
+      } catch (e) {
+        // ignore
+      }
+
+      try {
+        location.href = location.href;
+      } catch (e) {
+        // ignore
+      }
+
+      try {
+        location.replace(location.pathname + location.search);
+      } catch (e) {
+        // ignore
+      }
     }, 1800);
   }
 
-  /* ---------- Спавн ---------- */
   const PALETTE = ['#a78bfa', '#8b5cf6', '#c4b5fd', '#7c3aed', '#b39ddb', '#9575cd'];
 
   function spawnBox() {
-    // Защита: если уже максимум — не спавним
     if (bodies.length >= MAX_BOXES) {
       checkOverflow();
       return;
@@ -892,11 +886,9 @@
     b.va = (Math.random() - 0.5) * 2;
     bodies.push(b);
 
-    // Проверяем лимит
     checkOverflow();
   }
 
-  /* ---------- Главный цикл ---------- */
   let lastTime = performance.now();
   let accumulator = 0;
 
@@ -935,7 +927,6 @@
 
   requestAnimationFrame(loop);
 
-  /* ---------- Кнопки ---------- */
   const createBtn = document.getElementById('createBtn');
   const clearBtn = document.getElementById('clearBtn');
   const countInput = document.getElementById('countInput');
@@ -1000,7 +991,6 @@
     clearBtn.classList.remove('confirming');
   }
 
-  /* ---------- Старт ---------- */
   setTimeout(spawnBox, 400);
   setTimeout(spawnBox, 800);
 
