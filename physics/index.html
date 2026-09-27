@@ -4,23 +4,24 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="theme-color" content="#0d0620">
-<title>Vindim</title>
+<title>Симулятор физики</title>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
 
   html, body {
     width: 100%;
-    min-height: 100%;
-    overflow-x: hidden;
-    font-family: 'Segoe UI', sans-serif;
+    height: 100%;
+    overflow: hidden;
+    font-family: -apple-system, 'Segoe UI', Roboto, sans-serif;
     background: #0d0620;
     color: #fff;
     -webkit-tap-highlight-color: transparent;
     -webkit-text-size-adjust: 100%;
+    overscroll-behavior: none;
   }
 
   /* ===== Звёздный фон ===== */
-  .stars, .stars2, .stars3 {
+  .stars, .stars2 {
     position: fixed;
     top: 0; left: 0;
     width: 100%; height: 100%;
@@ -34,9 +35,7 @@
       radial-gradient(1px 1px at 90px 40px, #fff, transparent),
       radial-gradient(1px 1px at 130px 80px, #fff, transparent),
       radial-gradient(2px 2px at 160px 120px, #fff, transparent),
-      radial-gradient(1px 1px at 200px 50px, #fff, transparent),
-      radial-gradient(1px 1px at 250px 150px, #fff, transparent),
-      radial-gradient(2px 2px at 300px 90px, #fff, transparent);
+      radial-gradient(1px 1px at 200px 50px, #fff, transparent);
     background-repeat: repeat;
     background-size: 350px 200px;
     animation: twinkle 4s infinite;
@@ -44,22 +43,11 @@
   .stars2 {
     background:
       radial-gradient(1px 1px at 50px 20px, #d8b4ff, transparent),
-      radial-gradient(1px 1px at 120px 60px, #d8b4ff, transparent),
       radial-gradient(1px 1px at 200px 30px, #d8b4ff, transparent),
       radial-gradient(1px 1px at 280px 100px, #d8b4ff, transparent);
     background-repeat: repeat;
     background-size: 400px 150px;
     animation: twinkle 6s infinite 1s;
-  }
-  .stars3 {
-    background:
-      radial-gradient(1px 1px at 30px 40px, #f0abff, transparent),
-      radial-gradient(1px 1px at 180px 20px, #f0abff, transparent),
-      radial-gradient(2px 2px at 260px 130px, #f0abff, transparent),
-      radial-gradient(1px 1px at 380px 90px, #f0abff, transparent);
-    background-repeat: repeat;
-    background-size: 450px 250px;
-    animation: twinkle 8s infinite 2s;
   }
   @keyframes twinkle {
     0%, 100% { opacity: 0.4; }
@@ -71,14 +59,34 @@
     position: fixed;
     inset: 0;
     background:
-      radial-gradient(circle at 30% 40%, rgba(120, 40, 200, 0.35), transparent 60%),
-      radial-gradient(circle at 70% 70%, rgba(80, 20, 160, 0.4), transparent 60%),
+      radial-gradient(circle at 30% 40%, rgba(120, 40, 200, 0.25), transparent 60%),
+      radial-gradient(circle at 70% 70%, rgba(80, 20, 160, 0.3), transparent 60%),
       linear-gradient(160deg, #1a0733 0%, #0d0620 50%, #1f0a3d 100%);
     z-index: 0;
     pointer-events: none;
   }
 
-  /* ===== Шапка (Vindim) ===== */
+  /* ===== Canvas ===== */
+  #stage {
+    position: fixed;
+    inset: 0;
+    z-index: 1;
+    display: block;
+    touch-action: none;
+    cursor: grab;
+  }
+  #stage.grabbing { cursor: grabbing; }
+
+  /* ===== UI-слой ===== */
+  .ui {
+    position: fixed;
+    inset: 0;
+    z-index: 5;
+    pointer-events: none;
+  }
+  .ui > * { pointer-events: auto; }
+
+  /* ===== Шапка ===== */
   .header {
     position: fixed;
     top: 16px;
@@ -86,315 +94,177 @@
     display: flex;
     align-items: center;
     gap: 10px;
-    z-index: 10;
     padding: 8px 16px 8px 14px;
     border-radius: 50px;
-    background: rgba(60, 20, 120, 0.35);
+    background: rgba(60, 20, 120, 0.45);
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
     border: 1px solid rgba(180, 130, 255, 0.35);
     box-shadow: 0 4px 20px rgba(120, 40, 200, 0.35);
-  }
-  .header img {
-    width: clamp(34px, 7vw, 40px);
-    height: clamp(34px, 7vw, 40px);
-    border-radius: 50%;
-    object-fit: cover;
-    border: 2px solid rgba(200, 150, 255, 0.6);
-    box-shadow: 0 0 12px rgba(180, 100, 255, 0.6);
-    flex-shrink: 0;
+    z-index: 10;
   }
   .header .brand {
     font-family: 'Segoe Script', 'Brush Script MT', cursive;
-    font-size: clamp(20px, 4vw, 26px);
+    font-size: clamp(18px, 4vw, 24px);
     color: #e8d5ff;
-    text-shadow: 0 0 12px rgba(180, 100, 255, 0.8),
-                 0 0 20px rgba(140, 60, 220, 0.5);
+    text-shadow: 0 0 12px rgba(180, 100, 255, 0.8);
     letter-spacing: 1px;
     line-height: 1;
   }
 
-  /* ===== Заголовок страницы ===== */
-  .page-title {
-    position: relative;
-    z-index: 5;
-    text-align: center;
-    padding: 120px 20px 30px;
-  }
-  .page-title h1 {
-    font-family: 'Segoe Script', 'Brush Script MT', cursive;
-    font-size: clamp(34px, 8vw, 68px);
-    color: #f3e4ff;
-    text-shadow:
-      0 0 20px rgba(180, 100, 255, 0.9),
-      0 0 40px rgba(140, 60, 220, 0.7),
-      0 0 60px rgba(90, 20, 180, 0.5);
-    letter-spacing: 2px;
-    line-height: 1.15;
-    margin-bottom: 12px;
-  }
-  .page-title p {
-    font-family: 'Segoe Script', 'Brush Script MT', cursive;
-    font-size: clamp(18px, 4vw, 26px);
+  /* ===== Подсказка сверху ===== */
+  .hint {
+    position: fixed;
+    top: 20px;
+    left: 20px;
+    font-size: 13px;
     color: #c9a9ff;
-    letter-spacing: 1px;
-    opacity: 0.9;
-  }
-
-  /* ===== Сетка карточек ===== */
-  .grid {
-    position: relative;
-    z-index: 5;
-    max-width: 1100px;
-    margin: 0 auto;
-    padding: 20px 24px 80px;
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-    gap: 24px;
-  }
-
-  /* ===== Карточка ===== */
-  .card {
-    position: relative;
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
-    padding: 26px 24px 24px;
-    border-radius: 22px;
-    background: linear-gradient(160deg,
-      rgba(60, 20, 120, 0.55) 0%,
-      rgba(30, 10, 70, 0.75) 60%,
-      rgba(45, 15, 95, 0.6) 100%);
-    backdrop-filter: blur(14px);
-    -webkit-backdrop-filter: blur(14px);
-    border: 1px solid rgba(180, 130, 255, 0.4);
-    box-shadow:
-      0 8px 30px rgba(80, 20, 160, 0.45),
-      0 0 0 1px rgba(255, 255, 255, 0.04) inset,
-      0 0 60px rgba(120, 40, 200, 0.15) inset;
-    overflow: hidden;
-    transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1),
-                box-shadow 0.4s ease,
-                border-color 0.4s ease;
-    animation: cardAppear 0.8s cubic-bezier(0.22, 1, 0.36, 1) both;
-  }
-
-  .card:nth-child(2) { animation-delay: 0.1s; }
-
-  @keyframes cardAppear {
-    from { opacity: 0; transform: translateY(30px) scale(0.96); }
-    to   { opacity: 1; transform: translateY(0) scale(1); }
-  }
-
-  .card::before {
-    content: '';
-    position: absolute;
-    top: -50%;
-    left: -20%;
-    width: 140%;
-    height: 100%;
-    background: radial-gradient(ellipse at top,
-      rgba(200, 150, 255, 0.22), transparent 60%);
+    background: rgba(60, 20, 120, 0.35);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    padding: 8px 14px;
+    border-radius: 12px;
+    border: 1px solid rgba(180, 130, 255, 0.25);
+    opacity: 0.85;
     pointer-events: none;
-    transition: opacity 0.4s ease;
-    opacity: 0.6;
+    z-index: 10;
+    max-width: 220px;
+    line-height: 1.35;
   }
 
-  .card:hover {
-    transform: translateY(-8px) scale(1.02);
-    border-color: rgba(220, 180, 255, 0.75);
-    box-shadow:
-      0 18px 50px rgba(140, 60, 220, 0.65),
-      0 0 0 1px rgba(255, 255, 255, 0.08) inset,
-      0 0 80px rgba(160, 80, 255, 0.35) inset,
-      0 0 60px rgba(180, 100, 255, 0.45);
-  }
-  .card:hover::before { opacity: 1; }
-
-  .card-icon {
-    width: 64px;
-    height: 64px;
-    border-radius: 18px;
+  /* ===== Панель кнопок внизу ===== */
+  .bottom-bar {
+    position: fixed;
+    left: 50%;
+    bottom: 24px;
+    transform: translateX(-50%);
     display: flex;
+    gap: 12px;
+    z-index: 10;
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  .btn {
+    display: inline-flex;
     align-items: center;
     justify-content: center;
-    font-size: 32px;
+    gap: 8px;
+    padding: 16px 32px;
+    font-family: inherit;
+    font-size: 16px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    color: #fff;
+    border: none;
+    border-radius: 50px;
+    cursor: pointer;
+    transition: transform 0.2s cubic-bezier(0.22, 1, 0.36, 1),
+                box-shadow 0.2s ease,
+                background 0.2s ease;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+    min-height: 56px;
+    white-space: nowrap;
+  }
+
+  .btn-create {
     background: linear-gradient(135deg, #7c3aed 0%, #a855f7 100%);
     box-shadow:
-      0 6px 20px rgba(168, 85, 247, 0.6),
-      0 0 30px rgba(140, 60, 220, 0.4),
+      0 8px 24px rgba(168, 85, 247, 0.5),
+      0 0 40px rgba(124, 58, 237, 0.3),
       inset 0 1px 0 rgba(255, 255, 255, 0.35);
-    flex-shrink: 0;
   }
-
-  .card-tag {
-    display: inline-block;
-    align-self: flex-start;
-    padding: 5px 14px;
-    font-size: 12px;
-    font-weight: 600;
-    letter-spacing: 0.5px;
-    color: #e8d5ff;
-    background: rgba(168, 85, 247, 0.28);
-    border: 1px solid rgba(180, 130, 255, 0.45);
-    border-radius: 50px;
-    text-transform: uppercase;
-  }
-
-  .card-title {
-    font-family: 'Segoe Script', 'Brush Script MT', cursive;
-    font-size: 26px;
-    font-weight: 700;
-    color: #f3e4ff;
-    line-height: 1.3;
-    letter-spacing: 0.5px;
-    text-shadow: 0 0 12px rgba(180, 100, 255, 0.5);
-  }
-
-  /* ===== Кнопка карточки ===== */
-  .card-btn {
-    position: relative;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 10px;
-    padding: 18px 24px;
-    font-family: 'Segoe Script', 'Brush Script MT', cursive;
-    font-size: 18px;
-    font-weight: 700;
-    letter-spacing: 0.8px;
-    color: #fff;
-    text-decoration: none;
-    border-radius: 50px;
-    background: linear-gradient(135deg,
-      #7c3aed 0%, #a855f7 45%, #c084fc 55%, #a855f7 65%, #7c3aed 100%);
-    background-size: 250% 250%;
-    background-position: 0% 50%;
-    border: 1px solid rgba(220, 180, 255, 0.55);
+  .btn-create:hover {
+    transform: translateY(-3px) scale(1.03);
     box-shadow:
-      0 6px 22px rgba(168, 85, 247, 0.6),
-      0 0 40px rgba(124, 58, 237, 0.35),
-      inset 0 1px 0 rgba(255, 255, 255, 0.4),
-      inset 0 -2px 8px rgba(60, 10, 120, 0.5);
-    overflow: hidden;
-    min-height: 60px;
-    touch-action: manipulation;
-    transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1),
-                background-position 0.6s ease,
-                box-shadow 0.3s ease;
-    animation: btnPulse 3s ease-in-out infinite;
+      0 12px 32px rgba(200, 120, 255, 0.7),
+      0 0 60px rgba(140, 60, 220, 0.5),
+      inset 0 1px 0 rgba(255, 255, 255, 0.5);
+  }
+  .btn-create:active {
+    transform: translateY(-1px) scale(1.0);
   }
 
-  @keyframes btnPulse {
+  .btn-clear {
+    background: linear-gradient(135deg, #dc4a5a 0%, #e6397a 100%);
+    box-shadow:
+      0 8px 24px rgba(230, 57, 122, 0.5),
+      0 0 40px rgba(200, 40, 100, 0.3),
+      inset 0 1px 0 rgba(255, 255, 255, 0.3);
+  }
+  .btn-clear:hover {
+    transform: translateY(-3px) scale(1.03);
+    box-shadow:
+      0 12px 32px rgba(255, 100, 150, 0.7),
+      0 0 60px rgba(200, 60, 120, 0.5),
+      inset 0 1px 0 rgba(255, 255, 255, 0.45);
+  }
+  .btn-clear:active {
+    transform: translateY(-1px) scale(1.0);
+  }
+
+  /* Состояние "точно?" — кнопка становится ярче и пульсирует */
+  .btn-clear.confirming {
+    background: linear-gradient(135deg, #ff3b3b 0%, #d93025 100%);
+    animation: confirmPulse 0.8s ease-in-out infinite;
+  }
+  @keyframes confirmPulse {
     0%, 100% {
       box-shadow:
-        0 6px 22px rgba(168, 85, 247, 0.6),
-        0 0 40px rgba(124, 58, 237, 0.35),
-        inset 0 1px 0 rgba(255, 255, 255, 0.4),
-        inset 0 -2px 8px rgba(60, 10, 120, 0.5);
+        0 8px 24px rgba(255, 60, 60, 0.6),
+        0 0 40px rgba(220, 40, 40, 0.4),
+        inset 0 1px 0 rgba(255, 255, 255, 0.35);
     }
     50% {
       box-shadow:
-        0 8px 30px rgba(200, 120, 255, 0.85),
-        0 0 60px rgba(140, 60, 220, 0.55),
-        inset 0 1px 0 rgba(255, 255, 255, 0.5),
-        inset 0 -2px 8px rgba(60, 10, 120, 0.5);
+        0 12px 36px rgba(255, 100, 100, 0.9),
+        0 0 60px rgba(220, 60, 60, 0.6),
+        inset 0 1px 0 rgba(255, 255, 255, 0.5);
     }
   }
-
-  .card-btn::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: -75%;
-    width: 50%;
-    height: 100%;
-    background: linear-gradient(120deg,
-      transparent 0%,
-      rgba(255, 255, 255, 0.45) 50%,
-      transparent 100%);
-    transform: skewX(-20deg);
-    transition: left 0.7s ease;
-    pointer-events: none;
-  }
-
-  .card-btn:hover {
-    transform: translateY(-3px) scale(1.04);
-    background-position: 100% 50%;
-    box-shadow:
-      0 12px 36px rgba(200, 120, 255, 0.9),
-      0 0 70px rgba(160, 80, 255, 0.65),
-      inset 0 1px 0 rgba(255, 255, 255, 0.6),
-      inset 0 -2px 10px rgba(60, 10, 120, 0.6);
-  }
-  .card-btn:hover::before {
-    left: 125%;
-  }
-  .card-btn:active {
-    transform: translateY(-1px) scale(1.01);
-  }
-
-  .card-btn .arrow {
-    display: inline-block;
-    transition: transform 0.3s ease;
-  }
-  .card-btn:hover .arrow { transform: translateX(4px); }
 
   /* ===== Мобильная адаптация ===== */
-  @media (max-width: 700px) {
+  @media (max-width: 600px) {
+    .hint {
+      top: 14px;
+      left: 14px;
+      font-size: 12px;
+      padding: 6px 10px;
+      max-width: 160px;
+    }
+
     .header {
-      top: 12px;
-      right: 12px;
-      padding: 7px 14px 7px 10px;
-      gap: 8px;
+      top: 14px;
+      right: 14px;
+      padding: 6px 12px 6px 10px;
     }
 
-    .page-title {
-      padding: 110px 20px 20px;
+    .bottom-bar {
+      bottom: 16px;
+      gap: 10px;
+      width: calc(100% - 28px);
+      justify-content: center;
     }
 
-    .grid {
-      padding: 10px 16px 60px;
-      grid-template-columns: 1fr;
-      gap: 20px;
-    }
-
-    .card {
-      padding: 22px 20px 20px;
-      border-radius: 20px;
-    }
-
-    .card-icon {
-      width: 58px;
-      height: 58px;
-      font-size: 28px;
-      border-radius: 16px;
-    }
-
-    .card-title { font-size: 22px; }
-
-    .card-btn {
-      padding: 16px 20px;
-      font-size: 17px;
-      min-height: 56px;
+    .btn {
+      flex: 1;
+      padding: 14px 16px;
+      font-size: 15px;
+      min-height: 52px;
+      max-width: 200px;
     }
   }
 
   @media (max-width: 380px) {
-    .card-title { font-size: 20px; }
-    .card-btn { font-size: 16px; }
+    .btn {
+      padding: 12px 10px;
+      font-size: 14px;
+    }
   }
 
   @media (prefers-reduced-motion: reduce) {
-    .card,
-    .card-btn,
-    .card-btn::before,
-    .stars,
-    .stars2,
-    .stars3 {
-      animation: none !important;
-      transition: none !important;
-    }
+    .stars, .stars2 { animation: none !important; }
+    .btn, .btn-clear.confirming { animation: none !important; transition: none !important; }
   }
 </style>
 </head>
@@ -402,46 +272,553 @@
 
 <div class="stars"></div>
 <div class="stars2"></div>
-<div class="stars3"></div>
 
-<!-- Шапка -->
-<div class="header">
-  <span class="brand">Vindim</span>
-  <img src="logo.webp" alt="Vindim" onerror="this.style.display='none'">
-</div>
+<canvas id="stage"></canvas>
 
-<!-- Заголовок -->
-<div class="page-title">
-  <h1>Добро пожаловать</h1>
-  <p>Выбери мои проекты</p>
-</div>
+<div class="ui">
 
-<!-- Сетка карточек -->
-<div class="grid">
+  <div class="hint">Нажми кнопку и перетаскивай кубики</div>
 
-  <!-- Карточка: Люблю Галю Бабу -->
-  <div class="card">
-    <div class="card-icon">❤️</div>
-    <span class="card-tag">Проект</span>
-    <div class="card-title">Люблю Галю Бабу</div>
-    <a href="https://vadimtychkov17-a11y.github.io/gala" class="card-btn">
-      Открыть
-      <span class="arrow">→</span>
-    </a>
+  <div class="header">
+    <span class="brand">Vindim</span>
   </div>
 
-  <!-- Карточка: Симулятор физики -->
-  <div class="card">
-    <div class="card-icon">🧊</div>
-    <span class="card-tag">Игра</span>
-    <div class="card-title">Симулятор физики</div>
-    <a href="https://vadimtychkov17-a11y.github.io/physics" class="card-btn">
-      Открыть
-      <span class="arrow">→</span>
-    </a>
+  <div class="bottom-bar">
+    <button class="btn btn-create" id="createBtn">Создать кубик</button>
+    <button class="btn btn-clear" id="clearBtn">Очистить</button>
   </div>
 
 </div>
 
+<script>
+(function () {
+  'use strict';
+
+  /* ============================================================
+     ФИЗИКА — твёрдые квадраты с вращением
+     - Фиксированный шаг (1/120) с накоплением времени
+     - SAT (Separating Axis Theorem) для столкновений
+     - Контактные точки по вершинам, до 4 на пару
+     - Импульсы с трением Кулона
+     - Позиционная коррекция с допуском (slop)
+     - Сон медленных тел, чтобы не дрожали
+     ============================================================ */
+
+  const canvas = document.getElementById('stage');
+  const ctx = canvas.getContext('2d', { alpha: true });
+
+  let W = 0, H = 0;
+  let DPR = 1;
+
+  function resize() {
+    DPR = Math.min(window.devicePixelRatio || 1, 2);
+    W = window.innerWidth;
+    H = window.innerHeight;
+    canvas.width = Math.floor(W * DPR);
+    canvas.height = Math.floor(H * DPR);
+    canvas.style.width = W + 'px';
+    canvas.style.height = H + 'px';
+    ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+  }
+  resize();
+  window.addEventListener('resize', resize);
+
+  /* ---------- Константы физики ---------- */
+  const GRAVITY       = 1800;
+  const SUBSTEP       = 1 / 120;
+  const MAX_STEPS     = 5;      // максимум подшагов за кадр — защита от лагов без потери точности
+  const RESTITUTION   = 0.05;
+  const FRICTION      = 0.55;
+  const LINEAR_DAMP   = 0.999;
+  const ANGULAR_DAMP  = 0.995;
+  const SLEEP_LINEAR  = 6;
+  const SLEEP_ANGULAR = 0.12;
+  const SLEEP_TIME    = 0.5;
+  const POS_CORRECT   = 0.6;
+  const SLOP          = 0.5;
+
+  /* ---------- Класс тела ---------- */
+  function Body(x, y, hw, hh, opts) {
+    opts = opts || {};
+    this.x = x;
+    this.y = y;
+    this.vx = 0;
+    this.vy = 0;
+    this.angle = 0;
+    this.va = 0;
+    this.hw = hw;
+    this.hh = hh;
+    this.isStatic = !!opts.static;
+    this.color = opts.color || '#a78bfa';
+    this.sleepTimer = 0;
+    this.sleeping = false;
+
+    if (this.isStatic) {
+      this.invMass = 0;
+      this.invInertia = 0;
+    } else {
+      const m = (hw * 2) * (hh * 2) * 0.001;
+      this.invMass = 1 / m;
+      const w = hw * 2, h = hh * 2;
+      const I = m * (w * w + h * h) / 12;
+      this.invInertia = 1 / I;
+    }
+
+    this.localVerts = [
+      { x: -hw, y: -hh },
+      { x:  hw, y: -hh },
+      { x:  hw, y:  hh },
+      { x: -hw, y:  hh }
+    ];
+  }
+
+  Body.prototype.worldVerts = function () {
+    const c = Math.cos(this.angle);
+    const s = Math.sin(this.angle);
+    const out = [];
+    for (let i = 0; i < 4; i++) {
+      const p = this.localVerts[i];
+      out.push({
+        x: this.x + p.x * c - p.y * s,
+        y: this.y + p.x * s + p.y * c
+      });
+    }
+    return out;
+  };
+
+  Body.prototype.applyImpulse = function (jx, jy, rx, ry) {
+    if (this.isStatic) return;
+    this.vx += jx * this.invMass;
+    this.vy += jy * this.invMass;
+    this.va += (rx * jy - ry * jx) * this.invInertia;
+  };
+
+  Body.prototype.wake = function () {
+    this.sleeping = false;
+    this.sleepTimer = 0;
+  };
+
+  /* ---------- Мир ---------- */
+  const bodies = [];
+  const staticBodies = [];
+
+  function buildWalls() {
+    staticBodies.length = 0;
+    const T = 200;
+    staticBodies.push(new Body(W / 2, H + T / 2, W / 2 + T, T / 2, { static: true }));   // пол
+    staticBodies.push(new Body(-T / 2, H / 2, T / 2, H, { static: true }));              // левая
+    staticBodies.push(new Body(W + T / 2, H / 2, T / 2, H, { static: true }));           // правая
+    staticBodies.push(new Body(W / 2, -T / 2, W / 2 + T, T / 2, { static: true }));      // потолок
+  }
+  buildWalls();
+  window.addEventListener('resize', buildWalls);
+
+  /* ---------- SAT ---------- */
+  function project(verts, ax, ay) {
+    let mn = Infinity, mx = -Infinity;
+    for (let i = 0; i < verts.length; i++) {
+      const d = verts[i].x * ax + verts[i].y * ay;
+      if (d < mn) mn = d;
+      if (d > mx) mx = d;
+    }
+    return { mn: mn, mx: mx };
+  }
+
+  function edgeNormals(verts) {
+    const out = [];
+    for (let i = 0; i < verts.length; i++) {
+      const a = verts[i];
+      const b = verts[(i + 1) % verts.length];
+      const ex = b.x - a.x;
+      const ey = b.y - a.y;
+      const len = Math.hypot(ex, ey) || 1;
+      out.push({ x: -ey / len, y: ex / len });
+    }
+    return out;
+  }
+
+  function sat(aV, bV) {
+    const axes = edgeNormals(aV).concat(edgeNormals(bV));
+    let bestDepth = Infinity;
+    let bestNx = 0, bestNy = 0;
+    for (let i = 0; i < axes.length; i++) {
+      const ax = axes[i];
+      const A = project(aV, ax.x, ax.y);
+      const B = project(bV, ax.x, ax.y);
+      const overlap = Math.min(A.mx, B.mx) - Math.max(A.mn, B.mn);
+      if (overlap <= 0) return null;
+      if (overlap < bestDepth) {
+        bestDepth = overlap;
+        bestNx = ax.x;
+        bestNy = ax.y;
+      }
+    }
+    return { nx: bestNx, ny: bestNy, depth: bestDepth };
+  }
+
+  function orientNormal(n, aPos, bPos) {
+    const dx = bPos.x - aPos.x;
+    const dy = bPos.y - aPos.y;
+    if (dx * n.x + dy * n.y < 0) {
+      n.x = -n.x;
+      n.y = -n.y;
+    }
+    return n;
+  }
+
+  function pointInRect(px, py, body) {
+    const c = Math.cos(-body.angle);
+    const s = Math.sin(-body.angle);
+    const dx = px - body.x;
+    const dy = py - body.y;
+    const lx = dx * c - dy * s;
+    const ly = dx * s + dy * c;
+    return Math.abs(lx) <= body.hw + 0.5 && Math.abs(ly) <= body.hh + 0.5;
+  }
+
+  function findContacts(a, b, aV, bV) {
+    const contacts = [];
+    for (let i = 0; i < aV.length; i++) {
+      if (pointInRect(aV[i].x, aV[i].y, b)) contacts.push({ x: aV[i].x, y: aV[i].y });
+    }
+    for (let i = 0; i < bV.length; i++) {
+      if (pointInRect(bV[i].x, bV[i].y, a)) contacts.push({ x: bV[i].x, y: bV[i].y });
+    }
+    return contacts;
+  }
+
+  /* ---------- Разрешение пары ---------- */
+  function resolvePair(a, b) {
+    if (a.invMass === 0 && b.invMass === 0) return;
+
+    const aV = a.worldVerts();
+    const bV = b.worldVerts();
+    const hit = sat(aV, bV);
+    if (!hit) return;
+
+    const n = orientNormal({ x: hit.nx, y: hit.ny }, a, b);
+    const depth = hit.depth;
+
+    // Позиционная коррекция
+    const invSum = a.invMass + b.invMass;
+    if (invSum > 0) {
+      const correction = Math.max(depth - SLOP, 0) / invSum * POS_CORRECT;
+      a.x -= n.x * correction * a.invMass;
+      a.y -= n.y * correction * a.invMass;
+      b.x += n.x * correction * b.invMass;
+      b.y += n.y * correction * b.invMass;
+    }
+
+    a.wake();
+    b.wake();
+
+    let contacts = findContacts(a, b, aV, bV);
+    if (contacts.length === 0) {
+      contacts = [{ x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 }];
+    }
+    if (contacts.length > 4) contacts = contacts.slice(0, 4);
+    const invCount = 1 / contacts.length;
+
+    for (let k = 0; k < contacts.length; k++) {
+      const px = contacts[k].x;
+      const py = contacts[k].y;
+      const rax = px - a.x, ray = py - a.y;
+      const rbx = px - b.x, rby = py - b.y;
+
+      const rvx = (b.vx - b.va * rby) - (a.vx - a.va * ray);
+      const rvy = (b.vy + b.va * rbx) - (a.vy + a.va * rax);
+      const vn = rvx * n.x + rvy * n.y;
+      if (vn > 0) continue;
+
+      const raCrossN = rax * n.y - ray * n.x;
+      const rbCrossN = rbx * n.y - rby * n.x;
+      const invMassSum = a.invMass + b.invMass +
+                         raCrossN * raCrossN * a.invInertia +
+                         rbCrossN * rbCrossN * b.invInertia;
+      if (invMassSum === 0) continue;
+
+      const e = (Math.abs(vn) < 100) ? 0 : RESTITUTION;
+      const jn = -(1 + e) * vn / invMassSum * invCount;
+
+      const jnx = n.x * jn;
+      const jny = n.y * jn;
+      a.applyImpulse(-jnx, -jny, rax, ray);
+      b.applyImpulse(jnx, jny, rbx, rby);
+
+      // Трение
+      const rvx2 = (b.vx - b.va * rby) - (a.vx - a.va * ray);
+      const rvy2 = (b.vy + b.va * rbx) - (a.vy + a.va * rax);
+      let tx = rvx2 - (rvx2 * n.x + rvy2 * n.y) * n.x;
+      let ty = rvy2 - (rvx2 * n.x + rvy2 * n.y) * n.y;
+      const tLen = Math.hypot(tx, ty);
+      if (tLen > 1e-4) {
+        tx /= tLen;
+        ty /= tLen;
+        const raCrossT = rax * ty - ray * tx;
+        const rbCrossT = rbx * ty - rby * tx;
+        const invMassSumT = a.invMass + b.invMass +
+                            raCrossT * raCrossT * a.invInertia +
+                            rbCrossT * rbCrossT * b.invInertia;
+        let jt = -(rvx2 * tx + rvy2 * ty) / invMassSumT * invCount;
+        const maxF = FRICTION * Math.abs(jn);
+        if (jt >  maxF) jt =  maxF;
+        if (jt < -maxF) jt = -maxF;
+        a.applyImpulse(-tx * jt, -ty * jt, rax, ray);
+        b.applyImpulse( tx * jt,  ty * jt, rbx, rby);
+      }
+    }
+  }
+
+  /* ---------- Интеграция ---------- */
+  function integrate(body, dt) {
+    if (body.isStatic || body.sleeping) return;
+
+    body.vy += GRAVITY * dt;
+    body.vx *= LINEAR_DAMP;
+    body.vy *= LINEAR_DAMP;
+    body.va *= ANGULAR_DAMP;
+
+    body.x += body.vx * dt;
+    body.y += body.vy * dt;
+    body.angle += body.va * dt;
+
+    const speed = Math.hypot(body.vx, body.vy);
+    if (speed < SLEEP_LINEAR && Math.abs(body.va) < SLEEP_ANGULAR) {
+      body.sleepTimer += dt;
+      if (body.sleepTimer > SLEEP_TIME) {
+        body.sleeping = true;
+        body.vx = 0;
+        body.vy = 0;
+        body.va = 0;
+      }
+    } else {
+      body.sleepTimer = 0;
+    }
+  }
+
+  /* ---------- Шаг мира ---------- */
+  function step(dt) {
+    for (let i = 0; i < bodies.length; i++) integrate(bodies[i], dt);
+
+    for (let i = 0; i < bodies.length; i++) {
+      const a = bodies[i];
+      for (let s = 0; s < staticBodies.length; s++) {
+        resolvePair(a, staticBodies[s]);
+      }
+      for (let j = i + 1; j < bodies.length; j++) {
+        resolvePair(a, bodies[j]);
+      }
+    }
+  }
+
+  /* ---------- Драг ---------- */
+  let dragged = null;
+  const dragLocal = { x: 0, y: 0 };
+  const dragTarget = { x: 0, y: 0 };
+  const prevPointer = { x: 0, y: 0 };
+  const pointerVel = { x: 0, y: 0 };
+  let pointerTime = 0;
+
+  function getPointer(e) {
+    const rect = canvas.getBoundingClientRect();
+    const t = e.touches ? e.touches[0] : e;
+    return { x: t.clientX - rect.left, y: t.clientY - rect.top };
+  }
+
+  function pointInBody(px, py, body) {
+    const c = Math.cos(-body.angle);
+    const s = Math.sin(-body.angle);
+    const dx = px - body.x;
+    const dy = py - body.y;
+    const lx = dx * c - dy * s;
+    const ly = dx * s + dy * c;
+    return Math.abs(lx) <= body.hw && Math.abs(ly) <= body.hh;
+  }
+
+  function onDown(e) {
+    const p = getPointer(e);
+    prevPointer.x = p.x;
+    prevPointer.y = p.y;
+    pointerVel.x = 0;
+    pointerVel.y = 0;
+    pointerTime = performance.now();
+
+    for (let i = bodies.length - 1; i >= 0; i--) {
+      const b = bodies[i];
+      if (pointInBody(p.x, p.y, b)) {
+        dragged = b;
+        b.wake();
+        const c = Math.cos(-b.angle);
+        const s = Math.sin(-b.angle);
+        const dx = p.x - b.x;
+        const dy = p.y - b.y;
+        dragLocal.x = dx * c - dy * s;
+        dragLocal.y = dx * s + dy * c;
+        dragTarget.x = p.x;
+        dragTarget.y = p.y;
+        canvas.classList.add('grabbing');
+        e.preventDefault();
+        return;
+      }
+    }
+  }
+
+  function onMove(e) {
+    const p = getPointer(e);
+    const now = performance.now();
+    const dt = Math.max((now - pointerTime) / 1000, 1e-3);
+    pointerVel.x = (p.x - prevPointer.x) / dt;
+    pointerVel.y = (p.y - prevPointer.y) / dt;
+    prevPointer.x = p.x;
+    prevPointer.y = p.y;
+    pointerTime = now;
+
+    if (!dragged) return;
+    e.preventDefault();
+    dragTarget.x = p.x;
+    dragTarget.y = p.y;
+  }
+
+  function onUp() {
+    if (!dragged) return;
+    dragged.vx = pointerVel.x * 0.8;
+    dragged.vy = pointerVel.y * 0.8;
+    dragged.wake();
+    dragged = null;
+    canvas.classList.remove('grabbing');
+  }
+
+  canvas.addEventListener('mousedown', onDown);
+  canvas.addEventListener('mousemove', onMove);
+  window.addEventListener('mouseup', onUp);
+  canvas.addEventListener('touchstart', onDown, { passive: false });
+  canvas.addEventListener('touchmove', onMove, { passive: false });
+  window.addEventListener('touchend', onUp);
+  window.addEventListener('touchcancel', onUp);
+
+  function applyDrag() {
+    if (!dragged) return;
+    dragged.wake();
+
+    const c = Math.cos(dragged.angle);
+    const s = Math.sin(dragged.angle);
+    const wx = dragTarget.x - (dragLocal.x * c - dragLocal.y * s);
+    const wy = dragTarget.y - (dragLocal.x * s + dragLocal.y * c);
+
+    const k = 25;
+    const maxSpeed = 2400;
+    let vx = (wx - dragged.x) * k;
+    let vy = (wy - dragged.y) * k;
+    const sp = Math.hypot(vx, vy);
+    if (sp > maxSpeed) {
+      vx = vx / sp * maxSpeed;
+      vy = vy / sp * maxSpeed;
+    }
+    dragged.vx = vx;
+    dragged.vy = vy;
+    dragged.va *= 0.85;
+  }
+
+  /* ---------- Спавн ---------- */
+  const PALETTE = ['#a78bfa', '#8b5cf6', '#c4b5fd', '#7c3aed', '#b39ddb', '#9575cd'];
+
+  function spawnBox() {
+    const size = 50 + Math.random() * 40;
+    const hw = size / 2;
+    const x = W * 0.25 + Math.random() * W * 0.5;
+    const y = -size - Math.random() * 100;
+    const color = PALETTE[Math.floor(Math.random() * PALETTE.length)];
+    const b = new Body(x, y, hw, hw, { color: color });
+    b.vx = (Math.random() - 0.5) * 100;
+    b.vy = 100 + Math.random() * 100;
+    b.va = (Math.random() - 0.5) * 2;
+    bodies.push(b);
+  }
+
+  /* ---------- Главный цикл ---------- */
+  let lastTime = performance.now();
+  let accumulator = 0;
+
+  function loop(now) {
+    let dt = (now - lastTime) / 1000;
+    lastTime = now;
+    if (dt > 0.1) dt = 0.1;
+
+    accumulator += dt;
+    let steps = 0;
+    while (accumulator >= SUBSTEP && steps < MAX_STEPS) {
+      applyDrag();
+      step(SUBSTEP);
+      accumulator -= SUBSTEP;
+      steps++;
+    }
+    // Если не успели обработать всё — сбрасываем остаток, чтобы не накапливалось
+    if (accumulator > SUBSTEP * 2) accumulator = 0;
+
+    // Рендер
+    ctx.clearRect(0, 0, W, H);
+
+    for (let i = 0; i < bodies.length; i++) {
+      const b = bodies[i];
+      ctx.save();
+      ctx.translate(b.x, b.y);
+      ctx.rotate(b.angle);
+      ctx.fillStyle = b.color;
+      ctx.fillRect(-b.hw, -b.hh, b.hw * 2, b.hh * 2);
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+      ctx.lineWidth = 1;
+      ctx.strokeRect(-b.hw, -b.hh, b.hw * 2, b.hh * 2);
+      ctx.restore();
+    }
+
+    requestAnimationFrame(loop);
+  }
+
+  requestAnimationFrame(loop);
+
+  /* ---------- Кнопки ---------- */
+  const createBtn = document.getElementById('createBtn');
+  const clearBtn = document.getElementById('clearBtn');
+  let confirmTimer = null;
+  let isConfirming = false;
+
+  createBtn.addEventListener('click', function () {
+    // Если была активна кнопка "точно?" — сбрасываем
+    resetConfirm();
+    spawnBox();
+  });
+
+  clearBtn.addEventListener('click', function () {
+    if (!isConfirming) {
+      // Первый клик — просим подтверждение
+      isConfirming = true;
+      clearBtn.textContent = 'Точно?';
+      clearBtn.classList.add('confirming');
+      clearTimer = setTimeout(function () {
+        resetConfirm();
+      }, 3000);
+    } else {
+      // Второй клик — очищаем
+      bodies.length = 0;
+      resetConfirm();
+    }
+  });
+
+  function resetConfirm() {
+    if (confirmTimer) {
+      clearTimeout(confirmTimer);
+      confirmTimer = null;
+    }
+    isConfirming = false;
+    clearBtn.textContent = 'Очистить';
+    clearBtn.classList.remove('confirming');
+  }
+
+  /* ---------- Старт ---------- */
+  setTimeout(spawnBox, 400);
+  setTimeout(spawnBox, 800);
+
+})();
+</script>
 </body>
 </html>
