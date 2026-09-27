@@ -72,16 +72,13 @@
     align-items: center;
     justify-content: center;
     margin-bottom: clamp(24px, 5vw, 50px);
-    /* Размер контейнера = размеру фото */
+    padding: 70px;
   }
 
   /* ===== Кольца сердечек ===== */
   .orbit {
     position: absolute;
-    top: 50%;
-    left: 50%;
-    width: 100%;
-    height: 100%;
+    inset: 0;
     animation: spin 28s linear infinite;
     pointer-events: none;
     will-change: transform;
@@ -93,9 +90,7 @@
 
   .orbit .heart {
     position: absolute;
-    top: 50%;
-    left: 50%;
-    font-size: clamp(20px, 5vw, 36px);
+    font-size: clamp(24px, 5vw, 40px);
     line-height: 1;
     user-select: none;
     -webkit-user-select: none;
@@ -103,23 +98,23 @@
     transform-origin: center;
     filter: drop-shadow(0 2px 6px rgba(230, 57, 122, 0.3));
     will-change: scale;
+    transform: translate(-50%, -50%);
   }
 
   .orbit.reverse .heart {
-    font-size: clamp(16px, 4vw, 28px);
+    font-size: clamp(20px, 4vw, 32px);
     animation-duration: 2.4s;
   }
 
-  /* Радиус колец задаётся в % от высоты сердечка.
-     Для ВЕРТИКАЛЬНОГО фото используем смещение по ширине,
-     потому что фото узкое. */
-  .orbit .heart:nth-child(1) { transform: translate(-50%, -50%) rotate(0deg)   translateY(-140%) rotate(0deg); }
-  .orbit .heart:nth-child(2) { transform: translate(-50%, -50%) rotate(120deg) translateY(-140%) rotate(-120deg); }
-  .orbit .heart:nth-child(3) { transform: translate(-50%, -50%) rotate(240deg) translateY(-140%) rotate(-240deg); }
+  /* Внутреннее кольцо — 3 сердечка по серединам сторон */
+  .orbit .heart:nth-child(1) { top: 0;    left: 50%; }
+  .orbit .heart:nth-child(2) { top: 50%;  right: 0; }
+  .orbit .heart:nth-child(3) { bottom: 0; left: 50%; }
 
-  .orbit.reverse .heart:nth-child(1) { transform: translate(-50%, -50%) rotate(60deg)  translateY(-175%) rotate(-60deg); }
-  .orbit.reverse .heart:nth-child(2) { transform: translate(-50%, -50%) rotate(180deg) translateY(-175%) rotate(-180deg); }
-  .orbit.reverse .heart:nth-child(3) { transform: translate(-50%, -50%) rotate(300deg) translateY(-175%) rotate(-300deg); }
+  /* Внешнее кольцо — 3 сердечка в других точках */
+  .orbit.reverse .heart:nth-child(1) { top: 0;    right: 25%; }
+  .orbit.reverse .heart:nth-child(2) { bottom: 0; left: 25%;  }
+  .orbit.reverse .heart:nth-child(3) { top: 50%;  left: 0;    }
 
   @keyframes spin {
     from { transform: rotate(0deg); }
@@ -138,7 +133,7 @@
     60%      { scale: 1; }
   }
 
-  /* ===== Фото — рамка точно по картинке ===== */
+  /* ===== Фото — рамка по размеру картинки ===== */
   .photo {
     position: relative;
     z-index: 2;
@@ -150,17 +145,16 @@
       0 0 0 8px rgba(255, 182, 193, 0.55);
     animation: photoFloat 6s ease-in-out infinite;
     will-change: transform;
-    /* Ограничиваем высоту, чтобы вертикальное фото влезло в экран */
-    max-height: 62vh;
-    max-height: 62dvh;
+    max-height: 55vh;
+    max-height: 55dvh;
     display: flex;
   }
 
   .photo img {
     display: block;
-    max-height: 62vh;
-    max-height: 62dvh;
-    max-width: 82vw;
+    max-height: 55vh;
+    max-height: 55dvh;
+    max-width: 78vw;
     width: auto;
     height: auto;
     object-fit: contain;
@@ -204,54 +198,38 @@
 
     .title { margin-bottom: 20px; }
 
-    .photo-wrap { margin-bottom: 20px; }
+    .photo-wrap {
+      margin-bottom: 20px;
+      padding: 55px;
+    }
 
-    /* Чуть ниже на телефоне — чтобы больше влезло */
     .photo {
-      max-height: 55vh;
-      max-height: 55dvh;
+      max-height: 50vh;
+      max-height: 50dvh;
+      border-radius: 6px;
     }
     .photo img {
-      max-height: 55vh;
-      max-height: 55dvh;
-      max-width: 80vw;
+      max-height: 50vh;
+      max-height: 50dvh;
+      max-width: 75vw;
     }
-
-    .photo { border-radius: 6px; }
-
-    /* Кольца чуть ближе к фото */
-    .orbit .heart:nth-child(1) { transform: translate(-50%, -50%) rotate(0deg)   translateY(-125%) rotate(0deg); }
-    .orbit .heart:nth-child(2) { transform: translate(-50%, -50%) rotate(120deg) translateY(-125%) rotate(-120deg); }
-    .orbit .heart:nth-child(3) { transform: translate(-50%, -50%) rotate(240deg) translateY(-125%) rotate(-240deg); }
-
-    .orbit.reverse .heart:nth-child(1) { transform: translate(-50%, -50%) rotate(60deg)  translateY(-155%) rotate(-60deg); }
-    .orbit.reverse .heart:nth-child(2) { transform: translate(-50%, -50%) rotate(180deg) translateY(-155%) rotate(-180deg); }
-    .orbit.reverse .heart:nth-child(3) { transform: translate(-50%, -50%) rotate(300deg) translateY(-155%) rotate(-300deg); }
   }
 
   @media (max-width: 380px) {
+    .photo-wrap { padding: 45px; }
+
     .photo {
-      max-height: 50vh;
-      max-height: 50dvh;
+      max-height: 45vh;
+      max-height: 45dvh;
+      border-radius: 5px;
     }
     .photo img {
-      max-height: 50vh;
-      max-height: 50dvh;
-      max-width: 78vw;
+      max-height: 45vh;
+      max-height: 45dvh;
+      max-width: 72vw;
     }
-
-    .photo { border-radius: 5px; }
-
-    .orbit .heart:nth-child(1) { transform: translate(-50%, -50%) rotate(0deg)   translateY(-115%) rotate(0deg); }
-    .orbit .heart:nth-child(2) { transform: translate(-50%, -50%) rotate(120deg) translateY(-115%) rotate(-120deg); }
-    .orbit .heart:nth-child(3) { transform: translate(-50%, -50%) rotate(240deg) translateY(-115%) rotate(-240deg); }
-
-    .orbit.reverse .heart:nth-child(1) { transform: translate(-50%, -50%) rotate(60deg)  translateY(-140%) rotate(-60deg); }
-    .orbit.reverse .heart:nth-child(2) { transform: translate(-50%, -50%) rotate(180deg) translateY(-140%) rotate(-180deg); }
-    .orbit.reverse .heart:nth-child(3) { transform: translate(-50%, -50%) rotate(300deg) translateY(-140%) rotate(-300deg); }
   }
 
-  /* Уважение к "уменьшить движение" */
   @media (prefers-reduced-motion: reduce) {
     .title,
     .title .heart,
