@@ -325,7 +325,6 @@
     opacity: 0.95;
   }
 
-  /* Счётчик "осталось" под текстом */
   .overflow-screen .counter {
     margin-top: 20px;
     font-size: 14px;
@@ -854,20 +853,16 @@
   }
 
   function triggerOverflow() {
-    // Красный оттенок
     document.body.classList.add('danger');
 
-    // Показываем оверлей
     const screen = document.getElementById('overflowScreen');
     const counterEl = document.getElementById('overflowCounter');
     screen.classList.add('active');
 
-    // Сбрасываем драг
     dragged = null;
     canvas.classList.remove('grabbing');
 
-    // Постепенно удаляем кубики за 5 секунд
-    const totalTime = 5000;         // 5 секунд
+    const totalTime = 10000;
     const startCount = bodies.length;
     const startTime = performance.now();
 
@@ -875,7 +870,6 @@
       const elapsed = performance.now() - startTime;
       const progress = Math.min(elapsed / totalTime, 1);
 
-      // Сколько кубиков должно остаться к этому моменту
       const targetCount = Math.floor(startCount * (1 - progress));
       const toRemove = bodies.length - targetCount;
 
@@ -883,13 +877,11 @@
         bodies.splice(0, toRemove);
       }
 
-      // Обновляем счётчик в окне
       counterEl.textContent = 'Осталось: ' + bodies.length;
 
       if (progress < 1) {
         requestAnimationFrame(removeStep);
       } else {
-        // Всё удалено — окно исчезает, страница возвращается в норму
         bodies.length = 0;
         counterEl.textContent = '';
         screen.classList.remove('active');
