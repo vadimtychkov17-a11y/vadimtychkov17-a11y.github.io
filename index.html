@@ -145,11 +145,11 @@
   .grid {
     position: relative;
     z-index: 5;
-    max-width: 500px;
+    max-width: 1100px;
     margin: 0 auto;
     padding: 20px 24px 80px;
     display: grid;
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
     gap: 24px;
   }
 
@@ -178,6 +178,8 @@
                 border-color 0.4s ease;
     animation: cardAppear 0.8s cubic-bezier(0.22, 1, 0.36, 1) both;
   }
+
+  .card:nth-child(2) { animation-delay: 0.1s; }
 
   @keyframes cardAppear {
     from { opacity: 0; transform: translateY(30px) scale(0.96); }
@@ -339,7 +341,7 @@
   .card-btn:hover .arrow { transform: translateX(4px); }
 
   /* ===== Мобильная адаптация ===== */
-  @media (max-width: 600px) {
+  @media (max-width: 700px) {
     .header {
       top: 12px;
       right: 12px;
@@ -353,6 +355,7 @@
 
     .grid {
       padding: 10px 16px 60px;
+      grid-template-columns: 1fr;
       gap: 20px;
     }
 
@@ -416,11 +419,23 @@
 <!-- Сетка карточек -->
 <div class="grid">
 
+  <!-- Карточка: Люблю Галю Бабу -->
   <div class="card">
     <div class="card-icon">❤️</div>
     <span class="card-tag">Проект</span>
     <div class="card-title">Люблю Галю Бабу</div>
     <a href="https://vadimtychkov17-a11y.github.io/gala" class="card-btn">
+      Открыть
+      <span class="arrow">→</span>
+    </a>
+  </div>
+
+  <!-- Карточка: Симулятор физики -->
+  <div class="card">
+    <div class="card-icon">🧊</div>
+    <span class="card-tag">Игра</span>
+    <div class="card-title">Симулятор физики</div>
+    <a href="https://vadimtychkov17-a11y.github.io/physics" class="card-btn">
       Открыть
       <span class="arrow">→</span>
     </a>
