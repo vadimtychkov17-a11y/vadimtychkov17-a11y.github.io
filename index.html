@@ -78,7 +78,7 @@
     pointer-events: none;
   }
 
-  /* ===== Шапка (Vindim + лого справа сверху) ===== */
+  /* ===== Шапка (Vindim) ===== */
   .header {
     position: fixed;
     top: 16px;
@@ -114,70 +114,151 @@
     line-height: 1;
   }
 
-  /* ===== Центральный блок ===== */
-  .center {
+  /* ===== Заголовок страницы ===== */
+  .page-title {
     position: relative;
     z-index: 5;
-    min-height: 100vh;
-    min-height: 100dvh;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
     text-align: center;
-    padding: 110px 24px 60px;
-    padding-top: max(110px, calc(env(safe-area-inset-top) + 80px));
-    padding-bottom: max(60px, env(safe-area-inset-bottom));
+    padding: 120px 20px 30px;
   }
-
-  .center h1 {
+  .page-title h1 {
     font-family: 'Segoe Script', 'Brush Script MT', cursive;
-    font-size: clamp(38px, 8vw, 76px);
+    font-size: clamp(34px, 8vw, 68px);
     color: #f3e4ff;
     text-shadow:
       0 0 20px rgba(180, 100, 255, 0.9),
       0 0 40px rgba(140, 60, 220, 0.7),
       0 0 60px rgba(90, 20, 180, 0.5);
-    margin-bottom: 24px;
     letter-spacing: 2px;
     line-height: 1.15;
-    animation: softPulse 3.6s ease-in-out infinite;
+    margin-bottom: 12px;
   }
-
-  .center .subtitle {
+  .page-title p {
     font-family: 'Segoe Script', 'Brush Script MT', cursive;
-    font-size: clamp(20px, 4vw, 30px);
+    font-size: clamp(18px, 4vw, 26px);
     color: #c9a9ff;
     letter-spacing: 1px;
-    margin-bottom: 48px;
     opacity: 0.9;
   }
 
-  @keyframes softPulse {
-    0%, 100% { transform: scale(1); }
-    50%      { transform: scale(1.03); }
+  /* ===== Сетка карточек ===== */
+  .grid {
+    position: relative;
+    z-index: 5;
+    max-width: 500px;
+    margin: 0 auto;
+    padding: 20px 24px 80px;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 24px;
   }
 
-  /* ===== Кнопки проектов ===== */
-  .projects {
+  /* ===== Карточка ===== */
+  .card {
+    position: relative;
     display: flex;
     flex-direction: column;
-    align-items: center;
     gap: 16px;
-    width: 100%;
-    max-width: 460px;
+    padding: 26px 24px 24px;
+    border-radius: 22px;
+    background: linear-gradient(160deg,
+      rgba(60, 20, 120, 0.55) 0%,
+      rgba(30, 10, 70, 0.75) 60%,
+      rgba(45, 15, 95, 0.6) 100%);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border: 1px solid rgba(180, 130, 255, 0.4);
+    box-shadow:
+      0 8px 30px rgba(80, 20, 160, 0.45),
+      0 0 0 1px rgba(255, 255, 255, 0.04) inset,
+      0 0 60px rgba(120, 40, 200, 0.15) inset;
+    overflow: hidden;
+    transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1),
+                box-shadow 0.4s ease,
+                border-color 0.4s ease;
+    animation: cardAppear 0.8s cubic-bezier(0.22, 1, 0.36, 1) both;
   }
 
-  .project-btn {
+  @keyframes cardAppear {
+    from { opacity: 0; transform: translateY(30px) scale(0.96); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
+  }
+
+  .card::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -20%;
+    width: 140%;
+    height: 100%;
+    background: radial-gradient(ellipse at top,
+      rgba(200, 150, 255, 0.22), transparent 60%);
+    pointer-events: none;
+    transition: opacity 0.4s ease;
+    opacity: 0.6;
+  }
+
+  .card:hover {
+    transform: translateY(-8px) scale(1.02);
+    border-color: rgba(220, 180, 255, 0.75);
+    box-shadow:
+      0 18px 50px rgba(140, 60, 220, 0.65),
+      0 0 0 1px rgba(255, 255, 255, 0.08) inset,
+      0 0 80px rgba(160, 80, 255, 0.35) inset,
+      0 0 60px rgba(180, 100, 255, 0.45);
+  }
+  .card:hover::before { opacity: 1; }
+
+  .card-icon {
+    width: 64px;
+    height: 64px;
+    border-radius: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 32px;
+    background: linear-gradient(135deg, #7c3aed 0%, #a855f7 100%);
+    box-shadow:
+      0 6px 20px rgba(168, 85, 247, 0.6),
+      0 0 30px rgba(140, 60, 220, 0.4),
+      inset 0 1px 0 rgba(255, 255, 255, 0.35);
+    flex-shrink: 0;
+  }
+
+  .card-tag {
+    display: inline-block;
+    align-self: flex-start;
+    padding: 5px 14px;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    color: #e8d5ff;
+    background: rgba(168, 85, 247, 0.28);
+    border: 1px solid rgba(180, 130, 255, 0.45);
+    border-radius: 50px;
+    text-transform: uppercase;
+  }
+
+  .card-title {
+    font-family: 'Segoe Script', 'Brush Script MT', cursive;
+    font-size: 26px;
+    font-weight: 700;
+    color: #f3e4ff;
+    line-height: 1.3;
+    letter-spacing: 0.5px;
+    text-shadow: 0 0 12px rgba(180, 100, 255, 0.5);
+  }
+
+  /* ===== Кнопка карточки ===== */
+  .card-btn {
     position: relative;
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 12px;
-    width: 100%;
-    padding: 20px 32px;
+    gap: 10px;
+    padding: 18px 24px;
     font-family: 'Segoe Script', 'Brush Script MT', cursive;
-    font-size: clamp(18px, 4vw, 22px);
+    font-size: 18px;
     font-weight: 700;
     letter-spacing: 0.8px;
     color: #fff;
@@ -194,10 +275,8 @@
       inset 0 1px 0 rgba(255, 255, 255, 0.4),
       inset 0 -2px 8px rgba(60, 10, 120, 0.5);
     overflow: hidden;
-    cursor: pointer;
-    min-height: 64px;
+    min-height: 60px;
     touch-action: manipulation;
-    -webkit-tap-highlight-color: transparent;
     transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1),
                 background-position 0.6s ease,
                 box-shadow 0.3s ease;
@@ -221,7 +300,7 @@
     }
   }
 
-  .project-btn::before {
+  .card-btn::before {
     content: '';
     position: absolute;
     top: 0;
@@ -237,7 +316,7 @@
     pointer-events: none;
   }
 
-  .project-btn:hover {
+  .card-btn:hover {
     transform: translateY(-3px) scale(1.04);
     background-position: 100% 50%;
     box-shadow:
@@ -246,25 +325,18 @@
       inset 0 1px 0 rgba(255, 255, 255, 0.6),
       inset 0 -2px 10px rgba(60, 10, 120, 0.6);
   }
-  .project-btn:hover::before {
+  .card-btn:hover::before {
     left: 125%;
   }
-  .project-btn:active {
+  .card-btn:active {
     transform: translateY(-1px) scale(1.01);
   }
 
-  .project-btn .emoji {
-    font-size: 1.2em;
-    line-height: 1;
-    display: inline-block;
-  }
-  .project-btn .arrow {
+  .card-btn .arrow {
     display: inline-block;
     transition: transform 0.3s ease;
   }
-  .project-btn:hover .arrow {
-    transform: translateX(4px);
-  }
+  .card-btn:hover .arrow { transform: translateX(4px); }
 
   /* ===== Мобильная адаптация ===== */
   @media (max-width: 600px) {
@@ -275,26 +347,45 @@
       gap: 8px;
     }
 
-    .center {
-      padding: 90px 20px 40px;
-      padding-top: max(90px, calc(env(safe-area-inset-top) + 70px));
-      padding-bottom: max(40px, env(safe-area-inset-bottom));
+    .page-title {
+      padding: 110px 20px 20px;
     }
 
-    .center h1 { margin-bottom: 18px; }
-    .center .subtitle { margin-bottom: 36px; }
+    .grid {
+      padding: 10px 16px 60px;
+      gap: 20px;
+    }
 
-    .project-btn {
-      padding: 18px 24px;
-      min-height: 60px;
+    .card {
+      padding: 22px 20px 20px;
+      border-radius: 20px;
+    }
+
+    .card-icon {
+      width: 58px;
+      height: 58px;
+      font-size: 28px;
+      border-radius: 16px;
+    }
+
+    .card-title { font-size: 22px; }
+
+    .card-btn {
+      padding: 16px 20px;
+      font-size: 17px;
+      min-height: 56px;
     }
   }
 
-  /* Уважение к "уменьшить движение" */
+  @media (max-width: 380px) {
+    .card-title { font-size: 20px; }
+    .card-btn { font-size: 16px; }
+  }
+
   @media (prefers-reduced-motion: reduce) {
-    .center h1,
-    .project-btn,
-    .project-btn::before,
+    .card,
+    .card-btn,
+    .card-btn::before,
     .stars,
     .stars2,
     .stars3 {
@@ -310,24 +401,31 @@
 <div class="stars2"></div>
 <div class="stars3"></div>
 
-<!-- Шапка: Vindim + лого -->
+<!-- Шапка -->
 <div class="header">
   <span class="brand">Vindim</span>
   <img src="logo.webp" alt="Vindim" onerror="this.style.display='none'">
 </div>
 
-<!-- Центр -->
-<div class="center">
+<!-- Заголовок -->
+<div class="page-title">
   <h1>Добро пожаловать</h1>
-  <p class="subtitle">Выбери мои проекты</p>
+  <p>Выбери мои проекты</p>
+</div>
 
-  <div class="projects">
-    <a href="https://vadimtychkov17-a11y.github.io/gala" class="project-btn">
-      <span class="emoji">❤️</span>
-      Люблю Галю Бабу
+<!-- Сетка карточек -->
+<div class="grid">
+
+  <div class="card">
+    <div class="card-icon">❤️</div>
+    <span class="card-tag">Проект</span>
+    <div class="card-title">Люблю Галю Бабу</div>
+    <a href="https://vadimtychkov17-a11y.github.io/gala" class="card-btn">
+      Открыть
       <span class="arrow">→</span>
     </a>
   </div>
+
 </div>
 
 </body>
