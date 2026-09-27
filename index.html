@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+ <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
@@ -14,6 +14,7 @@
     background: #ffffff;
     color: #2a2a2a;
     -webkit-tap-highlight-color: transparent;
+    overflow-x: hidden;
   }
 
   .page {
@@ -33,7 +34,7 @@
     font-weight: 700;
     color: #e6397a;
     line-height: 1.2;
-    margin-bottom: 40px;
+    margin-bottom: 60px;
     letter-spacing: 1px;
     animation: softPulse 2.4s ease-in-out infinite;
   }
@@ -57,7 +58,7 @@
     60%      { transform: scale(1.15); }
   }
 
-  /* ===== Фото с вращающимися сердечками ===== */
+  /* ===== Фото с сердечками ===== */
   .photo-wrap {
     position: relative;
     width: min(420px, 82vw);
@@ -65,36 +66,46 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    margin-bottom: 40px;
+    margin-bottom: 60px;
   }
 
   .orbit {
     position: absolute;
-    inset: 0;
-    animation: spin 14s linear infinite;
+    inset: -40px;
+    animation: spin 18s linear infinite;
     pointer-events: none;
+    will-change: transform;
   }
 
   .orbit.reverse {
-    inset: -30px;
-    animation: spinReverse 22s linear infinite;
+    inset: -80px;
+    animation: spinReverse 26s linear infinite;
   }
 
-  .heart {
+  .orbit .heart {
     position: absolute;
-    font-size: 28px;
+    top: 50%;
+    left: 50%;
+    font-size: 42px;
     line-height: 1;
     user-select: none;
-    filter: drop-shadow(0 2px 4px rgba(230, 57, 122, 0.25));
+    animation: thump 1.6s ease-in-out infinite;
+    transform-origin: center;
+    filter: drop-shadow(0 2px 6px rgba(230, 57, 122, 0.3));
   }
 
-  /* 6 сердечек по кругу */
-  .heart:nth-child(1) { top: 0;    left: 50%; transform: translate(-50%, -50%); }
-  .heart:nth-child(2) { top: 25%;  right: 0; transform: translate(50%, -50%); }
-  .heart:nth-child(3) { bottom: 25%; right: 0; transform: translate(50%, 50%); }
-  .heart:nth-child(4) { bottom: 0; left: 50%; transform: translate(-50%, 50%); }
-  .heart:nth-child(5) { bottom: 25%; left: 0; transform: translate(-50%, 50%); }
-  .heart:nth-child(6) { top: 25%;  left: 0; transform: translate(-50%, -50%); }
+  .orbit.reverse .heart {
+    font-size: 34px;
+    animation-duration: 2s;
+  }
+
+  .orbit .heart:nth-child(1) { transform: translate(-50%, -50%) rotate(0deg)   translateY(-240px) rotate(0deg); }
+  .orbit .heart:nth-child(2) { transform: translate(-50%, -50%) rotate(120deg) translateY(-240px) rotate(-120deg); }
+  .orbit .heart:nth-child(3) { transform: translate(-50%, -50%) rotate(240deg) translateY(-240px) rotate(-240deg); }
+
+  .orbit.reverse .heart:nth-child(1) { transform: translate(-50%, -50%) rotate(60deg)  translateY(-280px) rotate(-60deg); }
+  .orbit.reverse .heart:nth-child(2) { transform: translate(-50%, -50%) rotate(180deg) translateY(-280px) rotate(-180deg); }
+  .orbit.reverse .heart:nth-child(3) { transform: translate(-50%, -50%) rotate(300deg) translateY(-280px) rotate(-300deg); }
 
   @keyframes spin {
     from { transform: rotate(0deg); }
@@ -105,13 +116,21 @@
     to   { transform: rotate(0deg); }
   }
 
-  /* ===== Само фото ===== */
+  @keyframes thump {
+    0%, 100% { scale: 1; }
+    15%      { scale: 1.18; }
+    30%      { scale: 0.96; }
+    45%      { scale: 1.10; }
+    60%      { scale: 1; }
+  }
+
+  /* ===== Само фото — лёгкое скругление ===== */
   .photo {
     position: relative;
     z-index: 2;
-    width: 78%;
-    height: 78%;
-    border-radius: 50%;
+    width: 72%;
+    height: 72%;
+    border-radius: 24px;   /* ← лёгкое скругление, а не круг */
     overflow: hidden;
     box-shadow:
       0 10px 40px rgba(230, 57, 122, 0.25),
@@ -132,7 +151,7 @@
     50%      { transform: translateY(-8px); }
   }
 
-  /* ===== Подпись под фото ===== */
+  /* ===== Подпись ===== */
   .caption {
     font-family: 'Segoe Script', 'Brush Script MT', cursive;
     font-size: clamp(20px, 4vw, 32px);
@@ -153,12 +172,29 @@
     to   { opacity: 0.9; transform: translateY(0); }
   }
 
+  /* ===== Мобильная адаптация ===== */
   @media (max-width: 600px) {
     .page { padding: 40px 20px 60px; }
-    .title { margin-bottom: 30px; }
-    .photo-wrap { margin-bottom: 30px; }
-    .heart { font-size: 22px; }
-    .orbit.reverse { inset: -20px; }
+    .title { margin-bottom: 40px; }
+    .photo-wrap {
+      margin-bottom: 40px;
+      width: min(320px, 78vw);
+    }
+    .orbit { inset: -30px; }
+    .orbit.reverse { inset: -60px; }
+
+    .orbit .heart { font-size: 30px; }
+    .orbit.reverse .heart { font-size: 24px; }
+
+    .orbit .heart:nth-child(1) { transform: translate(-50%, -50%) rotate(0deg)   translateY(-180px) rotate(0deg); }
+    .orbit .heart:nth-child(2) { transform: translate(-50%, -50%) rotate(120deg) translateY(-180px) rotate(-120deg); }
+    .orbit .heart:nth-child(3) { transform: translate(-50%, -50%) rotate(240deg) translateY(-180px) rotate(-240deg); }
+
+    .orbit.reverse .heart:nth-child(1) { transform: translate(-50%, -50%) rotate(60deg)  translateY(-215px) rotate(-60deg); }
+    .orbit.reverse .heart:nth-child(2) { transform: translate(-50%, -50%) rotate(180deg) translateY(-215px) rotate(-180deg); }
+    .orbit.reverse .heart:nth-child(3) { transform: translate(-50%, -50%) rotate(300deg) translateY(-215px) rotate(-300deg); }
+
+    .photo { border-radius: 18px; }
   }
 </style>
 </head>
@@ -172,24 +208,16 @@
 
   <div class="photo-wrap">
 
-    <!-- Первое кольцо -->
     <div class="orbit">
       <span class="heart">❤️</span>
       <span class="heart">💖</span>
       <span class="heart">💗</span>
-      <span class="heart">❤️</span>
-      <span class="heart">💕</span>
-      <span class="heart">💓</span>
     </div>
 
-    <!-- Второе кольцо — обратное вращение, без 💘 -->
     <div class="orbit reverse">
-      <span class="heart">💝</span>
-      <span class="heart">❤️</span>
-      <span class="heart">💖</span>
-      <span class="heart">💗</span>
-      <span class="heart">💓</span>
       <span class="heart">💕</span>
+      <span class="heart">💓</span>
+      <span class="heart">💝</span>
     </div>
 
     <div class="photo">
