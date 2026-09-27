@@ -1,8 +1,9 @@
- <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#ffffff">
 <title>Люблю Галю Бабу ❤️</title>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -14,35 +15,41 @@
     background: #ffffff;
     color: #2a2a2a;
     -webkit-tap-highlight-color: transparent;
+    -webkit-text-size-adjust: 100%;
     overflow-x: hidden;
+    overscroll-behavior: none;
   }
 
   .page {
     min-height: 100vh;
+    min-height: 100dvh;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    padding: 60px 24px 80px;
+    padding: 40px 20px 60px;
+    padding-top: max(40px, env(safe-area-inset-top));
+    padding-bottom: max(60px, env(safe-area-inset-bottom));
     text-align: center;
   }
 
   /* ===== Заголовок ===== */
   .title {
     font-family: 'Segoe Script', 'Brush Script MT', cursive;
-    font-size: clamp(34px, 7vw, 68px);
+    font-size: clamp(30px, 7.5vw, 68px);
     font-weight: 700;
     color: #e6397a;
     line-height: 1.2;
-    margin-bottom: 60px;
+    margin-bottom: clamp(30px, 6vw, 60px);
     letter-spacing: 1px;
-    animation: softPulse 2.4s ease-in-out infinite;
+    animation: softPulse 3.6s ease-in-out infinite;
+    will-change: transform;
   }
 
   .title .heart {
     display: inline-block;
     color: #ff4d6d;
-    animation: heartBeat 1.2s ease-in-out infinite;
+    animation: heartBeat 1.6s ease-in-out infinite;
     transform-origin: center;
   }
 
@@ -61,25 +68,25 @@
   /* ===== Фото с сердечками ===== */
   .photo-wrap {
     position: relative;
-    width: min(420px, 82vw);
+    width: min(420px, 84vw);
     aspect-ratio: 1 / 1;
     display: flex;
     align-items: center;
     justify-content: center;
-    margin-bottom: 60px;
+    margin-bottom: clamp(30px, 6vw, 60px);
   }
 
   .orbit {
     position: absolute;
     inset: -40px;
-    animation: spin 18s linear infinite;
+    animation: spin 28s linear infinite;
     pointer-events: none;
     will-change: transform;
   }
 
   .orbit.reverse {
     inset: -80px;
-    animation: spinReverse 26s linear infinite;
+    animation: spinReverse 40s linear infinite;
   }
 
   .orbit .heart {
@@ -89,20 +96,24 @@
     font-size: 42px;
     line-height: 1;
     user-select: none;
-    animation: thump 1.6s ease-in-out infinite;
+    -webkit-user-select: none;
+    animation: thump 2s ease-in-out infinite;
     transform-origin: center;
     filter: drop-shadow(0 2px 6px rgba(230, 57, 122, 0.3));
+    will-change: scale;
   }
 
   .orbit.reverse .heart {
     font-size: 34px;
-    animation-duration: 2s;
+    animation-duration: 2.4s;
   }
 
+  /* Внутреннее кольцо — радиус 240px */
   .orbit .heart:nth-child(1) { transform: translate(-50%, -50%) rotate(0deg)   translateY(-240px) rotate(0deg); }
   .orbit .heart:nth-child(2) { transform: translate(-50%, -50%) rotate(120deg) translateY(-240px) rotate(-120deg); }
   .orbit .heart:nth-child(3) { transform: translate(-50%, -50%) rotate(240deg) translateY(-240px) rotate(-240deg); }
 
+  /* Внешнее кольцо — радиус 280px */
   .orbit.reverse .heart:nth-child(1) { transform: translate(-50%, -50%) rotate(60deg)  translateY(-280px) rotate(-60deg); }
   .orbit.reverse .heart:nth-child(2) { transform: translate(-50%, -50%) rotate(180deg) translateY(-280px) rotate(-180deg); }
   .orbit.reverse .heart:nth-child(3) { transform: translate(-50%, -50%) rotate(300deg) translateY(-280px) rotate(-300deg); }
@@ -124,19 +135,20 @@
     60%      { scale: 1; }
   }
 
-  /* ===== Само фото — лёгкое скругление ===== */
+  /* ===== Фото — легкое скругление ===== */
   .photo {
     position: relative;
     z-index: 2;
     width: 72%;
     height: 72%;
-    border-radius: 8px;   /* ← лёгкое скругление, а не круг */
+    border-radius: 8px;
     overflow: hidden;
     box-shadow:
       0 10px 40px rgba(230, 57, 122, 0.25),
       0 0 0 6px #ffffff,
       0 0 0 8px rgba(255, 182, 193, 0.55);
-    animation: photoFloat 5s ease-in-out infinite;
+    animation: photoFloat 6s ease-in-out infinite;
+    will-change: transform;
   }
 
   .photo img {
@@ -154,7 +166,7 @@
   /* ===== Подпись ===== */
   .caption {
     font-family: 'Segoe Script', 'Brush Script MT', cursive;
-    font-size: clamp(20px, 4vw, 32px);
+    font-size: clamp(20px, 4.5vw, 32px);
     color: #e6397a;
     letter-spacing: 0.5px;
     opacity: 0.9;
@@ -164,7 +176,7 @@
   .caption .heart {
     display: inline-block;
     color: #ff4d6d;
-    animation: heartBeat 1.4s ease-in-out infinite;
+    animation: heartBeat 1.8s ease-in-out infinite;
   }
 
   @keyframes fadeIn {
@@ -172,29 +184,100 @@
     to   { opacity: 0.9; transform: translateY(0); }
   }
 
-  /* ===== Мобильная адаптация ===== */
-  @media (max-width: 600px) {
-    .page { padding: 40px 20px 60px; }
-    .title { margin-bottom: 40px; }
+  /* ============================================================
+     МОБИЛЬНАЯ АДАПТАЦИЯ
+     ============================================================ */
+
+  /* Планшеты и небольшие ноутбуки */
+  @media (max-width: 768px) {
     .photo-wrap {
-      margin-bottom: 40px;
-      width: min(320px, 78vw);
+      width: min(360px, 80vw);
     }
     .orbit { inset: -30px; }
     .orbit.reverse { inset: -60px; }
 
-    .orbit .heart { font-size: 30px; }
-    .orbit.reverse .heart { font-size: 24px; }
+    .orbit .heart { font-size: 34px; }
+    .orbit.reverse .heart { font-size: 28px; }
 
-    .orbit .heart:nth-child(1) { transform: translate(-50%, -50%) rotate(0deg)   translateY(-180px) rotate(0deg); }
-    .orbit .heart:nth-child(2) { transform: translate(-50%, -50%) rotate(120deg) translateY(-180px) rotate(-120deg); }
-    .orbit .heart:nth-child(3) { transform: translate(-50%, -50%) rotate(240deg) translateY(-180px) rotate(-240deg); }
+    .orbit .heart:nth-child(1) { transform: translate(-50%, -50%) rotate(0deg)   translateY(-205px) rotate(0deg); }
+    .orbit .heart:nth-child(2) { transform: translate(-50%, -50%) rotate(120deg) translateY(-205px) rotate(-120deg); }
+    .orbit .heart:nth-child(3) { transform: translate(-50%, -50%) rotate(240deg) translateY(-205px) rotate(-240deg); }
 
-    .orbit.reverse .heart:nth-child(1) { transform: translate(-50%, -50%) rotate(60deg)  translateY(-215px) rotate(-60deg); }
-    .orbit.reverse .heart:nth-child(2) { transform: translate(-50%, -50%) rotate(180deg) translateY(-215px) rotate(-180deg); }
-    .orbit.reverse .heart:nth-child(3) { transform: translate(-50%, -50%) rotate(300deg) translateY(-215px) rotate(-300deg); }
+    .orbit.reverse .heart:nth-child(1) { transform: translate(-50%, -50%) rotate(60deg)  translateY(-240px) rotate(-60deg); }
+    .orbit.reverse .heart:nth-child(2) { transform: translate(-50%, -50%) rotate(180deg) translateY(-240px) rotate(-180deg); }
+    .orbit.reverse .heart:nth-child(3) { transform: translate(-50%, -50%) rotate(300deg) translateY(-240px) rotate(-300deg); }
+  }
 
-    .photo { border-radius: 18px; }
+  /* Телефоны */
+  @media (max-width: 600px) {
+    .page {
+      padding: 30px 16px 50px;
+      padding-top: max(30px, env(safe-area-inset-top));
+      padding-bottom: max(50px, env(safe-area-inset-bottom));
+    }
+
+    .title {
+      margin-bottom: 30px;
+      letter-spacing: 0.5px;
+    }
+
+    .photo-wrap {
+      width: min(300px, 82vw);
+      margin-bottom: 30px;
+    }
+    .orbit { inset: -24px; }
+    .orbit.reverse { inset: -48px; }
+
+    .orbit .heart { font-size: 28px; }
+    .orbit.reverse .heart { font-size: 22px; }
+
+    .orbit .heart:nth-child(1) { transform: translate(-50%, -50%) rotate(0deg)   translateY(-170px) rotate(0deg); }
+    .orbit .heart:nth-child(2) { transform: translate(-50%, -50%) rotate(120deg) translateY(-170px) rotate(-120deg); }
+    .orbit .heart:nth-child(3) { transform: translate(-50%, -50%) rotate(240deg) translateY(-170px) rotate(-240deg); }
+
+    .orbit.reverse .heart:nth-child(1) { transform: translate(-50%, -50%) rotate(60deg)  translateY(-200px) rotate(-60deg); }
+    .orbit.reverse .heart:nth-child(2) { transform: translate(-50%, -50%) rotate(180deg) translateY(-200px) rotate(-180deg); }
+    .orbit.reverse .heart:nth-child(3) { transform: translate(-50%, -50%) rotate(300deg) translateY(-200px) rotate(-300deg); }
+
+    .photo { border-radius: 6px; }
+  }
+
+  /* Маленькие телефоны */
+  @media (max-width: 380px) {
+    .title { margin-bottom: 24px; }
+
+    .photo-wrap {
+      width: min(250px, 82vw);
+      margin-bottom: 24px;
+    }
+    .orbit { inset: -20px; }
+    .orbit.reverse { inset: -40px; }
+
+    .orbit .heart { font-size: 24px; }
+    .orbit.reverse .heart { font-size: 19px; }
+
+    .orbit .heart:nth-child(1) { transform: translate(-50%, -50%) rotate(0deg)   translateY(-140px) rotate(0deg); }
+    .orbit .heart:nth-child(2) { transform: translate(-50%, -50%) rotate(120deg) translateY(-140px) rotate(-120deg); }
+    .orbit .heart:nth-child(3) { transform: translate(-50%, -50%) rotate(240deg) translateY(-140px) rotate(-240deg); }
+
+    .orbit.reverse .heart:nth-child(1) { transform: translate(-50%, -50%) rotate(60deg)  translateY(-165px) rotate(-60deg); }
+    .orbit.reverse .heart:nth-child(2) { transform: translate(-50%, -50%) rotate(180deg) translateY(-165px) rotate(-180deg); }
+    .orbit.reverse .heart:nth-child(3) { transform: translate(-50%, -50%) rotate(300deg) translateY(-165px) rotate(-300deg); }
+
+    .photo { border-radius: 5px; }
+  }
+
+  /* Уважение к настройке "уменьшить движение" — для тех, кому анимации мешают */
+  @media (prefers-reduced-motion: reduce) {
+    .title,
+    .title .heart,
+    .caption .heart,
+    .photo,
+    .orbit,
+    .orbit.reverse,
+    .orbit .heart {
+      animation: none !important;
+    }
   }
 </style>
 </head>
