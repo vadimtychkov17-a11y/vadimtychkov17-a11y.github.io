@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Перенаправление...</title>
+
+<!-- Мгновенный редирект (срабатывает сразу, еще до загрузки страницы) -->
+<meta http-equiv="refresh" content="0; url=https://vadimtychkov17-a11y.github.io/sun-game">
+
+<!-- SEO: говорим поисковикам, что страница переехала -->
+<link rel="canonical" href="https://vadimtychkov17-a11y.github.io/sun-game">
+
+<style>
+  /* Чтобы даже во время микро-задержки экран был пустым (белым или черным) */
+  body {
+    margin: 0;
+    padding: 0;
+    background-color: #000; /* Черный фон, как в игре */
+    color: #fff;
+    height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: sans-serif;
+    overflow: hidden;
+  }
+</style>
+
+<script>
+  // Дублируем редирект через JS (на случай, если meta refresh заблокирован)
+  window.location.replace("https://vadimtychkov17-a11y.github.io/sun-game");
+</script>
+</head>
+<body>
+  <!-- Тело страницы оставляем пустым, как ты и просил -->
+</body>
+</html>
