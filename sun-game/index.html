@@ -1,0 +1,868 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<!-- ========================================== -->
+<!-- SEO ОПТИМИЗАЦИЯ -->
+<!-- ========================================== -->
+<title>Уничтожение солнца — 3D игра от первого лица | Vindim</title>
+<meta name="description" content="Кинематографичная 3D-игра на Three.js. Выстрели из огромного лазера, чтобы уничтожить солнце, и наблюдай за космической катастрофой от первого лица. Управление: WASD, мышь.">
+<meta name="keywords" content="3d игра, уничтожение солнца, симулятор, игра в браузере, three.js, Vindim, кинематографичная игра, лазер">
+<meta name="author" content="Vindim">
+<meta name="robots" content="index, follow">
+<link rel="canonical" href="https://vadimtychkov17-a11y.github.io/">
+
+<!-- Open Graph (для красивых ссылок в Telegram, VK, Discord) -->
+<meta property="og:title" content="Уничтожение солнца — 3D игра">
+<meta property="og:description" content="Уничтожь солнце из огромного лазера и посмотри, что будет с миром. Играй прямо в браузере.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://vadimtychkov17-a11y.github.io/">
+<!-- <meta property="og:image" content="https://vadimtychkov17-a11y.github.io/preview.jpg">  Картинка для превью ссылки -->
+
+<!-- ========================================== -->
+<!-- ФАВИКОН -->
+<!-- ========================================== -->
+<link rel="shortcut icon" href="favicon.ico" type="image/x-icon">
+<link rel="icon" href="favicon.ico" type="image/x-icon">
+<!-- Если favicon.ico лежит в корне, а файл в папке, используй href="../favicon.ico" -->
+
+<!-- ========================================== -->
+<!-- МИКРОРАЗМЕТКА (Schema.org) для поисковиков -->
+<!-- ========================================== -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "VideoGame",
+  "name": "Уничтожение солнца",
+  "description": "Кинематографичная 3D-игра, где нужно уничтожить солнце с помощью лазера.",
+  "genre": "Simulation",
+  "gamePlatform": "Web Browser",
+  "publisher": {
+    "@type": "Organization",
+    "name": "Vindim"
+  },
+  "author": {
+    "@type": "Person",
+    "name": "Vindim"
+  }
+}
+</script>
+
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  
+  body, html {
+    width: 100%; height: 100%;
+    background: #000; overflow: hidden;
+    font-family: 'Inter', -apple-system, sans-serif; color: #fff; user-select: none;
+  }
+
+  canvas {
+    position: absolute; inset: 0; width: 100%; height: 100%;
+    display: block; z-index: 1; outline: none; cursor: crosshair;
+  }
+
+  /* Кинематографичные полосы */
+  .letterbox {
+    position: absolute; left: 0; width: 100%; height: 12vh;
+    background: #000; z-index: 20; pointer-events: none;
+    transition: transform 2s cubic-bezier(0.19, 1, 0.22, 1);
+  }
+  .letterbox.top { top: 0; transform: translateY(-100%); }
+  .letterbox.bottom { bottom: 0; transform: translateY(100%); }
+  .letterbox.show { transform: translateY(0); }
+
+  /* Интерфейс */
+  .ui-layer {
+    position: absolute; inset: 0; z-index: 10; pointer-events: none;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .screen {
+    position: absolute; inset: 0; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; opacity: 0;
+    transition: opacity 2s ease; pointer-events: none;
+  }
+  .screen.active { opacity: 1; pointer-events: auto; }
+
+  #screen-splash { background: #000; }
+  .logo-vindim {
+    font-family: 'Segoe Script', 'Brush Script MT', cursive;
+    font-size: clamp(60px, 14vw, 150px);
+    color: #e8d5ff;
+    text-shadow: 0 0 30px rgba(180, 100, 255, 0.9), 0 0 80px rgba(140, 60, 220, 0.7);
+    opacity: 0; transform: scale(0.85);
+    animation: logoAppear 6s cubic-bezier(0.19, 1, 0.22, 1) forwards;
+    letter-spacing: 4px;
+  }
+  @keyframes logoAppear {
+    0% { opacity: 0; transform: scale(0.85); filter: blur(15px); }
+    15% { opacity: 1; transform: scale(1); filter: blur(0); }
+    80% { opacity: 1; transform: scale(1.02); filter: blur(0); }
+    100% { opacity: 0; transform: scale(1.05); filter: blur(10px); }
+  }
+
+  #screen-menu { background: radial-gradient(circle at center, #111 0%, #000 100%); }
+  .menu-title {
+    font-size: clamp(36px, 7vw, 72px); font-weight: 900; letter-spacing: 8px;
+    text-transform: uppercase; color: transparent; -webkit-text-stroke: 1px rgba(255,255,255,0.8);
+    margin-bottom: 60px; text-shadow: 0 0 40px rgba(255,255,255,0.2);
+  }
+
+  .btn {
+    padding: 20px 60px; font-size: 18px; font-weight: 600; letter-spacing: 3px;
+    color: #fff; background: rgba(255, 255, 255, 0.05); backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 50px; cursor: pointer;
+    transition: all 0.5s cubic-bezier(0.19, 1, 0.22, 1); text-transform: uppercase;
+    position: relative; overflow: hidden;
+    box-shadow: inset 0 0 20px rgba(255, 255, 255, 0.05), 0 10px 40px rgba(0, 0, 0, 0.5);
+  }
+  .btn::before {
+    content: ''; position: absolute; top: 0; left: -100%; width: 50%; height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+    transform: skewX(-25deg); transition: left 0.7s ease;
+  }
+  .btn:hover {
+    background: rgba(255, 255, 255, 0.15); border-color: rgba(255, 255, 255, 0.5);
+    box-shadow: inset 0 0 30px rgba(255, 255, 255, 0.1), 0 15px 50px rgba(0, 0, 0, 0.6);
+    transform: translateY(-3px);
+  }
+  .btn:hover::before { left: 150%; }
+  .btn:active { transform: translateY(1px) scale(0.98); }
+
+  /* Игровой UI */
+  #screen-game { justify-content: flex-end; padding-bottom: 15vh; pointer-events: none; }
+  
+  .hud-top {
+    position: absolute;
+    top: 14vh; left: 50%; transform: translateX(-50%);
+    background: rgba(0,0,0,0.75);
+    backdrop-filter: blur(10px);
+    padding: 16px 32px; border-radius: 12px;
+    border: 1px solid rgba(255,255,255,0.2);
+    font-size: 16px; font-weight: 500;
+    text-align: center; line-height: 1.6;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 1s ease;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+  }
+  .hud-top.show { opacity: 1; }
+  .hud-top b { color: #ffd966; }
+  .hud-top .click-hint { color: #4ade80; font-weight: bold; font-size: 18px; display: block; margin-top: 8px; }
+
+  .crosshair {
+    position: absolute; top: 50%; left: 50%;
+    width: 8px; height: 8px; border-radius: 50%;
+    background: rgba(255,255,255,0.8);
+    transform: translate(-50%, -50%);
+    box-shadow: 0 0 10px rgba(0,0,0,0.8), 0 0 2px rgba(0,0,0,1);
+    opacity: 0; transition: opacity 0.3s;
+    pointer-events: none;
+  }
+  .crosshair.show { opacity: 1; }
+
+  .start-btn {
+    font-size: 22px; padding: 20px 60px;
+    pointer-events: auto;
+    background: rgba(124, 58, 237, 0.7);
+    border-color: rgba(180, 130, 255, 0.9);
+    box-shadow: 0 0 30px rgba(124, 58, 237, 0.5);
+  }
+  .start-btn:hover { background: rgba(124, 58, 237, 0.9); }
+
+  /* Кнопка перезапуска и подпись */
+  .end-screen-content {
+    position: absolute; top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    display: flex; flex-direction: column; align-items: center;
+    opacity: 0; transition: all 2.5s ease; pointer-events: none;
+  }
+  .end-screen-content.show {
+    opacity: 1; pointer-events: auto;
+  }
+
+  .restart-btn {
+    font-size: 16px; padding: 18px 50px; margin-bottom: 24px;
+  }
+
+  .credits {
+    text-align: center;
+    color: rgba(255, 255, 255, 0.4);
+    font-size: 12px;
+    line-height: 1.6;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+  .credits strong { color: rgba(255, 255, 255, 0.7); }
+
+  #flash {
+    position: absolute; inset: 0; background: #fff; opacity: 0;
+    pointer-events: none; z-index: 50; transition: opacity 3s ease-out; mix-blend-mode: screen;
+  }
+</style>
+</head>
+<body>
+
+<div class="letterbox top" id="lb-top"></div>
+<div class="letterbox bottom" id="lb-bottom"></div>
+
+<canvas id="canvas"></canvas>
+
+<div class="crosshair" id="crosshair"></div>
+
+<div class="ui-layer">
+  <div class="screen active" id="screen-splash"><div class="logo-vindim">vindim</div></div>
+  
+  <div class="screen" id="screen-menu">
+    <div class="menu-title">Уничтожение</div>
+    <button class="btn" id="menuStartBtn">Начать</button>
+  </div>
+
+  <div class="screen" id="screen-game">
+    <div class="hud-top" id="hudTop">
+      <b>WASD</b> — идти, <b>Пробел</b> — прыжок<br>
+      <span class="click-hint">Кликни по экрану (ЛКМ), чтобы двигать мышью</span>
+    </div>
+    <button class="btn start-btn" id="gameStartBtn">Инициализация</button>
+    
+    <!-- Финальный экран с подписью -->
+    <div class="end-screen-content" id="endScreen">
+      <button class="btn restart-btn" id="restartBtn">Перезапустить цикл</button>
+      <div class="credits">
+        Данный сайт сделан ИИ.<br>
+        <strong>Vindim</strong> — выдуманная корпорация.
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="flash"></div>
+
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+    "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+  }
+}
+</script>
+
+<script type="module">
+import * as THREE from 'three';
+import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
+import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
+
+// ==========================================
+// АУДИО
+// ==========================================
+class SoundEngine {
+  constructor() { this.ctx = null; this.masterGain = null; this.reverb = null; }
+  init() {
+    if (this.ctx) return;
+    this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+    this.masterGain = this.ctx.createGain();
+    this.masterGain.connect(this.ctx.destination);
+    this.masterGain.gain.value = 0.8;
+    const length = this.ctx.sampleRate * 3;
+    const impulse = this.ctx.createBuffer(2, length, this.ctx.sampleRate);
+    const left = impulse.getChannelData(0), right = impulse.getChannelData(1);
+    for (let i = 0; i < length; i++) {
+      const decay = Math.exp(-i / (this.ctx.sampleRate * 0.5));
+      left[i] = (Math.random() * 2 - 1) * decay; right[i] = (Math.random() * 2 - 1) * decay;
+    }
+    this.reverb = this.ctx.createConvolver(); this.reverb.buffer = impulse; this.reverb.connect(this.masterGain);
+  }
+  resume() { if (this.ctx && this.ctx.state === 'suspended') this.ctx.resume(); }
+  connectWithReverb(node, dry = 0.5, wet = 0.5) {
+    const d = this.ctx.createGain(), w = this.ctx.createGain();
+    d.gain.value = dry; w.gain.value = wet;
+    node.connect(d); node.connect(w); d.connect(this.masterGain); w.connect(this.reverb);
+  }
+  playSplashDrone() {
+    this.init(); this.resume();
+    const t = this.ctx.currentTime, o = this.ctx.createOscillator(), g = this.ctx.createGain();
+    o.type = 'sine'; o.frequency.setValueAtTime(55, t); o.frequency.linearRampToValueAtTime(110, t + 6);
+    g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(0.2, t + 2); g.gain.linearRampToValueAtTime(0, t + 6);
+    o.connect(g); this.connectWithReverb(g, 0.8, 0.6); o.start(t); o.stop(t + 6);
+  }
+  playClick() {
+    this.init(); this.resume();
+    const t = this.ctx.currentTime, o = this.ctx.createOscillator(), g = this.ctx.createGain();
+    o.type = 'sine'; o.frequency.setValueAtTime(600, t); o.frequency.exponentialRampToValueAtTime(300, t + 0.1);
+    g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(0.1, t + 0.01); g.gain.exponentialRampToValueAtTime(0.001, t + 0.2);
+    o.connect(g); this.connectWithReverb(g, 0.9, 0.3); o.start(t); o.stop(t + 0.2);
+  }
+  playLaserCharging(duration) {
+    this.init(); this.resume();
+    const t = this.ctx.currentTime;
+    const o1 = this.ctx.createOscillator(), o2 = this.ctx.createOscillator(), g = this.ctx.createGain(), f = this.ctx.createBiquadFilter();
+    o1.type = 'sawtooth'; o2.type = 'square';
+    o1.frequency.setValueAtTime(30, t); o1.frequency.exponentialRampToValueAtTime(250, t + duration);
+    o2.frequency.setValueAtTime(31, t); o2.frequency.exponentialRampToValueAtTime(255, t + duration);
+    f.type = 'lowpass'; f.frequency.setValueAtTime(100, t); f.frequency.exponentialRampToValueAtTime(1200, t + duration);
+    g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(0.15, t + duration * 0.8);
+    o1.connect(f); o2.connect(f); f.connect(g); this.connectWithReverb(g, 0.7, 0.8);
+    o1.start(t); o1.stop(t + duration); o2.start(t); o2.stop(t + duration);
+  }
+  playLaserShot(duration) {
+    this.init(); this.resume();
+    const t = this.ctx.currentTime;
+    const o = this.ctx.createOscillator(), g = this.ctx.createGain();
+    o.type = 'sine'; o.frequency.setValueAtTime(60, t); o.frequency.linearRampToValueAtTime(20, t + duration);
+    g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(0.6, t + 1); g.gain.linearRampToValueAtTime(0, t + duration);
+    o.connect(g); this.connectWithReverb(g, 0.9, 0.5); o.start(t); o.stop(t + duration);
+    
+    const bs = this.ctx.sampleRate * duration;
+    const b = this.ctx.createBuffer(1, bs, this.ctx.sampleRate), d = b.getChannelData(0);
+    for (let i = 0; i < bs; i++) d[i] = Math.random() * 2 - 1;
+    const n = this.ctx.createBufferSource(); n.buffer = b;
+    const f = this.ctx.createBiquadFilter(); f.type = 'bandpass'; f.frequency.value = 800; f.Q.value = 2;
+    const ng = this.ctx.createGain();
+    ng.gain.setValueAtTime(0, t); ng.gain.linearRampToValueAtTime(0.1, t + 1); ng.gain.linearRampToValueAtTime(0, t + duration);
+    n.connect(f); f.connect(ng); this.connectWithReverb(ng, 0.5, 0.8); n.start(t);
+  }
+  playOminousRumble(duration) {
+    this.init(); this.resume();
+    const t = this.ctx.currentTime, o = this.ctx.createOscillator(), g = this.ctx.createGain();
+    o.type = 'sine'; o.frequency.setValueAtTime(25, t); o.frequency.linearRampToValueAtTime(10, t + duration);
+    g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(0.5, t + duration * 0.5); g.gain.linearRampToValueAtTime(0.8, t + duration);
+    o.connect(g); this.connectWithReverb(g, 0.8, 0.9); o.start(t); o.stop(t + duration);
+  }
+  playSupernova() {
+    this.init(); this.resume();
+    const t = this.ctx.currentTime;
+    const o = this.ctx.createOscillator(), g = this.ctx.createGain();
+    o.type = 'sine'; o.frequency.setValueAtTime(80, t); o.frequency.exponentialRampToValueAtTime(10, t + 5);
+    g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(1.0, t + 1); g.gain.exponentialRampToValueAtTime(0.01, t + 5);
+    o.connect(g); this.connectWithReverb(g, 1.0, 0.8); o.start(t); o.stop(t + 5);
+    
+    const bs = this.ctx.sampleRate * 5;
+    const b = this.ctx.createBuffer(1, bs, this.ctx.sampleRate), d = b.getChannelData(0);
+    for (let i = 0; i < bs; i++) d[i] = (Math.random() * 2 - 1) * Math.exp(-i / (this.ctx.sampleRate * 2));
+    const n = this.ctx.createBufferSource(); n.buffer = b;
+    const f = this.ctx.createBiquadFilter(); f.type = 'lowpass'; f.frequency.setValueAtTime(2000, t); f.frequency.exponentialRampToValueAtTime(50, t + 5);
+    const ng = this.ctx.createGain();
+    ng.gain.setValueAtTime(0, t); ng.gain.linearRampToValueAtTime(0.6, t + 1); ng.gain.exponentialRampToValueAtTime(0.01, t + 5);
+    n.connect(f); f.connect(ng); this.connectWithReverb(ng, 0.8, 1.0); n.start(t);
+  }
+  playEndAmbient() {
+    this.init(); this.resume();
+    const t = this.ctx.currentTime;
+    [65.41, 98.00, 130.81, 155.56].forEach(f => {
+      const o = this.ctx.createOscillator(), g = this.ctx.createGain();
+      o.type = 'sine'; o.frequency.setValueAtTime(f, t);
+      const lfo = this.ctx.createOscillator(), lg = this.ctx.createGain();
+      lfo.frequency.value = 0.1 + Math.random() * 0.2; lg.gain.value = 1.5;
+      lfo.connect(lg); lg.connect(o.frequency);
+      g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(0.1, t + 8);
+      o.connect(g); this.connectWithReverb(g, 0.5, 1.0); o.start(t); lfo.start(t);
+    });
+  }
+}
+const audio = new SoundEngine();
+
+// ==========================================
+// THREE.JS
+// ==========================================
+const canvas = document.getElementById('canvas');
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.0;
+renderer.shadowMap.enabled = true; 
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+
+const scene = new THREE.Scene();
+scene.fog = new THREE.FogExp2(0xaaccff, 0.0015);
+
+const camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.1, 3000);
+camera.rotation.order = 'YXZ';
+
+const renderScene = new RenderPass(scene, camera);
+const bloomPass = new UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 1.0, 0.4, 0.85);
+bloomPass.threshold = 0.85; 
+bloomPass.strength = 0.8; 
+bloomPass.radius = 0.4;
+
+const composer = new EffectComposer(renderer);
+composer.addPass(renderScene);
+composer.addPass(bloomPass);
+composer.addPass(new OutputPass());
+
+// --- НЕБО ---
+const skyGeo = new THREE.SphereGeometry(2000, 32, 15);
+const skyMat = new THREE.ShaderMaterial({
+  side: THREE.BackSide,
+  uniforms: {
+    topColor: { value: new THREE.Color(0x1e5fb8) },
+    bottomColor: { value: new THREE.Color(0xbcdef0) },
+    dark: { value: 0.0 }
+  },
+  vertexShader: `varying vec3 vWorldPosition; void main() { vec4 wp = modelMatrix * vec4(position, 1.0); vWorldPosition = wp.xyz; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`,
+  fragmentShader: `
+    uniform vec3 topColor; uniform vec3 bottomColor; uniform float dark; varying vec3 vWorldPosition;
+    void main() {
+      float h = normalize(vWorldPosition).y;
+      vec3 sky = mix(bottomColor, topColor, max(pow(max(h, 0.0), 0.6), 0.0));
+      sky = mix(sky, vec3(0.0), dark);
+      gl_FragColor = vec4(sky, 1.0);
+    }
+  `
+});
+scene.add(new THREE.Mesh(skyGeo, skyMat));
+
+// --- СВЕТ ---
+const sunLight = new THREE.DirectionalLight(0xfff4d8, 3.0);
+sunLight.position.set(60, 120, -200);
+sunLight.castShadow = true;
+sunLight.shadow.mapSize.width = 2048;
+sunLight.shadow.mapSize.height = 2048;
+sunLight.shadow.camera.near = 1;
+sunLight.shadow.camera.far = 600;
+sunLight.shadow.camera.left = -150;
+sunLight.shadow.camera.right = 150;
+sunLight.shadow.camera.top = 150;
+sunLight.shadow.camera.bottom = -150;
+scene.add(sunLight);
+
+const ambientLight = new THREE.AmbientLight(0x404060, 1.2);
+scene.add(ambientLight);
+
+// --- ЗЕМЛЯ ---
+const groundGeo = new THREE.PlaneGeometry(2000, 2000, 128, 128);
+groundGeo.rotateX(-Math.PI / 2);
+const posAttr = groundGeo.attributes.position;
+for (let i = 0; i < posAttr.count; i++) {
+  const x = posAttr.getX(i), z = posAttr.getZ(i);
+  const dist = Math.sqrt(x*x + z*z);
+  let y = 0;
+  if (dist > 60) {
+    y = (Math.sin(x * 0.02) * Math.cos(z * 0.02) * 30) + (Math.sin(x * 0.05) * 8);
+  }
+  posAttr.setY(i, y);
+}
+groundGeo.computeVertexNormals();
+
+const groundMat = new THREE.MeshStandardMaterial({ color: 0x2d4a32, roughness: 0.9 });
+const ground = new THREE.Mesh(groundGeo, groundMat);
+ground.position.y = -2;
+ground.receiveShadow = true;
+ground.castShadow = true;
+scene.add(ground);
+
+function getGroundHeight(x, z) {
+  const dist = Math.sqrt(x*x + z*z);
+  if (dist <= 60) return -2;
+  return (Math.sin(x * 0.02) * Math.cos(z * 0.02) * 30) + (Math.sin(x * 0.05) * 8) - 2;
+}
+
+// --- ДЕРЕВЬЯ ---
+const treeGeo = new THREE.ConeGeometry(2, 10, 5);
+const treeMat = new THREE.MeshStandardMaterial({ color: 0x1a2e1d, roughness: 1 });
+const treeCount = 300;
+const trees = new THREE.InstancedMesh(treeGeo, treeMat, treeCount);
+trees.castShadow = true; trees.receiveShadow = true;
+const dummy = new THREE.Object3D();
+for (let i = 0; i < treeCount; i++) {
+  const angle = Math.random() * Math.PI * 2;
+  const radius = 70 + Math.random() * 250;
+  const x = Math.cos(angle) * radius;
+  const z = Math.sin(angle) * radius;
+  const y = getGroundHeight(x, z);
+  const scale = 0.8 + Math.random() * 1.5;
+  dummy.position.set(x, y + 5, z);
+  dummy.scale.set(scale, scale, scale);
+  dummy.rotation.y = Math.random() * Math.PI;
+  dummy.updateMatrix();
+  trees.setMatrixAt(i, dummy.matrix);
+}
+scene.add(trees);
+
+// --- СОЛНЦЕ ---
+const sunGroup = new THREE.Group();
+sunGroup.position.set(100, 150, -300); 
+scene.add(sunGroup);
+
+const sunGeo = new THREE.SphereGeometry(40, 64, 64);
+const sunUniforms = {
+  time: { value: 0 },
+  sunColor: { value: new THREE.Color(0xffaa00) }
+};
+const sunMat = new THREE.ShaderMaterial({
+  uniforms: sunUniforms,
+  vertexShader: `
+    varying vec2 vUv; varying vec3 vNormal; varying vec3 vPos;
+    void main() { vUv = uv; vNormal = normalize(normalMatrix * normal); vPos = position; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }
+  `,
+  fragmentShader: `
+    uniform float time; uniform vec3 sunColor;
+    varying vec2 vUv; varying vec3 vNormal; varying vec3 vPos;
+    float fbm(vec3 p) {
+      float f = 0.0;
+      f += 0.5000 * sin(p.x * 2.0 + time);
+      f += 0.2500 * sin(p.y * 4.0 - time * 1.5);
+      f += 0.1250 * sin(p.z * 8.0 + time * 2.0);
+      return f;
+    }
+    void main() {
+      vec3 core = vec3(1.0, 0.9, 0.4);
+      vec3 edge = vec3(1.0, 0.4, 0.0);
+      float rim = 1.0 - max(dot(vNormal, vec3(0.0, 0.0, 1.0)), 0.0);
+      vec3 base = mix(core, edge, pow(rim, 2.0));
+      float n = fbm(vPos * 0.1);
+      base += vec3(n * 0.2, n * 0.1, 0.0);
+      base *= (1.0 - rim * 0.5);
+      gl_FragColor = vec4(base, 1.0);
+    }
+  `
+});
+const sun = new THREE.Mesh(sunGeo, sunMat);
+sunGroup.add(sun);
+
+const haloMat = new THREE.SpriteMaterial({ 
+  map: (() => {
+    const c = document.createElement('canvas'); c.width = c.height = 256;
+    const ctx = c.getContext('2d');
+    const grd = ctx.createRadialGradient(128, 128, 0, 128, 128, 128);
+    grd.addColorStop(0, 'rgba(255, 230, 150, 0.6)'); 
+    grd.addColorStop(0.5, 'rgba(255, 180, 50, 0.2)'); 
+    grd.addColorStop(1, 'rgba(255, 100, 0, 0)');
+    ctx.fillStyle = grd; ctx.fillRect(0, 0, 256, 256);
+    return new THREE.CanvasTexture(c);
+  })(), 
+  blending: THREE.AdditiveBlending, transparent: true, depthWrite: false 
+});
+const halo = new THREE.Sprite(haloMat);
+halo.scale.set(140, 140, 1);
+sunGroup.add(halo);
+
+// --- ЛАЗЕР ---
+const laserGroup = new THREE.Group();
+laserGroup.position.set(-50, -2, 0);
+scene.add(laserGroup);
+
+const matDark = new THREE.MeshStandardMaterial({ color: 0x2a2a2a, metalness: 0.8, roughness: 0.4 });
+const matBase = new THREE.MeshStandardMaterial({ color: 0x444444, metalness: 0.9, roughness: 0.5 });
+
+const base = new THREE.Mesh(new THREE.CylinderGeometry(12, 16, 6, 8), matBase);
+base.position.y = 3; base.castShadow = true; base.receiveShadow = true; laserGroup.add(base);
+
+const column = new THREE.Mesh(new THREE.CylinderGeometry(5, 7, 35, 8), matDark);
+column.position.y = 23.5; column.castShadow = true; laserGroup.add(column);
+
+for (let i = 0; i < 6; i++) {
+  const ring = new THREE.Mesh(new THREE.TorusGeometry(8, 0.5, 8, 16), matBase);
+  ring.position.y = 9 + i * 5; ring.rotation.x = Math.PI / 2; ring.castShadow = true; laserGroup.add(ring);
+}
+
+const lightBlock = new THREE.Mesh(new THREE.BoxGeometry(10, 22, 6), matDark);
+lightBlock.position.set(0, 23, 6); lightBlock.castShadow = true; laserGroup.add(lightBlock);
+
+const lights = [];
+for (let i = 0; i < 8; i++) {
+  const lMat = new THREE.MeshStandardMaterial({ color: 0x222222, emissive: 0x000000 });
+  const light = new THREE.Mesh(new THREE.SphereGeometry(1.2, 16, 16), lMat);
+  light.position.set(0, 13 + i * 2.5, 9.2); laserGroup.add(light); lights.push(light);
+}
+
+const barrel = new THREE.Mesh(new THREE.CylinderGeometry(4, 6, 15, 8), matDark);
+barrel.position.y = 48.5; barrel.castShadow = true; laserGroup.add(barrel);
+
+const nozzle = new THREE.Mesh(new THREE.CylinderGeometry(8, 4, 5, 8), matBase);
+nozzle.position.y = 58.5; nozzle.castShadow = true; laserGroup.add(nozzle);
+
+// --- ЛУЧ ---
+const beamCanvas = document.createElement('canvas');
+beamCanvas.width = 64; beamCanvas.height = 256;
+const bctx = beamCanvas.getContext('2d');
+const bgrd = bctx.createLinearGradient(0, 0, 0, 256);
+bgrd.addColorStop(0, 'rgba(255, 50, 50, 0)'); bgrd.addColorStop(0.2, 'rgba(255, 100, 100, 1)');
+bgrd.addColorStop(0.5, 'rgba(255, 255, 255, 1)'); bgrd.addColorStop(0.8, 'rgba(255, 100, 100, 1)');
+bgrd.addColorStop(1, 'rgba(255, 50, 50, 0)');
+bctx.fillStyle = bgrd; bctx.fillRect(24, 0, 16, 256);
+const beamTex = new THREE.CanvasTexture(beamCanvas);
+
+const beamMat = new THREE.SpriteMaterial({ map: beamTex, color: 0xffaaaa, blending: THREE.AdditiveBlending, transparent: true, opacity: 0, depthWrite: false });
+const beamSprite1 = new THREE.Sprite(beamMat);
+const beamSprite2 = new THREE.Sprite(beamMat);
+scene.add(beamSprite1); scene.add(beamSprite2);
+
+// --- ЧАСТИЦЫ ---
+const particlesGeo = new THREE.BufferGeometry();
+const pCount = 2000;
+const pPos = new Float32Array(pCount * 3);
+for (let i = 0; i < pCount * 3; i += 3) {
+  pPos[i] = (Math.random() - 0.5) * 600; pPos[i+1] = (Math.random() - 0.5) * 300 + 50; pPos[i+2] = (Math.random() - 0.5) * 600;
+}
+particlesGeo.setAttribute('position', new THREE.BufferAttribute(pPos, 3));
+const particlesMat = new THREE.PointsMaterial({ color: 0xaa55ff, size: 1.2, transparent: true, opacity: 0, blending: THREE.AdditiveBlending });
+const particles = new THREE.Points(particlesGeo, particlesMat);
+scene.add(particles);
+
+// ==========================================
+// ЛОГИКА ИГРЫ И FPS УПРАВЛЕНИЕ
+// ==========================================
+const state = {
+  phase: 'splash', time: 0, laserCharge: 0, laserCooldown: 0,
+  sunScale: 1.0, sunBlackHole: 0.0, shakeIntensity: 0,
+  smoothShakeX: 0, smoothShakeY: 0, shotTimer: 0
+};
+
+const player = {
+  pos: new THREE.Vector3(0, 3, 40),
+  vel: new THREE.Vector3(),
+  onGround: true,
+  speed: 15,
+  jumpV: 10
+};
+
+let yaw = 0; 
+let pitch = 0; 
+
+let isPointerLocked = false;
+const sensitivity = 0.002;
+
+canvas.addEventListener('click', () => {
+  if (!isPointerLocked && (state.phase === 'game' || state.phase === 'charging' || state.phase === 'firing' || state.phase === 'post-shot')) {
+    canvas.requestPointerLock();
+  }
+});
+
+document.addEventListener('pointerlockchange', () => {
+  isPointerLocked = document.pointerLockElement === canvas;
+  if (isPointerLocked) {
+    document.getElementById('hudTop').classList.remove('show');
+    document.getElementById('crosshair').classList.add('show');
+  } else {
+    if (state.phase === 'game' || state.phase === 'charging' || state.phase === 'firing') {
+      document.getElementById('hudTop').classList.add('show');
+    }
+    document.getElementById('crosshair').classList.remove('show');
+  }
+});
+
+document.addEventListener('mousemove', (e) => {
+  if (!isPointerLocked) return;
+  yaw -= e.movementX * sensitivity;
+  pitch -= e.movementY * sensitivity;
+  pitch = Math.max(-Math.PI / 2 + 0.1, Math.min(Math.PI / 2 - 0.1, pitch));
+});
+
+const keys = {};
+window.addEventListener('keydown', (e) => {
+  keys[e.code] = true;
+  if (e.code === 'KeyE' && !isPointerLocked && state.phase === 'game') {
+    document.getElementById('gameStartBtn').click();
+  }
+});
+window.addEventListener('keyup', (e) => keys[e.code] = false);
+
+document.getElementById('gameStartBtn').addEventListener('click', (e) => {
+  audio.playClick();
+  e.target.style.opacity = '0';
+  e.target.style.pointerEvents = 'none';
+  document.getElementById('hudTop').classList.remove('show');
+  
+  canvas.requestPointerLock();
+
+  setTimeout(() => {
+    state.phase = 'charging';
+    state.laserCharge = 0;
+    audio.playLaserCharging(20);
+  }, 500);
+});
+
+// ==========================================
+// ЦИКЛ
+// ==========================================
+let lastTime = performance.now();
+const beamStartWorld = new THREE.Vector3();
+const sunWorldPos = new THREE.Vector3();
+
+function animate() {
+  requestAnimationFrame(animate);
+  const now = performance.now();
+  let dt = (now - lastTime) / 1000;
+  lastTime = now;
+  if (dt > 0.05) dt = 0.05;
+  state.time += dt;
+
+  sunUniforms.time.value = state.time; 
+
+  // --- УПРАВЛЕНИЕ ИГРОКОМ ---
+  if (state.phase === 'game' || state.phase === 'charging' || state.phase === 'firing' || state.phase === 'post-shot') {
+    const forward = new THREE.Vector3(-Math.sin(yaw), 0, -Math.cos(yaw));
+    const right = new THREE.Vector3(Math.cos(yaw), 0, -Math.sin(yaw));
+    const move = new THREE.Vector3();
+
+    if (keys['KeyW']) move.add(forward);
+    if (keys['KeyS']) move.sub(forward);
+    if (keys['KeyA']) move.sub(right);
+    if (keys['KeyD']) move.add(right);
+    if (move.lengthSq() > 0) move.normalize().multiplyScalar(player.speed);
+
+    if (keys['Space'] && player.onGround) {
+      player.vel.y = player.jumpV;
+      player.onGround = false;
+    }
+
+    player.vel.y -= 30 * dt;
+    player.pos.addScaledVector(move, dt);
+    player.pos.y += player.vel.y * dt;
+
+    const groundH = getGroundHeight(player.pos.x, player.pos.z) + 1.7; 
+    if (player.pos.y <= groundH) {
+      player.pos.y = groundH;
+      player.vel.y = 0;
+      player.onGround = true;
+    }
+
+    const distToCenter = Math.hypot(player.pos.x, player.pos.z);
+    if (distToCenter > 40) {
+      const angle = Math.atan2(player.pos.z, player.pos.x);
+      player.pos.x = Math.cos(angle) * 40;
+      player.pos.z = Math.sin(angle) * 40;
+    }
+
+    camera.position.copy(player.pos);
+    camera.rotation.y = yaw;
+    camera.rotation.x = pitch;
+  }
+
+  // --- ЛОГИКА СЦЕНАРИЯ ---
+  if (state.phase === 'charging') {
+    state.laserCharge += dt / 20;
+    if (state.laserCharge >= 1) {
+      state.laserCharge = 1; state.phase = 'firing'; state.shotTimer = 0;
+      state.shakeIntensity = 5; 
+      audio.playLaserShot(5);
+    }
+  } 
+  else if (state.phase === 'firing') {
+    state.shotTimer += dt;
+    if (state.shotTimer >= 5) { state.phase = 'post-shot'; state.laserCooldown = 0; }
+  } 
+  else if (state.phase === 'post-shot') {
+    state.laserCooldown += dt / 10;
+    if (state.laserCooldown >= 1) {
+      if (state.sunBlackHole === 0) audio.playOminousRumble(8);
+      state.sunBlackHole += dt / 8;
+      state.sunScale = Math.max(0, state.sunScale - dt * 0.15);
+      skyMat.uniforms.dark.value = Math.min(1, skyMat.uniforms.dark.value + dt * 0.2);
+      sunLight.intensity = Math.max(0, sunLight.intensity - dt * 1.5);
+      ambientLight.intensity = Math.max(0.05, ambientLight.intensity - dt * 0.8);
+
+      if (state.sunBlackHole >= 1) {
+        state.sunBlackHole = 1; state.phase = 'supernova';
+        audio.playSupernova(); state.shakeIntensity = 20;
+        const flashEl = document.getElementById('flash');
+        flashEl.style.transition = 'opacity 1.5s ease-in'; flashEl.style.opacity = '0.9';
+        setTimeout(() => {
+          flashEl.style.transition = 'opacity 4s ease-out'; flashEl.style.opacity = '0';
+          state.phase = 'end'; particlesMat.opacity = 1;
+          audio.playEndAmbient();
+          
+          // ПОКАЗЫВАЕМ ФИНАЛЬНЫЙ ЭКРАН С ПОДПИСЬЮ
+          document.getElementById('endScreen').classList.add('show');
+          // Освобождаем мышь, чтобы можно было нажать кнопку
+          document.exitPointerLock();
+          
+        }, 2000);
+      }
+    }
+  }
+
+  // --- ВИЗУАЛ ---
+  lights.forEach((l, i) => {
+    const th = i / lights.length; let inten = 0;
+    if (state.phase === 'charging' && state.laserCharge > th) inten = 2.0 + Math.sin(state.time * 20 + i) * 1.0;
+    else if (state.phase === 'firing') inten = 4.0;
+    else if (state.phase === 'post-shot' && state.laserCooldown < th) inten = Math.max(0, 1 - state.laserCooldown * 2);
+    l.material.emissive.setHex(0xff0000); l.material.emissiveIntensity = inten;
+  });
+
+  if (state.phase === 'firing') {
+    beamMat.opacity = 1.0;
+    beamStartWorld.set(0, 58.5, 0);
+    laserGroup.localToWorld(beamStartWorld);
+    sunGroup.getWorldPosition(sunWorldPos);
+    const dir = sunWorldPos.clone().sub(beamStartWorld);
+    const dist = dir.length();
+    const midPoint = beamStartWorld.clone().add(dir.clone().multiplyScalar(0.5));
+    
+    beamSprite1.position.copy(midPoint);
+    beamSprite1.scale.set(8 + Math.sin(state.time * 50) * 2, dist, 1);
+    const angle = Math.atan2(dir.y, dir.x);
+    beamSprite1.material.rotation = angle - Math.PI / 2;
+
+    beamSprite2.position.copy(midPoint);
+    beamSprite2.scale.set(8 + Math.sin(state.time * 50 + 1) * 2, dist, 1);
+    beamSprite2.material.rotation = angle - Math.PI / 2 + Math.PI / 2;
+  } else {
+    beamMat.opacity = Math.max(0, beamMat.opacity - dt * 3);
+  }
+
+  sunGroup.scale.setScalar(state.sunScale);
+  if (state.phase === 'end') {
+    sunMat.uniforms.sunColor.value.setHex(0x000000);
+    haloMat.opacity = 0; sunLight.intensity = 0; ambientLight.intensity = 0.1;
+    scene.fog.color.setHex(0x000000);
+  }
+  if (state.phase === 'end') particles.rotation.y += dt * 0.02;
+
+  let tsx = 0, tsy = 0;
+  if (state.shakeIntensity > 0) {
+    tsx = (Math.random() - 0.5) * state.shakeIntensity * 0.1;
+    tsy = (Math.random() - 0.5) * state.shakeIntensity * 0.1;
+    state.shakeIntensity *= 0.95;
+    if (state.shakeIntensity < 0.1) state.shakeIntensity = 0;
+  }
+  state.smoothShakeX += (tsx - state.smoothShakeX) * 0.1;
+  state.smoothShakeY += (tsy - state.smoothShakeY) * 0.1;
+  
+  camera.position.x += state.smoothShakeX;
+  camera.position.y += state.smoothShakeY;
+
+  composer.render();
+}
+animate();
+
+// ==========================================
+// UI
+// ==========================================
+window.addEventListener('resize', () => {
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  composer.setSize(window.innerWidth, window.innerHeight);
+});
+
+const screens = { splash: document.getElementById('screen-splash'), menu: document.getElementById('screen-menu'), game: document.getElementById('screen-game') };
+const lbTop = document.getElementById('lb-top'), lbBottom = document.getElementById('lb-bottom');
+
+function switchScreen(name) {
+  Object.values(screens).forEach(s => s.classList.remove('active'));
+  if (screens[name]) screens[name].classList.add('active');
+}
+
+audio.playSplashDrone();
+setTimeout(() => { lbTop.classList.add('show'); lbBottom.classList.add('show'); }, 100);
+setTimeout(() => { switchScreen('menu'); state.phase = 'menu'; }, 6000);
+
+document.getElementById('menuStartBtn').addEventListener('click', () => {
+  audio.playClick(); 
+  switchScreen('game'); 
+  state.phase = 'game';
+  document.getElementById('hudTop').classList.add('show');
+  camera.position.copy(player.pos);
+});
+
+document.getElementById('restartBtn').addEventListener('click', () => window.location.reload());
+</script>
+</body>
+</html>
