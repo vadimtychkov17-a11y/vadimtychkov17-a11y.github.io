@@ -2,53 +2,11 @@
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-<!-- ========================================== -->
-<!-- SEO ОПТИМИЗАЦИЯ -->
-<!-- ========================================== -->
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Уничтожение солнца — 3D игра от первого лица | Vindim</title>
-<meta name="description" content="Кинематографичная 3D-игра на Three.js. Выстрели из огромного лазера, чтобы уничтожить солнце, и наблюдай за космической катастрофой от первого лица. Управление: WASD, мышь.">
-<meta name="keywords" content="3d игра, уничтожение солнца, симулятор, игра в браузере, three.js, Vindim, кинематографичная игра, лазер">
-<meta name="author" content="Vindim">
-<meta name="robots" content="index, follow">
-<link rel="canonical" href="https://vadimtychkov17-a11y.github.io/">
+<meta name="description" content="Кинематографичная 3D-игра на Three.js. Выстрели из огромного лазера, чтобы уничтожить солнце, и наблюдай за космической катастрофой от первого лица.">
 
-<!-- Open Graph (для красивых ссылок в Telegram, VK, Discord) -->
-<meta property="og:title" content="Уничтожение солнца — 3D игра">
-<meta property="og:description" content="Уничтожь солнце из огромного лазера и посмотри, что будет с миром. Играй прямо в браузере.">
-<meta property="og:type" content="website">
-<meta property="og:url" content="https://vadimtychkov17-a11y.github.io/">
-<!-- <meta property="og:image" content="https://vadimtychkov17-a11y.github.io/preview.jpg">  Картинка для превью ссылки -->
-
-<!-- ========================================== -->
-<!-- ФАВИКОН -->
-<!-- ========================================== -->
 <link rel="shortcut icon" href="favicon.ico" type="image/x-icon">
-<link rel="icon" href="favicon.ico" type="image/x-icon">
-<!-- Если favicon.ico лежит в корне, а файл в папке, используй href="../favicon.ico" -->
-
-<!-- ========================================== -->
-<!-- МИКРОРАЗМЕТКА (Schema.org) для поисковиков -->
-<!-- ========================================== -->
-<script type="application/ld+json">
-{
-  "@context": "https://schema.org",
-  "@type": "VideoGame",
-  "name": "Уничтожение солнца",
-  "description": "Кинематографичная 3D-игра, где нужно уничтожить солнце с помощью лазера.",
-  "genre": "Simulation",
-  "gamePlatform": "Web Browser",
-  "publisher": {
-    "@type": "Organization",
-    "name": "Vindim"
-  },
-  "author": {
-    "@type": "Person",
-    "name": "Vindim"
-  }
-}
-</script>
 
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -57,11 +15,12 @@
     width: 100%; height: 100%;
     background: #000; overflow: hidden;
     font-family: 'Inter', -apple-system, sans-serif; color: #fff; user-select: none;
+    touch-action: none; /* Отключаем скролл и зум на телефоне */
   }
 
   canvas {
     position: absolute; inset: 0; width: 100%; height: 100%;
-    display: block; z-index: 1; outline: none; cursor: crosshair;
+    display: block; z-index: 1; outline: none;
   }
 
   /* Кинематографичные полосы */
@@ -108,6 +67,7 @@
     font-size: clamp(36px, 7vw, 72px); font-weight: 900; letter-spacing: 8px;
     text-transform: uppercase; color: transparent; -webkit-text-stroke: 1px rgba(255,255,255,0.8);
     margin-bottom: 60px; text-shadow: 0 0 40px rgba(255,255,255,0.2);
+    text-align: center; padding: 0 20px;
   }
 
   .btn {
@@ -123,11 +83,7 @@
     background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
     transform: skewX(-25deg); transition: left 0.7s ease;
   }
-  .btn:hover {
-    background: rgba(255, 255, 255, 0.15); border-color: rgba(255, 255, 255, 0.5);
-    box-shadow: inset 0 0 30px rgba(255, 255, 255, 0.1), 0 15px 50px rgba(0, 0, 0, 0.6);
-    transform: translateY(-3px);
-  }
+  .btn:hover { background: rgba(255, 255, 255, 0.15); border-color: rgba(255, 255, 255, 0.5); transform: translateY(-3px); }
   .btn:hover::before { left: 150%; }
   .btn:active { transform: translateY(1px) scale(0.98); }
 
@@ -137,69 +93,96 @@
   .hud-top {
     position: absolute;
     top: 14vh; left: 50%; transform: translateX(-50%);
-    background: rgba(0,0,0,0.75);
-    backdrop-filter: blur(10px);
+    background: rgba(0,0,0,0.75); backdrop-filter: blur(10px);
     padding: 16px 32px; border-radius: 12px;
     border: 1px solid rgba(255,255,255,0.2);
-    font-size: 16px; font-weight: 500;
-    text-align: center; line-height: 1.6;
-    pointer-events: none;
-    opacity: 0;
-    transition: opacity 1s ease;
+    font-size: 16px; font-weight: 500; text-align: center; line-height: 1.6;
+    pointer-events: none; opacity: 0; transition: opacity 1s ease;
     box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    width: 90%; max-width: 400px;
   }
   .hud-top.show { opacity: 1; }
   .hud-top b { color: #ffd966; }
-  .hud-top .click-hint { color: #4ade80; font-weight: bold; font-size: 18px; display: block; margin-top: 8px; }
-
-  .crosshair {
-    position: absolute; top: 50%; left: 50%;
-    width: 8px; height: 8px; border-radius: 50%;
-    background: rgba(255,255,255,0.8);
-    transform: translate(-50%, -50%);
-    box-shadow: 0 0 10px rgba(0,0,0,0.8), 0 0 2px rgba(0,0,0,1);
-    opacity: 0; transition: opacity 0.3s;
-    pointer-events: none;
-  }
-  .crosshair.show { opacity: 1; }
+  .hud-top .click-hint { color: #4ade80; font-weight: bold; font-size: 16px; display: block; margin-top: 8px; }
 
   .start-btn {
-    font-size: 22px; padding: 20px 60px;
-    pointer-events: auto;
-    background: rgba(124, 58, 237, 0.7);
-    border-color: rgba(180, 130, 255, 0.9);
-    box-shadow: 0 0 30px rgba(124, 58, 237, 0.5);
+    font-size: 20px; padding: 20px 40px;
+    pointer-events: auto; background: rgba(124, 58, 237, 0.7);
+    border-color: rgba(180, 130, 255, 0.9); box-shadow: 0 0 30px rgba(124, 58, 237, 0.5);
   }
-  .start-btn:hover { background: rgba(124, 58, 237, 0.9); }
 
-  /* Кнопка перезапуска и подпись */
+  /* ===== МОБИЛЬНОЕ УПРАВЛЕНИЕ ===== */
+  #mobile-controls {
+    position: absolute; inset: 0; z-index: 15;
+    display: none; pointer-events: none;
+  }
+  #mobile-controls.active { display: block; }
+
+  /* Джойстик (левая сторона) */
+  .joystick-zone {
+    position: absolute; bottom: 20px; left: 20px;
+    width: 120px; height: 120px;
+    background: rgba(255,255,255,0.1);
+    border: 2px solid rgba(255,255,255,0.3);
+    border-radius: 50%;
+    pointer-events: auto;
+    touch-action: none;
+  }
+  .joystick-stick {
+    position: absolute; top: 50%; left: 50%;
+    width: 50px; height: 50px;
+    background: rgba(255,255,255,0.5);
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+  }
+
+  /* Кнопка прыжка (правая сторона) */
+  .jump-btn {
+    position: absolute; bottom: 30px; right: 30px;
+    width: 80px; height: 80px;
+    background: rgba(124, 58, 237, 0.5);
+    border: 2px solid rgba(180, 130, 255, 0.8);
+    border-radius: 50%;
+    color: white; font-weight: bold; font-size: 14px;
+    display: flex; align-items: center; justify-content: center;
+    pointer-events: auto;
+    touch-action: none;
+  }
+  .jump-btn:active { background: rgba(124, 58, 237, 0.9); transform: scale(0.95); }
+
+  /* Зона свайпа камеры (правая половина экрана) */
+  .look-zone {
+    position: absolute; top: 0; right: 0;
+    width: 50%; height: 100%;
+    pointer-events: auto;
+    touch-action: none;
+    z-index: 14;
+  }
+
   .end-screen-content {
     position: absolute; top: 50%; left: 50%;
     transform: translate(-50%, -50%);
     display: flex; flex-direction: column; align-items: center;
     opacity: 0; transition: all 2.5s ease; pointer-events: none;
+    width: 90%; text-align: center;
   }
-  .end-screen-content.show {
-    opacity: 1; pointer-events: auto;
-  }
+  .end-screen-content.show { opacity: 1; pointer-events: auto; }
 
-  .restart-btn {
-    font-size: 16px; padding: 18px 50px; margin-bottom: 24px;
-  }
-
-  .credits {
-    text-align: center;
-    color: rgba(255, 255, 255, 0.4);
-    font-size: 12px;
-    line-height: 1.6;
-    letter-spacing: 1px;
-    text-transform: uppercase;
-  }
+  .restart-btn { font-size: 16px; padding: 18px 50px; margin-bottom: 24px; }
+  .credits { color: rgba(255, 255, 255, 0.4); font-size: 12px; line-height: 1.6; letter-spacing: 1px; text-transform: uppercase; }
   .credits strong { color: rgba(255, 255, 255, 0.7); }
 
   #flash {
     position: absolute; inset: 0; background: #fff; opacity: 0;
     pointer-events: none; z-index: 50; transition: opacity 3s ease-out; mix-blend-mode: screen;
+  }
+
+  /* Настройка UI под телефоны */
+  @media (max-width: 768px) {
+    .letterbox { height: 8vh; }
+    .hud-top { top: 10vh; padding: 12px 20px; font-size: 14px; }
+    .start-btn { font-size: 18px; padding: 16px 32px; }
   }
 </style>
 </head>
@@ -210,7 +193,14 @@
 
 <canvas id="canvas"></canvas>
 
-<div class="crosshair" id="crosshair"></div>
+<!-- Мобильные контролы -->
+<div id="mobile-controls">
+  <div class="joystick-zone" id="joystickZone">
+    <div class="joystick-stick" id="joystickStick"></div>
+  </div>
+  <div class="jump-btn" id="jumpBtn">JUMP</div>
+  <div class="look-zone" id="lookZone"></div>
+</div>
 
 <div class="ui-layer">
   <div class="screen active" id="screen-splash"><div class="logo-vindim">vindim</div></div>
@@ -222,12 +212,11 @@
 
   <div class="screen" id="screen-game">
     <div class="hud-top" id="hudTop">
-      <b>WASD</b> — идти, <b>Пробел</b> — прыжок<br>
-      <span class="click-hint">Кликни по экрану (ЛКМ), чтобы двигать мышью</span>
+      <b>WASD</b> — идти, <b>Мышь</b> — смотреть, <b>Пробел</b> — прыжок<br>
+      <span class="click-hint" id="hintText">Кликни по экрану (ЛКМ), чтобы захватить мышь</span>
     </div>
     <button class="btn start-btn" id="gameStartBtn">Инициализация</button>
     
-    <!-- Финальный экран с подписью -->
     <div class="end-screen-content" id="endScreen">
       <button class="btn restart-btn" id="restartBtn">Перезапустить цикл</button>
       <div class="credits">
@@ -255,6 +244,16 @@ import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
+
+// ==========================================
+// ОПРЕДЕЛЕНИЕ УСТРОЙСТВА (ПК или Телефон)
+// ==========================================
+const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth < 900;
+
+if (isMobile) {
+  document.getElementById('mobile-controls').classList.add('active');
+  document.getElementById('hintText').innerHTML = 'Используй джойстик слева и свайпай справа, чтобы смотреть';
+}
 
 // ==========================================
 // АУДИО
@@ -369,13 +368,12 @@ const audio = new SoundEngine();
 // THREE.JS
 // ==========================================
 const canvas = document.getElementById('canvas');
-const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: !isMobile }); // На мобилках выключаем сглаживание для FPS
 renderer.setSize(window.innerWidth, window.innerHeight);
-renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, isMobile ? 1.5 : 2)); // Ограничиваем DPR на мобилках
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
 renderer.toneMappingExposure = 1.0;
-renderer.shadowMap.enabled = true; 
-renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.shadowMap.enabled = !isMobile; // Тени выключаем на мобилках для скорости
 
 const scene = new THREE.Scene();
 scene.fog = new THREE.FogExp2(0xaaccff, 0.0015);
@@ -385,9 +383,7 @@ camera.rotation.order = 'YXZ';
 
 const renderScene = new RenderPass(scene, camera);
 const bloomPass = new UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 1.0, 0.4, 0.85);
-bloomPass.threshold = 0.85; 
-bloomPass.strength = 0.8; 
-bloomPass.radius = 0.4;
+bloomPass.threshold = 0.85; bloomPass.strength = 0.8; bloomPass.radius = 0.4;
 
 const composer = new EffectComposer(renderer);
 composer.addPass(renderScene);
@@ -398,36 +394,22 @@ composer.addPass(new OutputPass());
 const skyGeo = new THREE.SphereGeometry(2000, 32, 15);
 const skyMat = new THREE.ShaderMaterial({
   side: THREE.BackSide,
-  uniforms: {
-    topColor: { value: new THREE.Color(0x1e5fb8) },
-    bottomColor: { value: new THREE.Color(0xbcdef0) },
-    dark: { value: 0.0 }
-  },
+  uniforms: { topColor: { value: new THREE.Color(0x1e5fb8) }, bottomColor: { value: new THREE.Color(0xbcdef0) }, dark: { value: 0.0 } },
   vertexShader: `varying vec3 vWorldPosition; void main() { vec4 wp = modelMatrix * vec4(position, 1.0); vWorldPosition = wp.xyz; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`,
-  fragmentShader: `
-    uniform vec3 topColor; uniform vec3 bottomColor; uniform float dark; varying vec3 vWorldPosition;
-    void main() {
-      float h = normalize(vWorldPosition).y;
-      vec3 sky = mix(bottomColor, topColor, max(pow(max(h, 0.0), 0.6), 0.0));
-      sky = mix(sky, vec3(0.0), dark);
-      gl_FragColor = vec4(sky, 1.0);
-    }
-  `
+  fragmentShader: `uniform vec3 topColor; uniform vec3 bottomColor; uniform float dark; varying vec3 vWorldPosition; void main() { float h = normalize(vWorldPosition).y; vec3 sky = mix(bottomColor, topColor, max(pow(max(h, 0.0), 0.6), 0.0)); sky = mix(sky, vec3(0.0), dark); gl_FragColor = vec4(sky, 1.0); }`
 });
 scene.add(new THREE.Mesh(skyGeo, skyMat));
 
 // --- СВЕТ ---
 const sunLight = new THREE.DirectionalLight(0xfff4d8, 3.0);
 sunLight.position.set(60, 120, -200);
-sunLight.castShadow = true;
-sunLight.shadow.mapSize.width = 2048;
-sunLight.shadow.mapSize.height = 2048;
-sunLight.shadow.camera.near = 1;
-sunLight.shadow.camera.far = 600;
-sunLight.shadow.camera.left = -150;
-sunLight.shadow.camera.right = 150;
-sunLight.shadow.camera.top = 150;
-sunLight.shadow.camera.bottom = -150;
+sunLight.castShadow = !isMobile;
+if (sunLight.castShadow) {
+  sunLight.shadow.mapSize.width = 2048; sunLight.shadow.mapSize.height = 2048;
+  sunLight.shadow.camera.near = 1; sunLight.shadow.camera.far = 600;
+  sunLight.shadow.camera.left = -150; sunLight.shadow.camera.right = 150;
+  sunLight.shadow.camera.top = 150; sunLight.shadow.camera.bottom = -150;
+}
 scene.add(sunLight);
 
 const ambientLight = new THREE.AmbientLight(0x404060, 1.2);
@@ -441,9 +423,7 @@ for (let i = 0; i < posAttr.count; i++) {
   const x = posAttr.getX(i), z = posAttr.getZ(i);
   const dist = Math.sqrt(x*x + z*z);
   let y = 0;
-  if (dist > 60) {
-    y = (Math.sin(x * 0.02) * Math.cos(z * 0.02) * 30) + (Math.sin(x * 0.05) * 8);
-  }
+  if (dist > 60) y = (Math.sin(x * 0.02) * Math.cos(z * 0.02) * 30) + (Math.sin(x * 0.05) * 8);
   posAttr.setY(i, y);
 }
 groundGeo.computeVertexNormals();
@@ -451,8 +431,7 @@ groundGeo.computeVertexNormals();
 const groundMat = new THREE.MeshStandardMaterial({ color: 0x2d4a32, roughness: 0.9 });
 const ground = new THREE.Mesh(groundGeo, groundMat);
 ground.position.y = -2;
-ground.receiveShadow = true;
-ground.castShadow = true;
+ground.receiveShadow = !isMobile;
 scene.add(ground);
 
 function getGroundHeight(x, z) {
@@ -462,61 +441,47 @@ function getGroundHeight(x, z) {
 }
 
 // --- ДЕРЕВЬЯ ---
-const treeGeo = new THREE.ConeGeometry(2, 10, 5);
-const treeMat = new THREE.MeshStandardMaterial({ color: 0x1a2e1d, roughness: 1 });
-const treeCount = 300;
-const trees = new THREE.InstancedMesh(treeGeo, treeMat, treeCount);
-trees.castShadow = true; trees.receiveShadow = true;
-const dummy = new THREE.Object3D();
-for (let i = 0; i < treeCount; i++) {
-  const angle = Math.random() * Math.PI * 2;
-  const radius = 70 + Math.random() * 250;
-  const x = Math.cos(angle) * radius;
-  const z = Math.sin(angle) * radius;
-  const y = getGroundHeight(x, z);
-  const scale = 0.8 + Math.random() * 1.5;
-  dummy.position.set(x, y + 5, z);
-  dummy.scale.set(scale, scale, scale);
-  dummy.rotation.y = Math.random() * Math.PI;
-  dummy.updateMatrix();
-  trees.setMatrixAt(i, dummy.matrix);
+if (!isMobile) { // На мобилках деревья выключаем для оптимизации
+  const treeGeo = new THREE.ConeGeometry(2, 10, 5);
+  const treeMat = new THREE.MeshStandardMaterial({ color: 0x1a2e1d, roughness: 1 });
+  const treeCount = 300;
+  const trees = new THREE.InstancedMesh(treeGeo, treeMat, treeCount);
+  trees.castShadow = true; trees.receiveShadow = true;
+  const dummy = new THREE.Object3D();
+  for (let i = 0; i < treeCount; i++) {
+    const angle = Math.random() * Math.PI * 2;
+    const radius = 70 + Math.random() * 250;
+    const x = Math.cos(angle) * radius;
+    const z = Math.sin(angle) * radius;
+    const y = getGroundHeight(x, z);
+    const scale = 0.8 + Math.random() * 1.5;
+    dummy.position.set(x, y + 5, z);
+    dummy.scale.set(scale, scale, scale);
+    dummy.rotation.y = Math.random() * Math.PI;
+    dummy.updateMatrix();
+    trees.setMatrixAt(i, dummy.matrix);
+  }
+  scene.add(trees);
 }
-scene.add(trees);
 
 // --- СОЛНЦЕ ---
 const sunGroup = new THREE.Group();
 sunGroup.position.set(100, 150, -300); 
 scene.add(sunGroup);
 
-const sunGeo = new THREE.SphereGeometry(40, 64, 64);
-const sunUniforms = {
-  time: { value: 0 },
-  sunColor: { value: new THREE.Color(0xffaa00) }
-};
+const sunGeo = new THREE.SphereGeometry(40, isMobile ? 32 : 64, isMobile ? 32 : 64);
+const sunUniforms = { time: { value: 0 }, sunColor: { value: new THREE.Color(0xffaa00) } };
 const sunMat = new THREE.ShaderMaterial({
   uniforms: sunUniforms,
-  vertexShader: `
-    varying vec2 vUv; varying vec3 vNormal; varying vec3 vPos;
-    void main() { vUv = uv; vNormal = normalize(normalMatrix * normal); vPos = position; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }
-  `,
+  vertexShader: `varying vec2 vUv; varying vec3 vNormal; varying vec3 vPos; void main() { vUv = uv; vNormal = normalize(normalMatrix * normal); vPos = position; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`,
   fragmentShader: `
-    uniform float time; uniform vec3 sunColor;
-    varying vec2 vUv; varying vec3 vNormal; varying vec3 vPos;
-    float fbm(vec3 p) {
-      float f = 0.0;
-      f += 0.5000 * sin(p.x * 2.0 + time);
-      f += 0.2500 * sin(p.y * 4.0 - time * 1.5);
-      f += 0.1250 * sin(p.z * 8.0 + time * 2.0);
-      return f;
-    }
+    uniform float time; uniform vec3 sunColor; varying vec2 vUv; varying vec3 vNormal; varying vec3 vPos;
+    float fbm(vec3 p) { float f = 0.0; f += 0.5000 * sin(p.x * 2.0 + time); f += 0.2500 * sin(p.y * 4.0 - time * 1.5); f += 0.1250 * sin(p.z * 8.0 + time * 2.0); return f; }
     void main() {
-      vec3 core = vec3(1.0, 0.9, 0.4);
-      vec3 edge = vec3(1.0, 0.4, 0.0);
+      vec3 core = vec3(1.0, 0.9, 0.4); vec3 edge = vec3(1.0, 0.4, 0.0);
       float rim = 1.0 - max(dot(vNormal, vec3(0.0, 0.0, 1.0)), 0.0);
       vec3 base = mix(core, edge, pow(rim, 2.0));
-      float n = fbm(vPos * 0.1);
-      base += vec3(n * 0.2, n * 0.1, 0.0);
-      base *= (1.0 - rim * 0.5);
+      float n = fbm(vPos * 0.1); base += vec3(n * 0.2, n * 0.1, 0.0); base *= (1.0 - rim * 0.5);
       gl_FragColor = vec4(base, 1.0);
     }
   `
@@ -527,19 +492,13 @@ sunGroup.add(sun);
 const haloMat = new THREE.SpriteMaterial({ 
   map: (() => {
     const c = document.createElement('canvas'); c.width = c.height = 256;
-    const ctx = c.getContext('2d');
-    const grd = ctx.createRadialGradient(128, 128, 0, 128, 128, 128);
-    grd.addColorStop(0, 'rgba(255, 230, 150, 0.6)'); 
-    grd.addColorStop(0.5, 'rgba(255, 180, 50, 0.2)'); 
-    grd.addColorStop(1, 'rgba(255, 100, 0, 0)');
-    ctx.fillStyle = grd; ctx.fillRect(0, 0, 256, 256);
-    return new THREE.CanvasTexture(c);
-  })(), 
-  blending: THREE.AdditiveBlending, transparent: true, depthWrite: false 
+    const ctx = c.getContext('2d'); const grd = ctx.createRadialGradient(128, 128, 0, 128, 128, 128);
+    grd.addColorStop(0, 'rgba(255, 230, 150, 0.6)'); grd.addColorStop(0.5, 'rgba(255, 180, 50, 0.2)'); grd.addColorStop(1, 'rgba(255, 100, 0, 0)');
+    ctx.fillStyle = grd; ctx.fillRect(0, 0, 256, 256); return new THREE.CanvasTexture(c);
+  })(), blending: THREE.AdditiveBlending, transparent: true, depthWrite: false 
 });
 const halo = new THREE.Sprite(haloMat);
-halo.scale.set(140, 140, 1);
-sunGroup.add(halo);
+halo.scale.set(140, 140, 1); sunGroup.add(halo);
 
 // --- ЛАЗЕР ---
 const laserGroup = new THREE.Group();
@@ -550,18 +509,18 @@ const matDark = new THREE.MeshStandardMaterial({ color: 0x2a2a2a, metalness: 0.8
 const matBase = new THREE.MeshStandardMaterial({ color: 0x444444, metalness: 0.9, roughness: 0.5 });
 
 const base = new THREE.Mesh(new THREE.CylinderGeometry(12, 16, 6, 8), matBase);
-base.position.y = 3; base.castShadow = true; base.receiveShadow = true; laserGroup.add(base);
+base.position.y = 3; base.castShadow = !isMobile; base.receiveShadow = !isMobile; laserGroup.add(base);
 
 const column = new THREE.Mesh(new THREE.CylinderGeometry(5, 7, 35, 8), matDark);
-column.position.y = 23.5; column.castShadow = true; laserGroup.add(column);
+column.position.y = 23.5; column.castShadow = !isMobile; laserGroup.add(column);
 
 for (let i = 0; i < 6; i++) {
   const ring = new THREE.Mesh(new THREE.TorusGeometry(8, 0.5, 8, 16), matBase);
-  ring.position.y = 9 + i * 5; ring.rotation.x = Math.PI / 2; ring.castShadow = true; laserGroup.add(ring);
+  ring.position.y = 9 + i * 5; ring.rotation.x = Math.PI / 2; ring.castShadow = !isMobile; laserGroup.add(ring);
 }
 
 const lightBlock = new THREE.Mesh(new THREE.BoxGeometry(10, 22, 6), matDark);
-lightBlock.position.set(0, 23, 6); lightBlock.castShadow = true; laserGroup.add(lightBlock);
+lightBlock.position.set(0, 23, 6); lightBlock.castShadow = !isMobile; laserGroup.add(lightBlock);
 
 const lights = [];
 for (let i = 0; i < 8; i++) {
@@ -571,10 +530,10 @@ for (let i = 0; i < 8; i++) {
 }
 
 const barrel = new THREE.Mesh(new THREE.CylinderGeometry(4, 6, 15, 8), matDark);
-barrel.position.y = 48.5; barrel.castShadow = true; laserGroup.add(barrel);
+barrel.position.y = 48.5; barrel.castShadow = !isMobile; laserGroup.add(barrel);
 
 const nozzle = new THREE.Mesh(new THREE.CylinderGeometry(8, 4, 5, 8), matBase);
-nozzle.position.y = 58.5; nozzle.castShadow = true; laserGroup.add(nozzle);
+nozzle.position.y = 58.5; nozzle.castShadow = !isMobile; laserGroup.add(nozzle);
 
 // --- ЛУЧ ---
 const beamCanvas = document.createElement('canvas');
@@ -594,7 +553,7 @@ scene.add(beamSprite1); scene.add(beamSprite2);
 
 // --- ЧАСТИЦЫ ---
 const particlesGeo = new THREE.BufferGeometry();
-const pCount = 2000;
+const pCount = isMobile ? 500 : 2000; // Меньше частиц для телефонов
 const pPos = new Float32Array(pCount * 3);
 for (let i = 0; i < pCount * 3; i += 3) {
   pPos[i] = (Math.random() - 0.5) * 600; pPos[i+1] = (Math.random() - 0.5) * 300 + 50; pPos[i+2] = (Math.random() - 0.5) * 600;
@@ -605,7 +564,7 @@ const particles = new THREE.Points(particlesGeo, particlesMat);
 scene.add(particles);
 
 // ==========================================
-// ЛОГИКА ИГРЫ И FPS УПРАВЛЕНИЕ
+// ЛОГИКА И УПРАВЛЕНИЕ
 // ==========================================
 const state = {
   phase: 'splash', time: 0, laserCharge: 0, laserCooldown: 0,
@@ -623,27 +582,21 @@ const player = {
 
 let yaw = 0; 
 let pitch = 0; 
-
-let isPointerLocked = false;
 const sensitivity = 0.002;
 
+// ====== ДЕСКТОПНОЕ УПРАВЛЕНИЕ ======
+let isPointerLocked = false;
+
 canvas.addEventListener('click', () => {
-  if (!isPointerLocked && (state.phase === 'game' || state.phase === 'charging' || state.phase === 'firing' || state.phase === 'post-shot')) {
+  if (!isMobile && !isPointerLocked && (state.phase === 'game' || state.phase === 'charging' || state.phase === 'firing' || state.phase === 'post-shot')) {
     canvas.requestPointerLock();
   }
 });
 
 document.addEventListener('pointerlockchange', () => {
   isPointerLocked = document.pointerLockElement === canvas;
-  if (isPointerLocked) {
-    document.getElementById('hudTop').classList.remove('show');
-    document.getElementById('crosshair').classList.add('show');
-  } else {
-    if (state.phase === 'game' || state.phase === 'charging' || state.phase === 'firing') {
-      document.getElementById('hudTop').classList.add('show');
-    }
-    document.getElementById('crosshair').classList.remove('show');
-  }
+  if (isPointerLocked) document.getElementById('hudTop').classList.remove('show');
+  else if (state.phase === 'game' || state.phase === 'charging' || state.phase === 'firing') document.getElementById('hudTop').classList.add('show');
 });
 
 document.addEventListener('mousemove', (e) => {
@@ -662,13 +615,131 @@ window.addEventListener('keydown', (e) => {
 });
 window.addEventListener('keyup', (e) => keys[e.code] = false);
 
+// ====== МОБИЛЬНОЕ УПРАВЛЕНИЕ ======
+const mobileControls = {
+  isMoving: false,
+  moveX: 0,
+  moveZ: 0,
+  isLooking: false,
+  lookX: 0,
+  lookY: 0
+};
+
+const joyZone = document.getElementById('joystickZone');
+const joyStick = document.getElementById('joystickStick');
+const lookZone = document.getElementById('lookZone');
+const jumpBtn = document.getElementById('jumpBtn');
+
+let joyTouchId = null;
+let lookTouchId = null;
+
+if (isMobile) {
+  // Джойстик
+  joyZone.addEventListener('touchstart', (e) => {
+    e.preventDefault();
+    const touch = e.changedTouches[0];
+    joyTouchId = touch.identifier;
+    updateJoystick(touch);
+  }, { passive: false });
+
+  joyZone.addEventListener('touchmove', (e) => {
+    e.preventDefault();
+    for (let i = 0; i < e.changedTouches.length; i++) {
+      if (e.changedTouches[i].identifier === joyTouchId) {
+        updateJoystick(e.changedTouches[i]);
+        break;
+      }
+    }
+  }, { passive: false });
+
+  const endJoy = (e) => {
+    e.preventDefault();
+    joyTouchId = null;
+    mobileControls.isMoving = false;
+    mobileControls.moveX = 0;
+    mobileControls.moveZ = 0;
+    joyStick.style.transform = `translate(-50%, -50%)`;
+  };
+  joyZone.addEventListener('touchend', endJoy);
+  joyZone.addEventListener('touchcancel', endJoy);
+
+  function updateJoystick(touch) {
+    const rect = joyZone.getBoundingClientRect();
+    const centerX = rect.left + rect.width / 2;
+    const centerY = rect.top + rect.height / 2;
+    
+    let dx = touch.clientX - centerX;
+    let dy = touch.clientY - centerY;
+    
+    const maxDist = 40;
+    const dist = Math.hypot(dx, dy);
+    if (dist > maxDist) {
+      dx = (dx / dist) * maxDist;
+      dy = (dy / dist) * maxDist;
+    }
+    
+    joyStick.style.transform = `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px))`;
+    
+    mobileControls.isMoving = true;
+    mobileControls.moveX = dx / maxDist; // -1 .. 1
+    mobileControls.moveZ = dy / maxDist; // -1 .. 1
+  }
+
+  // Свайп камеры
+  lookZone.addEventListener('touchstart', (e) => {
+    e.preventDefault();
+    const touch = e.changedTouches[0];
+    lookTouchId = touch.identifier;
+    mobileControls.isLooking = true;
+    mobileControls.lookX = touch.clientX;
+    mobileControls.lookY = touch.clientY;
+  }, { passive: false });
+
+  lookZone.addEventListener('touchmove', (e) => {
+    e.preventDefault();
+    for (let i = 0; i < e.changedTouches.length; i++) {
+      if (e.changedTouches[i].identifier === lookTouchId) {
+        const touch = e.changedTouches[i];
+        const dx = touch.clientX - mobileControls.lookX;
+        const dy = touch.clientY - mobileControls.lookY;
+        
+        yaw -= dx * 0.005;
+        pitch -= dy * 0.005;
+        pitch = Math.max(-Math.PI / 2 + 0.1, Math.min(Math.PI / 2 - 0.1, pitch));
+        
+        mobileControls.lookX = touch.clientX;
+        mobileControls.lookY = touch.clientY;
+        break;
+      }
+    }
+  }, { passive: false });
+
+  const endLook = (e) => {
+    e.preventDefault();
+    lookTouchId = null;
+    mobileControls.isLooking = false;
+  };
+  lookZone.addEventListener('touchend', endLook);
+  lookZone.addEventListener('touchcancel', endLook);
+
+  // Прыжок
+  jumpBtn.addEventListener('touchstart', (e) => {
+    e.preventDefault();
+    if (player.onGround) {
+      player.vel.y = player.jumpV;
+      player.onGround = false;
+    }
+  }, { passive: false });
+}
+
+// Запуск игры
 document.getElementById('gameStartBtn').addEventListener('click', (e) => {
   audio.playClick();
   e.target.style.opacity = '0';
   e.target.style.pointerEvents = 'none';
   document.getElementById('hudTop').classList.remove('show');
   
-  canvas.requestPointerLock();
+  if (!isMobile) canvas.requestPointerLock();
 
   setTimeout(() => {
     state.phase = 'charging';
@@ -700,13 +771,19 @@ function animate() {
     const right = new THREE.Vector3(Math.cos(yaw), 0, -Math.sin(yaw));
     const move = new THREE.Vector3();
 
-    if (keys['KeyW']) move.add(forward);
-    if (keys['KeyS']) move.sub(forward);
-    if (keys['KeyA']) move.sub(right);
-    if (keys['KeyD']) move.add(right);
+    if (isMobile && mobileControls.isMoving) {
+      move.add(forward.clone().multiplyScalar(-mobileControls.moveZ));
+      move.add(right.clone().multiplyScalar(mobileControls.moveX));
+    } else if (!isMobile) {
+      if (keys['KeyW']) move.add(forward);
+      if (keys['KeyS']) move.sub(forward);
+      if (keys['KeyA']) move.sub(right);
+      if (keys['KeyD']) move.add(right);
+    }
+
     if (move.lengthSq() > 0) move.normalize().multiplyScalar(player.speed);
 
-    if (keys['Space'] && player.onGround) {
+    if (!isMobile && keys['Space'] && player.onGround) {
       player.vel.y = player.jumpV;
       player.onGround = false;
     }
@@ -766,12 +843,8 @@ function animate() {
           flashEl.style.transition = 'opacity 4s ease-out'; flashEl.style.opacity = '0';
           state.phase = 'end'; particlesMat.opacity = 1;
           audio.playEndAmbient();
-          
-          // ПОКАЗЫВАЕМ ФИНАЛЬНЫЙ ЭКРАН С ПОДПИСЬЮ
           document.getElementById('endScreen').classList.add('show');
-          // Освобождаем мышь, чтобы можно было нажать кнопку
-          document.exitPointerLock();
-          
+          if (!isMobile) document.exitPointerLock();
         }, 2000);
       }
     }
