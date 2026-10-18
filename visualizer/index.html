@@ -1,0 +1,801 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>vindim — Visualizer</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  
+  body, html {
+    width: 100%; height: 100%;
+    background: #050505;
+    color: #fff;
+    font-family: 'Inter', -apple-system, 'Segoe UI', sans-serif;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* ===== ЗАСТАВКА ===== */
+  #splash {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    background: #050505;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: opacity 1s ease, visibility 1s ease;
+  }
+
+  #splash.hidden {
+    opacity: 0;
+    visibility: hidden;
+  }
+
+  .splash-text {
+    font-family: 'Segoe Script', 'Brush Script MT', cursive;
+    font-size: clamp(60px, 15vw, 150px);
+    color: #e8d5ff;
+    text-shadow: 
+      0 0 30px rgba(180, 100, 255, 0.8),
+      0 0 80px rgba(140, 60, 220, 0.6);
+    letter-spacing: 4px;
+    animation: splashAnim 3s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+    opacity: 0;
+    transform: scale(0.9);
+  }
+
+  @keyframes splashAnim {
+    0% { opacity: 0; transform: scale(0.9); filter: blur(15px); }
+    20% { opacity: 1; transform: scale(1); filter: blur(0); }
+    80% { opacity: 1; transform: scale(1.05); filter: blur(0); }
+    100% { opacity: 0; transform: scale(1.1); filter: blur(10px); }
+  }
+
+  /* ===== ОСНОВНОЙ ИНТЕРФЕЙС ===== */
+  #visualizer {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    z-index: 1;
+  }
+
+  .ui-panel {
+    position: absolute;
+    bottom: 20px;
+    right: 20px;
+    z-index: 10;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .ui-panel.hidden {
+    transform: translateX(calc(100% + 40px));
+  }
+
+  .toggle-panel-btn {
+    position: absolute;
+    bottom: 20px;
+    right: 20px;
+    z-index: 9;
+    width: 54px; height: 54px;
+    background: rgba(30, 30, 40, 0.6);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 50%;
+    color: white; font-size: 22px;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    opacity: 0; pointer-events: none;
+    transition: all 0.3s;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+  }
+  .toggle-panel-btn.show { opacity: 1; pointer-events: auto; }
+  .toggle-panel-btn:hover { background: rgba(255,255,255,0.15); transform: scale(1.05); }
+
+  .panel-content {
+    background: rgba(20, 20, 30, 0.65);
+    backdrop-filter: blur(30px) saturate(150%);
+    -webkit-backdrop-filter: blur(30px) saturate(150%);
+    padding: 16px;
+    border-radius: 24px;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    box-shadow: 
+      0 20px 50px rgba(0,0,0,0.7), 
+      inset 0 1px 0 rgba(255,255,255,0.2),
+      inset 0 -1px 0 rgba(0,0,0,0.3);
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    width: 380px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .top-controls {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+
+  .btn {
+    padding: 10px 14px;
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #fff;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.1);
+  }
+
+  .btn:hover { background: rgba(255, 255, 255, 0.15); transform: translateY(-2px); box-shadow: 0 5px 15px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.2); }
+  .btn:active { transform: translateY(0); }
+
+  #btnLoad { color: #00d2ff; flex: 1; }
+  #btnLoad:hover { background: rgba(0,210,255,0.15); border-color: #00d2ff; box-shadow: 0 0 20px rgba(0,210,255,0.3); }
+  
+  #btnPlay { color: #00ff88; flex: 1; }
+  #btnPlay:hover { background: rgba(0,255,136,0.15); border-color: #00ff88; box-shadow: 0 0 20px rgba(0,255,136,0.3); }
+  
+  #btnStop { color: #ff3366; flex: 1; }
+  #btnStop:hover { background: rgba(255,51,102,0.15); border-color: #ff3366; box-shadow: 0 0 20px rgba(255,51,102,0.3); }
+  
+  #btnRecord { color: #ff0000; flex: 1; font-weight: 900; }
+  #btnRecord:hover { background: rgba(255,0,0,0.15); border-color: #ff0000; box-shadow: 0 0 20px rgba(255,0,0,0.3); }
+  #btnRecord.recording { animation: pulseRed 1s infinite; border-color: #ff0000; background: rgba(255,0,0,0.3); }
+  @keyframes pulseRed { 0%, 100% { box-shadow: 0 0 10px #ff0000; } 50% { box-shadow: 0 0 30px #ff0000; } }
+
+  .icon-btn {
+    width: 36px; height: 36px;
+    flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px; padding: 0;
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.2);
+    border-radius: 10px;
+    color: #fff; cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.1);
+  }
+  .icon-btn:hover { background: rgba(255,255,255,0.15); transform: translateY(-2px); }
+  .icon-btn.active { background: rgba(255,0,170,0.25); border-color: #ff00aa; box-shadow: 0 0 15px rgba(255,0,170,0.4); color: #fff; }
+
+  .presets-container {
+    max-height: 220px;
+    overflow-y: auto;
+    padding-right: 6px;
+    border-top: 1px solid rgba(255,255,255,0.1);
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+    padding-top: 12px; padding-bottom: 12px;
+  }
+
+  .presets-container::-webkit-scrollbar { width: 6px; }
+  .presets-container::-webkit-scrollbar-track { background: rgba(0,0,0,0.3); border-radius: 10px; }
+  .presets-container::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 10px; }
+  .presets-container::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.4); }
+
+  .presets-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 8px;
+  }
+
+  .preset-btn {
+    aspect-ratio: 1 / 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    color: rgba(255,255,255,0.7);
+    position: relative;
+  }
+
+  .preset-btn:hover { background: rgba(255,255,255,0.15); color: #fff; transform: scale(1.05); }
+  .preset-btn.active { border-color: #ff00aa; background: rgba(255, 0, 170, 0.2); color: #fff; box-shadow: 0 0 15px rgba(255,0,170,0.4); }
+  
+  .preset-btn::after {
+    content: attr(title); position: absolute; bottom: 120%; left: 50%; transform: translateX(-50%);
+    background: rgba(0,0,0,0.9); color: #fff; font-size: 10px; padding: 4px 8px;
+    border-radius: 6px; white-space: nowrap; pointer-events: none; opacity: 0; transition: opacity 0.2s; z-index: 100;
+  }
+  .preset-btn:hover::after { opacity: 1; }
+
+  .bottom-controls { display: flex; justify-content: space-between; align-items: center; }
+  .bottom-controls span { font-size: 13px; color: rgba(255,255,255,0.7); font-weight: 600; letter-spacing: 0.5px; }
+
+  #fileInput { display: none; }
+  .drop-zone {
+    position: absolute; inset: 0; z-index: 20; background: rgba(0,0,0,0.85);
+    display: none; align-items: center; justify-content: center;
+    font-size: 30px; font-weight: bold; color: #00ff88;
+    border: 4px dashed #00ff88; pointer-events: none;
+    backdrop-filter: blur(10px);
+  }
+  .drop-zone.active { display: flex; }
+
+  .hint {
+    position: absolute; top: 30px; left: 50%; transform: translateX(-50%);
+    font-size: 14px; color: rgba(255,255,255,0.9); z-index: 10;
+    background: rgba(20,20,30,0.7); padding: 10px 24px; border-radius: 30px;
+    backdrop-filter: blur(15px); border: 1px solid rgba(255,255,255,0.15);
+    pointer-events: none; transition: all 0.3s;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+  }
+
+  /* ===== МОДАЛЬНОЕ ОКНО "СКАЧАТЬ ПЕСНИ" ===== */
+  .modal-overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.8);
+    backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+    display: flex; align-items: center; justify-content: center;
+    padding: 20px; z-index: 1000; opacity: 0; pointer-events: none;
+    transition: opacity 0.4s ease;
+  }
+  .modal-overlay.active { opacity: 1; pointer-events: auto; }
+
+  .modal {
+    background: rgba(25, 25, 35, 0.9);
+    border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 24px; padding: 30px;
+    max-width: 600px; width: 100%;
+    transform: scale(0.9) translateY(20px);
+    transition: all 0.5s cubic-bezier(0.2, 0.8, 0.2, 1);
+    box-shadow: 0 20px 60px rgba(0,0,0,0.8);
+    max-height: 90vh; overflow-y: auto;
+  }
+  .modal-overlay.active .modal { transform: scale(1) translateY(0); }
+  .modal h2 { font-size: 24px; margin-bottom: 20px; color: #e8d5ff; text-align: center; }
+
+  .song-card {
+    display: flex; align-items: center; gap: 16px;
+    background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 16px; padding: 16px; margin-bottom: 16px;
+    transition: all 0.3s ease;
+  }
+  .song-card:hover { background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.2); }
+  .song-cover { width: 80px; height: 80px; border-radius: 12px; object-fit: cover; background: #111; flex-shrink: 0; }
+  .song-info { flex: 1; }
+  .song-title { font-size: 18px; font-weight: 700; color: #fff; margin-bottom: 4px; }
+  .song-original { font-size: 12px; color: #00d2ff; text-decoration: none; display: inline-flex; align-items: center; gap: 4px; margin-bottom: 10px; }
+  .song-original:hover { text-decoration: underline; }
+  .song-actions { display: flex; gap: 8px; }
+
+  .btn-small {
+    padding: 8px 16px; font-size: 13px; font-weight: 600;
+    border-radius: 10px; cursor: pointer; border: none;
+    transition: all 0.2s; text-decoration: none;
+    display: inline-flex; align-items: center; justify-content: center;
+  }
+  .btn-download {
+    background: rgba(0, 255, 136, 0.15); color: #00ff88;
+    border: 1px solid rgba(0, 255, 136, 0.3);
+  }
+  .btn-download:hover { background: rgba(0, 255, 136, 0.3); }
+
+  .btn-close-modal {
+    width: 100%; padding: 16px; background: rgba(255,255,255,0.1);
+    border: none; border-radius: 12px; color: #fff;
+    font-size: 16px; font-weight: 600; cursor: pointer;
+    transition: all 0.3s ease; margin-top: 10px;
+  }
+  .btn-close-modal:hover { background: rgba(255,255,255,0.2); }
+
+  @media (max-width: 600px) {
+    .ui-panel { right: 10px; bottom: 10px; }
+    .panel-content { width: 320px; padding: 12px; gap: 10px; }
+    .presets-container { max-height: 180px; }
+    .preset-btn { font-size: 16px; border-radius: 8px; }
+    .btn { padding: 8px; font-size: 10px; border-radius: 8px; }
+    .icon-btn { width: 32px; height: 32px; font-size: 14px; border-radius: 8px; }
+    .hint { font-size: 12px; padding: 8px 16px; }
+    .modal { padding: 20px; }
+    .song-card { flex-direction: column; text-align: center; }
+    .song-original { justify-content: center; }
+    .song-actions { justify-content: center; width: 100%; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ЗАСТАВКА -->
+<div id="splash">
+  <div class="splash-text">vindim</div>
+</div>
+
+<!-- Основной интерфейс -->
+<div class="drop-zone" id="dropZone">Отпусти файл (MP3)</div>
+<div class="hint" id="hint">Загрузи трек или перетащи файл</div>
+<canvas id="visualizer"></canvas>
+
+<div class="toggle-panel-btn" id="togglePanelBtn">⚙️</div>
+
+<div class="ui-panel hidden" id="uiPanel">
+  <div class="panel-content">
+    <div class="top-controls">
+      <button class="btn" id="btnLoad">Загрузить</button>
+      <button class="btn" id="btnPlay">Играть</button>
+      <button class="btn" id="btnStop">Стоп</button>
+      <button class="btn" id="btnRecord">🎥 Запись</button>
+      <button class="icon-btn" id="btnSongs" title="Скачать песни">🎵</button>
+      <button class="icon-btn" id="btnScreenshot" title="Скриншот">📸</button>
+      <button class="icon-btn" id="btnHide" title="Скрыть">✖</button>
+    </div>
+
+    <div class="presets-container">
+      <div class="presets-grid" id="presetsGrid"></div>
+    </div>
+
+    <div class="bottom-controls">
+      <span id="presetName">Кольца</span>
+      <div style="display:flex; gap: 8px;">
+        <button class="icon-btn" id="btnRandom" title="Случайный">🎲</button>
+        <button class="icon-btn" id="btnSpeedrun" title="Спидран (0.5с)">⚡⚡</button>
+        <button class="icon-btn" id="btnFull" title="Экран">⛶</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<input type="file" id="fileInput" accept="audio/*">
+
+<!-- МОДАЛЬНОЕ ОКНО С ПЕСНЯМИ -->
+<div class="modal-overlay" id="songsModal">
+  <div class="modal">
+    <h2>Скачать песни</h2>
+    
+    <!-- Песня 1 -->
+    <div class="song-card">
+      <img src="cover_gigachad.png" alt="Gigachad Theme" class="song-cover" onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'80\' height=\'80\'><rect width=\'80\' height=\'80\' fill=\'%23222\'/><text x=\'50%\' y=\'50%\' dominant-baseline=\'middle\' text-anchor=\'middle\' font-size=\'30\'>🎵</text></svg>'">
+      <div class="song-info">
+        <div class="song-title">Gigachad Theme</div>
+        <a href="https://www.youtube.com/watch?v=OVh0bMNSFss" target="_blank" class="song-original">▶ Оригинал на YouTube</a>
+        <div class="song-actions">
+          <!-- ТУТ МЫ ВЫЗЫВАЕМ ФУНКЦИЮ СКАЧИВАНИЯ -->
+          <button onclick="forceDownload('GigachadTheme.mp3', 'GigachadTheme.mp3')" class="btn-small btn-download">📥 Скачать</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Песня 2 -->
+    <div class="song-card">
+      <img src="cover_verity.png" alt="Verity" class="song-cover" onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'80\' height=\'80\'><rect width=\'80\' height=\'80\' fill=\'%23222\'/><text x=\'50%\' y=\'50%\' dominant-baseline=\'middle\' text-anchor=\'middle\' font-size=\'30\'>🎵</text></svg>'">
+      <div class="song-info">
+        <div class="song-title">Verity</div>
+        <a href="https://youtu.be/IQFUln-Aakc" target="_blank" class="song-original">▶ Оригинал на YouTube</a>
+        <div class="song-actions">
+          <!-- ТУТ МЫ ВЫЗЫВАЕМ ФУНКЦИЮ СКАЧИВАНИЯ -->
+          <button onclick="forceDownload('Verity.mp3', 'Verity.mp3')" class="btn-small btn-download">📥 Скачать</button>
+        </div>
+      </div>
+    </div>
+
+    <button class="btn-close-modal" id="closeSongsModal">Закрыть</button>
+  </div>
+</div>
+
+<script>
+// Заставка
+setTimeout(() => {
+  document.getElementById('splash').classList.add('hidden');
+  setTimeout(() => {
+    document.getElementById('uiPanel').classList.remove('hidden');
+  }, 300);
+}, 2800);
+
+// Предотвращаем спам ошибок Canvas
+window.addEventListener('error', function(e) {
+  if (e.message.includes('CanvasRenderingContext2D')) e.preventDefault();
+});
+
+/* ==========================================
+   1. АУДИО СИСТЕМА
+   ========================================== */
+let audioCtx = null, audioSource = null, analyser = null, audioElement = null;
+let isPlaying = false;
+let freqData = null, timeData = null;
+let smoothBass = 0, smoothMid = 0, smoothTreble = 0, smoothAvg = 0;
+
+function initAudio() {
+  if (audioCtx) return;
+  audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  analyser = audioCtx.createAnalyser();
+  analyser.fftSize = 2048; analyser.smoothingTimeConstant = 0.8; 
+  freqData = new Uint8Array(analyser.frequencyBinCount);
+  timeData = new Uint8Array(analyser.fftSize);
+}
+
+function setupAudioSource(file) {
+  initAudio();
+  if (audioElement) { audioElement.pause(); if (audioSource) audioSource.disconnect(); }
+  audioElement = new Audio();
+  audioElement.src = URL.createObjectURL(file);
+  audioSource = audioCtx.createMediaElementSource(audioElement);
+  audioSource.connect(analyser); analyser.connect(audioCtx.destination);
+  audioElement.addEventListener('ended', () => { 
+    isPlaying = false; 
+    resetPlayBtn(); 
+    if(mediaRecorder && mediaRecorder.state === "recording") {
+      mediaRecorder.stop();
+    }
+  });
+  return audioElement;
+}
+
+function playAudio() {
+  if (!audioElement) { updateHint("Загрузи трек!", "#ff3366"); return; }
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+  if (!isPlaying) {
+    audioElement.play().then(() => {
+      isPlaying = true;
+      const btn = document.getElementById('btnPlay');
+      btn.textContent = "Пауза"; btn.style.color = "#ffaa00"; btn.style.borderColor = "#ffaa00";
+      updateHint("Воспроизведение...", "#00ff88");
+    }).catch(err => updateHint("Ошибка: " + err.message, "#ff3366"));
+  } else {
+    audioElement.pause(); isPlaying = false; resetPlayBtn(); updateHint("Пауза", "#fff");
+  }
+}
+
+function resetPlayBtn() {
+  const btn = document.getElementById('btnPlay');
+  btn.textContent = "Играть"; btn.style.color = "#00ff88"; btn.style.borderColor = "#00ff88";
+}
+
+let hintTimeout;
+function updateHint(text, color) {
+  const hint = document.getElementById('hint');
+  hint.textContent = text; hint.style.color = color;
+  clearTimeout(hintTimeout);
+  hintTimeout = setTimeout(() => hint.style.color = "rgba(255,255,255,0.9)", 3000);
+}
+
+/* ==========================================
+   2. ЗАПИСЬ ВИДЕО
+   ========================================== */
+let mediaRecorder = null;
+let recordedChunks = [];
+
+document.getElementById('btnRecord').addEventListener('click', () => {
+  if (!audioElement) { updateHint("Загрузи трек перед записью!", "#ff3366"); return; }
+  if (mediaRecorder && mediaRecorder.state === "recording") {
+    mediaRecorder.stop();
+    updateHint("Запись остановлена вручную.", "#fff");
+    return;
+  }
+
+  audioElement.currentTime = 0;
+  
+  const canvasStream = document.getElementById('visualizer').captureStream(60);
+  const audioStream = audioCtx.createMediaStreamDestination();
+  audioSource.connect(audioStream); 
+
+  const combinedStream = new MediaStream([
+    ...canvasStream.getVideoTracks(),
+    ...audioStream.stream.getAudioTracks()
+  ]);
+
+  mediaRecorder = new MediaRecorder(combinedStream, { mimeType: 'video/webm; codecs=vp9,opus' });
+  
+  mediaRecorder.ondataavailable = (e) => {
+    if (e.data.size > 0) recordedChunks.push(e.data);
+  };
+
+  mediaRecorder.onstop = () => {
+    const blob = new Blob(recordedChunks, { type: 'video/webm' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `vindim_vis_${Date.now()}.webm`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    
+    recordedChunks = [];
+    document.getElementById('btnRecord').classList.remove('recording');
+    document.getElementById('btnRecord').textContent = "🎥 Запись";
+    updateHint("Видео сохранено!", "#00ff88");
+  };
+
+  recordedChunks = [];
+  mediaRecorder.start();
+  
+  document.getElementById('btnRecord').classList.add('recording');
+  document.getElementById('btnRecord').textContent = "⏹ Стоп";
+  updateHint("Идет запись видео (играет музыка)...", "#ff0000");
+
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+  audioElement.play();
+  isPlaying = true;
+  document.getElementById('btnPlay').textContent = "Пауза";
+});
+
+/* ==========================================
+   3. ПРИНУДИТЕЛЬНОЕ СКАЧИВАНИЕ ПЕСЕН
+   ========================================== */
+async function forceDownload(url, filename) {
+  try {
+    updateHint("Начинаю скачивание...", "#00d2ff");
+    
+    const response = await fetch(url);
+    if (!response.ok) throw new Error('Файл не найден на сервере');
+    
+    const blob = await response.blob();
+    const blobUrl = window.URL.createObjectURL(blob);
+    
+    const a = document.createElement('a');
+    a.style.display = 'none';
+    a.href = blobUrl;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    
+    window.URL.revokeObjectURL(blobUrl);
+    document.body.removeChild(a);
+    
+    updateHint("Файл успешно скачан!", "#00ff88");
+  } catch (error) {
+    console.error(error);
+    updateHint("Ошибка: файл " + url + " не найден!", "#ff3366");
+  }
+}
+
+/* ==========================================
+   4. УПРАВЛЕНИЕ
+   ========================================== */
+document.getElementById('btnLoad').addEventListener('click', () => document.getElementById('fileInput').click());
+document.getElementById('fileInput').addEventListener('change', (e) => {
+  if (e.target.files.length > 0) { setupAudioSource(e.target.files[0]); playAudio(); }
+});
+document.getElementById('btnPlay').addEventListener('click', playAudio);
+document.getElementById('btnStop').addEventListener('click', () => {
+  if (audioElement) {
+    audioElement.pause(); audioElement.currentTime = 0; isPlaying = false;
+    resetPlayBtn(); updateHint("Остановлено", "#fff");
+  }
+  if (mediaRecorder && mediaRecorder.state === "recording") mediaRecorder.stop();
+});
+
+window.addEventListener('dragover', (e) => { e.preventDefault(); document.getElementById('dropZone').classList.add('active'); });
+window.addEventListener('dragleave', (e) => { e.preventDefault(); if (e.relatedTarget === null) document.getElementById('dropZone').classList.remove('active'); });
+window.addEventListener('drop', (e) => {
+  e.preventDefault(); document.getElementById('dropZone').classList.remove('active');
+  if (e.dataTransfer.files.length > 0) { setupAudioSource(e.dataTransfer.files[0]); playAudio(); }
+});
+
+document.getElementById('btnScreenshot').addEventListener('click', () => {
+  const link = document.createElement('a');
+  link.download = `vindim_vis_${Date.now()}.png`;
+  link.href = document.getElementById('visualizer').toDataURL();
+  link.click();
+  updateHint("Скриншот сохранен!", "#00ff88");
+});
+
+// Модальное окно песен
+const songsModal = document.getElementById('songsModal');
+document.getElementById('btnSongs').addEventListener('click', () => {
+  songsModal.classList.add('active');
+});
+document.getElementById('closeSongsModal').addEventListener('click', () => {
+  songsModal.classList.remove('active');
+});
+songsModal.addEventListener('click', (e) => {
+  if (e.target === songsModal) songsModal.classList.remove('active');
+});
+
+/* ==========================================
+   5. СПИСОК ИЗ 100 ШАБЛОНОВ
+   ========================================== */
+const PRESETS = [];
+const icons = ['🎛️','📈','🌀','🕳️','🧊','🌊','👁️','💻','☀️','💥','⚡','🕸️','🔊','💠','📊','✴️','🌌','🩸','❄️','🔮','📉','🧬','📡','🎯','🌈','🔲','🔺','🔻','🌪️','🔊','💿','🔋','⚙️','💡','🌡️','🎚️','💓','🎶','📶','🏁','🌀','⚛️','📦','🎚️','🎚️','🎯','💥','🔊','🌊','🔥','🔮','⚡','🌀','🎯','🔷','🔶','🔺','🟢','🔴','🟣','🟡','🟠','🔵','💠','🔹','🔸','✨','⭐','🌟','💫','☄️','🪐','🌙','☁️','🌧️','⛈️','🌨️','🌬️','🌪️','🌫️','🌈','☀️','🌞','🌝','🌚','🌕','🌖','🌗','🌘','🌑','🌒','🌓','🌔'];
+
+for (let i = 0; i < 100; i++) {
+  PRESETS.push({ id: i, icon: icons[i % icons.length], name: `Режим ${i+1}` });
+}
+const names = ['Кольца','Осциллограф','Спираль','Туннель','Орбита','Волны','Пульс','Матрица','Лучи','Кольца 2','Молния','Паутина','Сабы','Ромбы','Спектр','Звезда','Галактика','Кровь','Снег','Шар','Линия','ДНК','Радар','Мишень','Радуга','Квадраты','Треугольники','Воронка','Смерч','Пик','Диск','Заряд','Шестерня','Лампа','Термо','Фейдеры','Сердце','Ноты','Сигнал','Клетка','Гипно','Ядро','Блоки','Каналы','Баланс','Фокус','Бум','Стерео','Океан','Плазма'];
+for(let i=0; i<50; i++) PRESETS[i].name = names[i];
+
+let currentPreset = 0;
+let stateTime = 0;
+let flashEnabled = false;
+
+setInterval(() => stateTime += 0.05, 50);
+
+const presetsGrid = document.getElementById('presetsGrid');
+const presetNameLabel = document.getElementById('presetName');
+
+PRESETS.forEach(p => {
+  const btn = document.createElement('div');
+  btn.className = `preset-btn ${p.id === 0 ? 'active' : ''}`;
+  btn.innerHTML = p.icon;
+  btn.title = p.name;
+  btn.dataset.id = p.id;
+  btn.addEventListener('click', () => selectPreset(p.id));
+  presetsGrid.appendChild(btn);
+});
+
+function selectPreset(id) {
+  currentPreset = id;
+  document.querySelectorAll('.preset-btn').forEach(b => {
+    b.classList.toggle('active', parseInt(b.dataset.id) === id);
+  });
+  presetNameLabel.textContent = PRESETS[id].name;
+}
+
+/* ==========================================
+   6. УТИЛИТЫ
+   ========================================== */
+const uiPanel = document.getElementById('uiPanel');
+const togglePanelBtn = document.getElementById('togglePanelBtn');
+
+document.getElementById('btnHide').addEventListener('click', () => {
+  uiPanel.classList.add('hidden'); togglePanelBtn.classList.add('show');
+});
+togglePanelBtn.addEventListener('click', () => {
+  uiPanel.classList.remove('hidden'); togglePanelBtn.classList.remove('show');
+});
+
+document.getElementById('btnRandom').addEventListener('click', () => {
+  selectPreset(Math.floor(Math.random() * PRESETS.length));
+});
+
+let intervalSpeedrun = null;
+const btnSpeedrun = document.getElementById('btnSpeedrun');
+btnSpeedrun.addEventListener('click', () => {
+  if (intervalSpeedrun) { clearInterval(intervalSpeedrun); intervalSpeedrun = null; btnSpeedrun.classList.remove('active'); }
+  else {
+    intervalSpeedrun = setInterval(() => selectPreset((currentPreset + 1) % PRESETS.length), 500);
+    btnSpeedrun.classList.add('active');
+  }
+});
+
+document.getElementById('btnFull').addEventListener('click', () => {
+  if (!document.fullscreenElement) document.documentElement.requestFullscreen().catch(e => console.log(e));
+  else document.exitFullscreen();
+});
+
+/* ==========================================
+   7. РЕНДЕР 100 РЕЖИМОВ
+   ========================================== */
+const canvas = document.getElementById('visualizer');
+const ctx = canvas.getContext('2d');
+let W, H, CX, CY;
+
+function resize() { W = canvas.width = window.innerWidth; H = canvas.height = window.innerHeight; CX = W / 2; CY = H / 2; }
+window.addEventListener('resize', resize); resize();
+
+const colors = ['#ff0044', '#ff00aa', '#aa00ff', '#5500ff', '#00aaff', '#00ffaa', '#ffaa00', '#ff0055', '#00ff44'];
+const particles = [];
+for(let i=0; i<100; i++) {
+  particles.push({ x: Math.random()*W, y: Math.random()*H, vx: (Math.random()-0.5)*2, vy: (Math.random()-0.5)*2, size: Math.random()*4+1, color: colors[Math.floor(Math.random()*colors.length)] });
+}
+
+function safeArc(x, y, r, start, end) {
+  if (r < 0) r = 0; ctx.arc(x, y, r, start, end);
+}
+
+function draw() {
+  requestAnimationFrame(draw);
+  if (!analyser) { ctx.fillStyle = '#050505'; ctx.fillRect(0, 0, W, H); return; }
+
+  analyser.getByteFrequencyData(freqData);
+  analyser.getByteTimeDomainData(timeData);
+
+  let bass = 0, mid = 0, treble = 0, avg = 0;
+  const len = freqData.length;
+  for (let i = 0; i < len * 0.1; i++) bass += freqData[i]; bass /= (len * 0.1);
+  for (let i = len * 0.1; i < len * 0.4; i++) mid += freqData[i]; mid /= (len * 0.3);
+  for (let i = len * 0.4; i < len; i++) treble += freqData[i]; treble /= (len * 0.6);
+  for (let i = 0; i < len; i++) avg += freqData[i]; avg /= len;
+
+  smoothBass += (bass - smoothBass) * 0.2;
+  smoothMid += (mid - smoothMid) * 0.2;
+  smoothTreble += (treble - smoothTreble) * 0.2;
+  smoothAvg += (avg - smoothAvg) * 0.2;
+
+  ctx.fillStyle = 'rgba(5,5,5,0.3)';
+  ctx.fillRect(0, 0, W, H);
+
+  ctx.save();
+  
+  try {
+    if (currentPreset < 50) {
+      switch(currentPreset) {
+        case 0: ctx.translate(CX, CY); const nb0 = 120, step0 = Math.floor(len / nb0), baseR0 = 100 + smoothBass * 0.5;
+          for (let i = 0; i < nb0; i++) { let val = freqData[i * step0]; if (i > nb0 * 0.6) val *= 1.5; ctx.rotate((Math.PI * 2) / nb0); ctx.strokeStyle = `hsla(${(i / nb0) * 360}, 100%, 60%, ${val / 255 + 0.2})`; ctx.lineWidth = 4; ctx.beginPath(); ctx.moveTo(baseR0, 0); ctx.lineTo(baseR0 + (val / 255) * 250, 0); ctx.stroke(); } break;
+        case 1: ctx.translate(0, CY); ctx.beginPath(); ctx.lineWidth = 3; const wg = ctx.createLinearGradient(0, 0, W, 0); wg.addColorStop(0, '#00d2ff'); wg.addColorStop(0.5, '#00ff88'); wg.addColorStop(1, '#ff3366'); ctx.strokeStyle = wg; ctx.shadowBlur = 15; ctx.shadowColor = '#00ff88'; const sw = W / timeData.length; let x = 0; for (let i = 0; i < timeData.length; i++) { const y = (timeData[i] / 128.0 - 1) * (H * 0.25); if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y); x += sw; } ctx.stroke(); break;
+        case 2: ctx.translate(CX, CY); ctx.beginPath(); ctx.lineWidth = 3 + smoothBass/50; ctx.strokeStyle = '#ff00aa'; ctx.shadowBlur = 20; ctx.shadowColor = '#ff00aa'; let ang2 = 0, rad2 = 10 + smoothAvg; ctx.moveTo(0,0); for(let i=0; i<200; i++) { ang2 += 0.2; const r = rad2 * ang2; ctx.lineTo(Math.cos(ang2 + stateTime) * r, Math.sin(ang2 + stateTime) * r); } ctx.stroke(); break;
+        case 3: ctx.translate(CX, CY); for (let i = 0; i < 30; i++) { ctx.strokeStyle = `hsla(${(i * 12 + stateTime * 100) % 360}, 100%, 50%, ${1 - i/30})`; ctx.lineWidth = 2; ctx.beginPath(); safeArc(0, 0, 50 + i * 20 + (smoothAvg * 2), 0, Math.PI * 2); ctx.stroke(); } break;
+        case 4: ctx.translate(CX, CY); for(let i=0; i<5; i++) { const angle = stateTime * (i+1)*0.5, rad = 100 + i * 50 + smoothBass; ctx.fillStyle = colors[i % colors.length]; ctx.beginPath(); safeArc(Math.cos(angle)*rad, Math.sin(angle)*rad, 10 + smoothMid/20, 0, Math.PI*2); ctx.fill(); ctx.strokeStyle = `rgba(255,255,255,0.1)`; ctx.beginPath(); safeArc(0, 0, rad, 0, Math.PI*2); ctx.stroke(); } break;
+        case 5: const nb5 = 100, bw5 = W / nb5; for (let i = 0; i < nb5; i++) { let val = freqData[i * Math.floor(len/nb5)]; ctx.fillStyle = `hsl(${200 - (i/nb5)*100}, 100%, 50%)`; ctx.fillRect(i * bw5, H - (val / 255) * H * 0.6, bw5 - 2, (val / 255) * H * 0.6); } break;
+        case 6: ctx.translate(CX, CY); for(let i=0; i<10; i++) { const r = Math.max(0, (stateTime * 50 + i * 50) % 400); ctx.strokeStyle = `rgba(0, 255, 255, ${Math.max(0, 1 - (r / 400))})`; ctx.lineWidth = 2 + smoothBass/50; ctx.beginPath(); safeArc(0, 0, r, 0, Math.PI*2); ctx.stroke(); } break;
+        case 7: const nb7 = 60, step7 = Math.floor(len / nb7); for (let i = 0; i < nb7; i++) { let blocks = Math.floor(freqData[i * step7] / 10); for(let j=0; j<blocks; j++) { ctx.fillStyle = j > blocks-3 ? '#fff' : '#00ff00'; ctx.globalAlpha = 1 - (j / blocks) * 0.5; ctx.fillRect(i * (W/nb7) + 2, H - (j * 15) - 10, (W/nb7) - 4, 12); } } ctx.globalAlpha = 1.0; break;
+        case 8: ctx.translate(CX, CY); for(let i=0; i<40; i++) { ctx.rotate((Math.PI*2)/40); ctx.strokeStyle = `hsl(45, 100%, 50%)`; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(50 + freqData[i*5] * 1.5, 0); ctx.stroke(); } break;
+        case 9: ctx.translate(CX, CY); for(let i=0; i<5; i++) { ctx.strokeStyle = colors[i]; ctx.lineWidth = 5 + Math.sin(stateTime*10 + i)*2; ctx.beginPath(); safeArc(0, 0, 50 + i*40 + smoothBass*1.5, 0, Math.PI*2); ctx.stroke(); } break;
+        case 10: ctx.translate(CX, CY); ctx.strokeStyle = '#00d2ff'; ctx.lineWidth = 2; for(let i=0; i<3; i++) { ctx.beginPath(); let x = 0, y = 0; ctx.moveTo(0, 0); for(let j=0; j<10; j++) { x += (Math.random()-0.5) * 50; y += 30 + smoothBass/10; ctx.lineTo(x, y); } ctx.stroke(); } break;
+        case 11: ctx.translate(CX, CY); for(let i=1; i<=10; i++) { const r = i * 20 + smoothBass/5; ctx.strokeStyle = `rgba(255,255,255,0.2)`; ctx.beginPath(); safeArc(0,0,r,0,Math.PI*2); ctx.stroke(); for(let j=0; j<12; j++) { const a = (j/12)*Math.PI*2; ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(Math.cos(a)*r, Math.sin(a)*r); ctx.stroke(); } } break;
+        case 12: const nb12 = 20, bw12 = W / nb12; for (let i = 0; i < nb12; i++) { ctx.fillStyle = `rgba(255, 50, 50, 0.8)`; ctx.fillRect(i * bw12, H - (freqData[i * 3] / 255) * H, bw12 - 5, (freqData[i * 3] / 255) * H); } break;
+        case 13: ctx.translate(CX, CY); for(let i=0; i<8; i++) { const s = 30 + i*20 + smoothBass; ctx.rotate(stateTime * 0.2); ctx.strokeStyle = `hsl(${i*40}, 100%, 60%)`; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(0, -s); ctx.lineTo(s, 0); ctx.lineTo(0, s); ctx.lineTo(-s, 0); ctx.closePath(); ctx.stroke(); } break;
+        case 14: const nb14 = 64, bw14 = W / nb14; for (let i = 0; i < nb14; i++) { ctx.fillStyle = `hsl(${(i/nb14)*360}, 100%, 50%)`; const h = (freqData[i * Math.floor(len/nb14)] / 255) * H * 0.8; ctx.fillRect(i * bw14 + 2, H/2 - h/2, bw14 - 4, h); } break;
+        case 15: ctx.translate(CX, CY); ctx.rotate(stateTime); ctx.beginPath(); ctx.lineWidth = 4; ctx.strokeStyle = '#fff'; ctx.shadowBlur = 20; ctx.shadowColor = '#00d2ff'; for(let i=0; i<5; i++) { const a = (i/5)*Math.PI*2 - Math.PI/2, r = 100 + smoothBass*2; ctx.lineTo(Math.cos(a)*r, Math.sin(a)*r); const a2 = ((i+0.5)/5)*Math.PI*2 - Math.PI/2; ctx.lineTo(Math.cos(a2)*(r*0.4), Math.sin(a2)*(r*0.4)); } ctx.closePath(); ctx.stroke(); break;
+        case 16: ctx.translate(CX, CY); for(let i=0; i<200; i++) { const a = i * 0.1 + stateTime; const r = i * 1.5; ctx.fillStyle = colors[i%colors.length]; ctx.globalAlpha = 1 - (i/200); ctx.beginPath(); safeArc(Math.cos(a)*r, Math.sin(a)*r, 2 + smoothBass/50, 0, Math.PI*2); ctx.fill(); } ctx.globalAlpha = 1.0; break;
+        case 17: ctx.fillStyle = '#8a0303'; for(let i=0; i<20; i++) { const x = (i/20)*W, h = freqData[i*10] * 2; ctx.fillRect(x, H, W/20, -h - smoothBass); } break;
+        case 18: for(let i=0; i<50; i++) { const p = particles[i]; p.y += 1 + smoothBass/50; p.x += Math.sin(stateTime + i)*2; if(p.y > H) p.y = 0; ctx.fillStyle = `rgba(255,255,255,${freqData[i*10]/255})`; ctx.beginPath(); safeArc(p.x, p.y, 2, 0, Math.PI*2); ctx.fill(); } break;
+        case 19: ctx.translate(CX, CY); const rad19 = 100 + smoothBass; const grad19 = ctx.createRadialGradient(0,0,0,0,0,rad19); grad19.addColorStop(0, '#fff'); grad19.addColorStop(1, '#00d2ff'); ctx.fillStyle = grad19; ctx.beginPath(); safeArc(0,0,rad19,0,Math.PI*2); ctx.fill(); break;
+        case 20: ctx.beginPath(); ctx.strokeStyle = '#ff00aa'; ctx.lineWidth = 4; ctx.moveTo(0, CY); for(let i=0; i<W; i+=10) { const val = freqData[Math.floor(i/W * len)] / 255; ctx.lineTo(i, CY - val * 200); } ctx.stroke(); break;
+        case 21: ctx.translate(CX, CY); for(let i=0; i<30; i++) { const y = i * 20 - 300; const x1 = Math.sin(y*0.02 + stateTime)*100; const x2 = Math.cos(y*0.02 + stateTime)*100; ctx.fillStyle = '#00ff88'; ctx.beginPath(); safeArc(x1, y, 5, 0, Math.PI*2); ctx.fill(); ctx.fillStyle = '#ff00aa'; ctx.beginPath(); safeArc(x2, y, 5, 0, Math.PI*2); ctx.fill(); ctx.strokeStyle = 'rgba(255,255,255,0.1)'; ctx.beginPath(); ctx.moveTo(x1,y); ctx.lineTo(x2,y); ctx.stroke(); } break;
+        case 22: ctx.translate(CX, CY); ctx.strokeStyle = '#00ff00'; ctx.lineWidth = 2; ctx.beginPath(); safeArc(0,0,200,0,Math.PI*2); ctx.stroke(); ctx.rotate(stateTime * 2); ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(200,0); ctx.stroke(); break;
+        case 23: ctx.translate(CX, CY); for(let i=5; i>0; i--) { ctx.fillStyle = i%2===0 ? '#ff0000' : '#ffffff'; ctx.beginPath(); safeArc(0,0, i*30 + smoothBass/10, 0, Math.PI*2); ctx.fill(); } break;
+        case 24: const bw24 = W / 7; for(let i=0; i<7; i++) { ctx.fillStyle = `hsl(${i*50}, 100%, 50%)`; ctx.fillRect(i*bw24, H - (freqData[i*20]/255)*H*0.8, bw24, (freqData[i*20]/255)*H*0.8); } break;
+        case 25: const sqSize = 40 + smoothBass/2; for(let x=0; x<W; x+=sqSize) for(let y=0; y<H; y+=sqSize) { if(Math.random() > 0.8) { ctx.fillStyle = colors[Math.floor(Math.random()*colors.length)]; ctx.fillRect(x, y, sqSize-2, sqSize-2); } } break;
+        case 26: ctx.translate(CX, CY); for(let i=0; i<10; i++) { ctx.rotate(Math.PI/5 + stateTime*0.1); ctx.strokeStyle = `hsl(${i*36}, 100%, 50%)`; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(0, -100 - smoothBass); ctx.lineTo(86, 50); ctx.lineTo(-86, 50); ctx.closePath(); ctx.stroke(); } break;
+        case 27: ctx.translate(CX, CY); for(let i=0; i<20; i++) { ctx.strokeStyle = `hsla(${i*15}, 100%, 50%, 0.5)`; ctx.lineWidth = 2; ctx.beginPath(); safeArc(0,0, Math.max(0, 200 - i*10 - smoothBass), 0, Math.PI*2); ctx.stroke(); } break;
+        case 28: ctx.translate(CX, CY); for(let i=0; i<50; i++) { const y = i*10 - 250; const rad = 10 + i*3 + Math.sin(stateTime*5 + i)*20; ctx.fillStyle = '#fff'; ctx.beginPath(); safeArc(Math.cos(stateTime+i)*rad, y, 3, 0, Math.PI*2); ctx.fill(); } break;
+        case 29: ctx.fillStyle = '#ff0000'; ctx.fillRect(0, H - smoothBass*3, W, Math.max(0, smoothBass*3)); break;
+        case 30: ctx.translate(CX, CY); for(let i=0; i<50; i++) { ctx.rotate(Math.PI*2/50); const h = freqData[i*10]/255 * 100; ctx.fillStyle = '#fff'; ctx.fillRect(80, -2, Math.max(0, h), 4); } break;
+        case 31: ctx.fillStyle = '#00ff00'; const charge = (smoothBass / 255) * W; ctx.fillRect(0, CY, Math.max(0, charge), 50); ctx.strokeStyle = '#fff'; ctx.lineWidth = 2; ctx.strokeRect(0, CY, W, 50); break;
+        case 32: ctx.translate(CX, CY); ctx.rotate(stateTime); ctx.strokeStyle = '#aaa'; ctx.lineWidth = 10; for(let i=0; i<12; i++) { ctx.rotate(Math.PI/6); ctx.beginPath(); ctx.moveTo(50,0); ctx.lineTo(80 + smoothBass/5,0); ctx.stroke(); } ctx.beginPath(); safeArc(0,0,50,0,Math.PI*2); ctx.stroke(); break;
+        case 33: ctx.translate(CX, CY); ctx.fillStyle = `rgba(255, 255, 0, ${smoothBass/255})`; ctx.beginPath(); safeArc(0,0, 50 + smoothBass/2, 0, Math.PI*2); ctx.fill(); break;
+        case 34: ctx.fillStyle = '#ff0000'; ctx.fillRect(CX-20, H, 40, -(smoothBass/255 * H)); break;
+        case 35: for(let i=0; i<10; i++) { const val = freqData[i*20]/255; ctx.fillStyle = '#00d2ff'; ctx.fillRect(100 + i*50, CY + 100 - val*200, 20, Math.max(0, val*200)); } break;
+        case 36: ctx.translate(CX, CY); ctx.scale(1 + smoothBass/500, 1 + smoothBass/500); ctx.fillStyle = '#ff0055'; ctx.beginPath(); ctx.moveTo(0, 0); ctx.bezierCurveTo(-50, -50, -100, 50, 0, 100); ctx.bezierCurveTo(100, 50, 50, -50, 0, 0); ctx.fill(); break;
+        case 37: for(let i=0; i<20; i++) { const x = (i/20)*W; const y = H - Math.sin(stateTime*2 + i) * 100 - (freqData[i*10]/255)*200; ctx.fillStyle = colors[i%colors.length]; ctx.beginPath(); safeArc(x, y, 10, 0, Math.PI*2); ctx.fill(); } break;
+        case 38: for(let i=0; i<5; i++) { const h = 50 + i*50; ctx.fillStyle = freqData[i*50] > 100 ? '#00ff00' : '#333'; ctx.fillRect(CX - 100 + i*45, H - h, 30, h); } break;
+        case 39: ctx.strokeStyle = `rgba(255,255,255,${smoothBass/255})`; for(let i=0; i<20; i++) { ctx.beginPath(); ctx.moveTo(i*W/20, 0); ctx.lineTo(i*W/20, H); ctx.stroke(); } for(let i=0; i<20; i++) { ctx.beginPath(); ctx.moveTo(0, i*H/20); ctx.lineTo(W, i*H/20); ctx.stroke(); } break;
+        case 40: ctx.translate(CX, CY); for(let i=0; i<50; i++) { ctx.rotate(0.2); const r = i * 5 + smoothBass; ctx.fillStyle = i%2===0 ? '#000' : '#fff'; ctx.beginPath(); ctx.arc(0,0, Math.max(0, r),0,Math.PI); ctx.fill(); } break;
+        case 41: ctx.translate(CX, CY); for(let i=0; i<360; i+=10) { const a = i * Math.PI/180; ctx.fillStyle = '#00d2ff'; ctx.fillRect(Math.cos(a)*150, Math.sin(a)*150, 5, 5); } break;
+        case 42: for(let i=0; i<30; i++) { ctx.fillStyle = colors[i%colors.length]; ctx.fillRect(Math.random()*W, Math.random()*H, Math.max(0, 20 + smoothBass/10), Math.max(0, 20 + smoothBass/10)); } break;
+        case 43: for(let i=0; i<3; i++) { ctx.fillStyle = colors[i]; ctx.fillRect(CX - 100 + i*70, H - (freqData[i*100]/255)*H, 50, (freqData[i*100]/255)*H); } break;
+        case 44: ctx.fillStyle = '#ff00aa'; ctx.fillRect(0, CY, W/2 * (smoothBass/255), 20); ctx.fillStyle = '#00ff88'; ctx.fillRect(W/2, CY, W/2 * (smoothTreble/255), 20); break;
+        case 45: ctx.translate(CX, CY); ctx.strokeStyle = '#fff'; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(-100, 0); ctx.lineTo(100, 0); ctx.stroke(); ctx.beginPath(); ctx.moveTo(0, -100); ctx.lineTo(0, 100); ctx.stroke(); ctx.fillStyle = '#ff0000'; ctx.beginPath(); safeArc(0,0, smoothBass/2, 0, Math.PI*2); ctx.fill(); break;
+        case 46: ctx.translate(CX, CY); for(let i=0; i<20; i++) { const a = Math.random()*Math.PI*2; const r = Math.random() * smoothBass * 2; ctx.fillStyle = '#fff'; ctx.fillRect(Math.cos(a)*r, Math.sin(a)*r, 5, 5); } break;
+        case 47: ctx.fillStyle = '#ff00aa'; ctx.fillRect(100, CY - (smoothBass/255)*200, 100, (smoothBass/255)*200); ctx.fillStyle = '#00ff88'; ctx.fillRect(W-200, CY - (smoothTreble/255)*200, 100, (smoothTreble/255)*200); break;
+        case 48: ctx.fillStyle = '#00aaff'; ctx.beginPath(); ctx.moveTo(0, H); for(let x=0; x<=W; x+=20) { ctx.lineTo(x, CY + Math.sin(x*0.02 + stateTime*3) * smoothBass); } ctx.lineTo(W, H); ctx.fill(); break;
+        case 49: ctx.fillStyle = `rgba(255, 0, 0, ${smoothAvg/255})`; ctx.beginPath(); for(let x=0; x<=W; x+=10) { ctx.lineTo(x, CY + Math.sin(x*0.05 + stateTime) * 50 + Math.cos(x*0.02 - stateTime) * smoothMid); } ctx.lineTo(W, H); ctx.lineTo(0, H); ctx.fill(); break;
+      }
+    } else {
+      const p = currentPreset - 50;
+      ctx.translate(CX, CY);
+      switch(p % 10) {
+        case 0: for(let i=0; i<20; i++) { ctx.rotate(Math.PI/10 + stateTime*0.5); ctx.strokeStyle = `hsl(${i*18}, 100%, 60%)`; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(0, 100 + smoothBass); ctx.lineTo(0, -100 - smoothMid); ctx.stroke(); } break;
+        case 1: for(let i=0; i<10; i++) { const s = 50 + i*20 + smoothBass/2; const offset = Math.sin(stateTime + i) * 50; ctx.strokeStyle = colors[i%colors.length]; ctx.lineWidth = 2; ctx.strokeRect(-s/2 + offset, -s/2 + offset, s, s); } break;
+        case 2: const step = 40 + smoothAvg; for(let x=-W; x<W; x+=step) for(let y=-H; y<H; y+=step) { ctx.fillStyle = `rgba(255,255,255,${smoothBass/255})`; ctx.beginPath(); ctx.arc(x, y, 2, 0, Math.PI*2); ctx.fill(); } break;
+        case 3: for(let i=0; i<100; i++) { ctx.rotate(Math.PI*2/100); ctx.strokeStyle = `hsla(${i*3.6}, 100%, 50%, 0.5)`; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(0, 200 + smoothBass*2); ctx.stroke(); } break;
+        case 4: ctx.strokeStyle = '#00ff00'; ctx.lineWidth = 4; ctx.beginPath(); for(let x=-W/2; x<W/2; x+=20) { ctx.lineTo(x, Math.sin(x*0.02 + stateTime*5) * (smoothBass + 50)); } ctx.stroke(); break;
+        case 5: for(let i=0; i<200; i++) { const angle = i * 0.1 + stateTime; const r = i * 1.5 + smoothBass; ctx.fillStyle = colors[i%colors.length]; ctx.beginPath(); ctx.arc(Math.cos(angle)*r, Math.sin(angle)*r, 3, 0, Math.PI*2); ctx.fill(); } break;
+        case 6: for(let i=0; i<5; i++) { ctx.rotate(stateTime * 0.5 + i); ctx.strokeStyle = colors[i]; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(0, -150 - smoothBass); ctx.lineTo(130, 75); ctx.lineTo(-130, 75); ctx.closePath(); ctx.stroke(); } break;
+        case 7: const rad = 100 + smoothBass * 2; const grad = ctx.createRadialGradient(0,0,0,0,0,rad); grad.addColorStop(0, '#fff'); grad.addColorStop(0.5, colors[Math.floor(stateTime)%colors.length]); grad.addColorStop(1, 'rgba(0,0,0,0)'); ctx.fillStyle = grad; ctx.beginPath(); ctx.arc(0,0,rad,0,Math.PI*2); ctx.fill(); break;
+        case 8: for(let i=0; i<20; i++) { const angle = (i/20) * Math.PI*2 + stateTime; const r = 150; ctx.fillStyle = colors[i%colors.length]; ctx.beginPath(); ctx.arc(Math.cos(angle)*r, Math.sin(angle)*r, 10 + smoothMid/10, 0, Math.PI*2); ctx.fill(); } break;
+        case 9: for(let i=0; i<10; i++) { ctx.strokeStyle = `hsla(${i*36}, 100%, 50%, 0.5)`; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo((Math.random()-0.5)*W, (Math.random()-0.5)*H); ctx.lineTo((Math.random()-0.5)*W, (Math.random()-0.5)*H); ctx.stroke(); } break;
+      }
+    }
+  } catch(e) { console.warn("Render error caught:", e); }
+  
+  ctx.restore();
+
+  if (flashEnabled && smoothBass > 200) {
+    ctx.fillStyle = `rgba(255, 255, 255, ${(smoothBass - 200) / 55 * 0.3})`;
+    ctx.fillRect(0, 0, W, H);
+  }
+}
+
+draw();
+</script>
+</body>
+</html>
