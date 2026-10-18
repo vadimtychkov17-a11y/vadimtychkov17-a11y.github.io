@@ -3,36 +3,479 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Перенаправление...</title>
-
-<!-- Мгновенный редирект (срабатывает сразу, еще до загрузки страницы) -->
-<meta http-equiv="refresh" content="0; url=https://vadimtychkov17-a11y.github.io/sun-game">
-
-<!-- SEO: говорим поисковикам, что страница переехала -->
-<link rel="canonical" href="https://vadimtychkov17-a11y.github.io/sun-game">
-
+<title>vindim — Проекты</title>
+<link rel="shortcut icon" href="favicon.ico" type="image/x-icon">
 <style>
-  /* Чтобы даже во время микро-задержки экран был пустым (белым или черным) */
-  body {
-    margin: 0;
-    padding: 0;
-    background-color: #000; /* Черный фон, как в игре */
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  
+  body, html {
+    width: 100%; min-height: 100vh;
+    background: transparent;
     color: #fff;
-    height: 100vh;
+    font-family: -apple-system, 'Segoe UI', Roboto, sans-serif;
+    overflow-x: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* Звёздный канвас */
+  #starfield {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    z-index: 0;
+    pointer-events: none;
+    background-color: #0a0a0f;
+  }
+
+  /* Градиентные пятна */
+  .glow-bg {
+    position: fixed; inset: 0;
+    z-index: 1;
+    pointer-events: none;
+    background: 
+      radial-gradient(circle at 15% 50%, rgba(124, 58, 237, 0.12), transparent 45%),
+      radial-gradient(circle at 85% 30%, rgba(236, 72, 153, 0.08), transparent 45%);
+    animation: bgPulse 15s infinite alternate ease-in-out; /* Замедлил */
+  }
+
+  @keyframes bgPulse {
+    0% { opacity: 0.8; transform: scale(1); }
+    100% { opacity: 1; transform: scale(1.02); }
+  }
+
+  /* Контент поверх фона */
+  .header, .projects-container, .btn-info {
+    position: relative;
+    z-index: 10;
+  }
+
+  /* ===== ШАПКА ===== */
+  .header {
+    text-align: center;
+    padding: 60px 20px 40px;
+  }
+
+  .logo {
+    font-family: 'Segoe Script', 'Brush Script MT', cursive;
+    font-size: clamp(50px, 10vw, 90px);
+    color: #e8d5ff;
+    text-shadow: 
+      0 0 20px rgba(180, 100, 255, 0.6),
+      0 0 50px rgba(140, 60, 220, 0.4);
+    letter-spacing: 2px;
+    margin-bottom: 12px;
+    /* Замедлил анимацию логотипа */
+    animation: logoFloat 12s ease-in-out infinite, fadeInDown 1.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+
+  @keyframes logoFloat {
+    0%, 100% { transform: translateY(0) scale(1); }
+    50% { transform: translateY(-8px) scale(1.01); }
+  }
+
+  .subtitle {
+    font-size: clamp(14px, 2vw, 18px);
+    color: rgba(255,255,255,0.6);
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    animation: fadeIn 1.5s ease;
+  }
+
+  /* ===== СЕТКА ПРОЕКТОВ ===== */
+  .projects-container {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: stretch;
+    padding: 20px 40px 100px;
+    max-width: 1100px;
+    margin: 0 auto;
+    width: 100%;
+    gap: 40px;
+    flex-wrap: wrap;
+    animation: fadeInUp 1.2s cubic-bezier(0.2, 0.8, 0.2, 1) 0.3s both;
+  }
+
+  /* Карточка проекта */
+  .project-card {
+    background: rgba(30, 30, 40, 0.5);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 28px;
+    width: 100%;
+    max-width: 480px;
+    display: flex;
+    flex-direction: column;
+    /* Сделал переход плавнее и медленнее */
+    transition: all 0.8s cubic-bezier(0.2, 0.8, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+  }
+
+  /* Убрал резкий блик, оставил легкое изменение прозрачности фона при наведении */
+  .project-card:hover {
+    transform: translateY(-8px) scale(1.01); /* Чуть меньше сдвиг */
+    border-color: rgba(0, 200, 100, 0.3);
+    background: rgba(40, 40, 55, 0.65);
+    box-shadow: 
+      0 20px 40px rgba(0,0,0,0.6),
+      0 0 40px rgba(0, 200, 100, 0.1);
+  }
+
+  .project-cover {
+    width: 100%;
+    height: 240px;
+    object-fit: cover;
+    object-position: center;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+    background-color: #111;
+    /* Медленный зум картинки */
+    transition: transform 1.5s cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+
+  .project-card:hover .project-cover {
+    transform: scale(1.03);
+  }
+
+  .project-content {
+    padding: 30px;
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+  }
+
+  .project-title {
+    font-size: 26px;
+    font-weight: 800;
+    margin-bottom: 12px;
+    color: #fff;
+    letter-spacing: 0.5px;
+  }
+
+  .project-desc {
+    font-size: 16px;
+    color: rgba(255,255,255,0.7);
+    line-height: 1.6;
+    margin-bottom: 30px;
+    flex: 1;
+  }
+
+  /* ===== ТЁМНАЯ ЗЕЛЁНАЯ КНОПКА ===== */
+  .btn-play {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 18px 40px;
+    font-size: 16px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: #fff; /* Вернул белый текст для темной кнопки */
+    text-decoration: none;
+    /* Тёмно-зелёный градиент */
+    background: linear-gradient(135deg, #0f5c3c, #0d7a4b);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 16px;
+    transition: all 0.5s cubic-bezier(0.2, 0.8, 0.2, 1);
+    box-shadow: 
+      0 8px 20px rgba(0, 0, 0, 0.4),
+      inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  }
+
+  .btn-play:hover {
+    transform: translateY(-3px);
+    /* При наведении становится чуть светлее */
+    background: linear-gradient(135deg, #147a50, #10a363);
+    box-shadow: 
+      0 12px 25px rgba(0, 0, 0, 0.5),
+      0 0 30px rgba(16, 163, 99, 0.2),
+      inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  }
+
+  .btn-play:active {
+    transform: translateY(1px) scale(0.99);
+  }
+
+  /* ===== КНОПКА ИНФО ===== */
+  .btn-info {
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    width: 50px;
+    height: 50px;
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.25);
+    border-radius: 50%;
+    color: rgba(255,255,255,0.8);
+    font-size: 24px;
+    font-family: 'Times New Roman', serif;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-family: sans-serif;
-    overflow: hidden;
+    cursor: pointer;
+    transition: all 0.5s cubic-bezier(0.2, 0.8, 0.2, 1);
+    backdrop-filter: blur(10px);
+  }
+
+  .btn-info:hover {
+    background: rgba(255,255,255,0.15);
+    color: #fff;
+    border-color: rgba(255,255,255,0.4);
+    transform: scale(1.1) rotate(5deg);
+  }
+
+  /* ===== МОДАЛЬНОЕ ОКНО ===== */
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.8);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    z-index: 100;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.5s ease;
+  }
+
+  .modal-overlay.active {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .modal {
+    background: #1a1a22;
+    border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 24px;
+    padding: 40px;
+    max-width: 500px;
+    width: 100%;
+    transform: scale(0.95) translateY(20px);
+    transition: all 0.6s cubic-bezier(0.2, 0.8, 0.2, 1);
+    box-shadow: 0 20px 60px rgba(0,0,0,0.8);
+  }
+
+  .modal-overlay.active .modal {
+    transform: scale(1) translateY(0);
+  }
+
+  .modal h2 {
+    font-size: 24px;
+    margin-bottom: 20px;
+    color: #e8d5ff;
+  }
+
+  .modal p {
+    font-size: 15px;
+    color: rgba(255,255,255,0.8);
+    line-height: 1.6;
+    margin-bottom: 16px;
+  }
+
+  .modal ul {
+    margin-left: 20px;
+    margin-bottom: 24px;
+    color: rgba(255,255,255,0.7);
+    line-height: 1.6;
+  }
+
+  .btn-close {
+    width: 100%;
+    padding: 16px;
+    background: rgba(255,255,255,0.1);
+    border: none;
+    border-radius: 12px;
+    color: #fff;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+  }
+
+  .btn-close:hover { 
+    background: rgba(255,255,255,0.2); 
+  }
+
+  /* ===== АНИМАЦИИ ===== */
+  @keyframes fadeInDown {
+    from { opacity: 0; transform: translateY(-30px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(30px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+
+  @media (max-width: 768px) {
+    .projects-container { padding: 20px 20px 100px; gap: 20px; }
+    .project-card { max-width: 100%; }
+    .project-cover { height: 200px; }
+    .project-content { padding: 24px; }
+    .btn-info { bottom: 20px; right: 20px; width: 44px; height: 44px; font-size: 20px; }
+    .modal { padding: 30px 24px; }
   }
 </style>
-
-<script>
-  // Дублируем редирект через JS (на случай, если meta refresh заблокирован)
-  window.location.replace("https://vadimtychkov17-a11y.github.io/sun-game");
-</script>
 </head>
 <body>
-  <!-- Тело страницы оставляем пустым, как ты и просил -->
+
+  <!-- Звёздный фон на Canvas -->
+  <canvas id="starfield"></canvas>
+  <div class="glow-bg"></div>
+
+  <!-- Шапка -->
+  <header class="header">
+    <div class="logo">vindim</div>
+    <div class="subtitle">Проекты</div>
+  </header>
+
+  <!-- Сетка проектов -->
+  <main class="projects-container">
+    
+    <!-- Карточка 1 -->
+    <div class="project-card">
+      <img src="cover1.PNG" alt="Уничтожение солнца" class="project-cover" onerror="this.style.display='none'">
+      <div class="project-content">
+        <h1 class="project-title">Уничтожение солнца</h1>
+        <p class="project-desc">Там есть баг когда прыгаешь пушка снова запускается, не прыгай!</p>
+        <a href="https://vadimtychkov17-a11y.github.io/sun-game/" class="btn-play">Играть</a>
+      </div>
+    </div>
+
+    <!-- Карточка 2 -->
+    <div class="project-card">
+      <img src="cover2.PNG" alt="Аудио визуализатор" class="project-cover" onerror="this.style.display='none'">
+      <div class="project-content">
+        <h1 class="project-title">Аудио визуализатор</h1>
+        <p class="project-desc">Есть баги не злись</p>
+        <a href="https://vadimtychkov17-a11y.github.io/visualizer/" class="btn-play">Играть</a>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- Кнопка Инфо -->
+  <button class="btn-info" id="infoBtn">ℹ</button>
+
+  <!-- Модальное окно -->
+  <div class="modal-overlay" id="infoModal">
+    <div class="modal">
+      <h2>О проектах</h2>
+      <p>Добро пожаловать в лаунчер проектов от <strong>vindim</strong>. Здесь собраны лучшие (и не очень) эксперименты.</p>
+      
+      <ul>
+        <li><strong>Все проекты</strong> созданы ИИ (искусственным интеллектом).</li>
+        <li><strong>Vindim</strong> — это выдуманная корпорация. Её не существует в реальном мире.</li>
+        <li>Если ты нашел баг — это не баг, а фича! 😉</li>
+      </ul>
+
+      <p style="font-size: 13px; color: rgba(255,255,255,0.5);">Версия лаунчера: 1.0.2</p>
+      
+      <button class="btn-close" id="closeModalBtn">Закрыть</button>
+    </div>
+  </div>
+
+  <script>
+    // ===== ГЕНЕРАТОР ЗВЁЗД =====
+    const canvas = document.getElementById('starfield');
+    const ctx = canvas.getContext('2d');
+    let W, H;
+    let stars = [];
+    let targetMouseX = 0, targetMouseY = 0;
+    let currentMouseX = 0, currentMouseY = 0;
+
+    function resize() {
+      W = canvas.width = window.innerWidth;
+      H = canvas.height = window.innerHeight;
+      initStars();
+    }
+
+    function initStars() {
+      stars = [];
+      const numStars = 300;
+      for (let i = 0; i < numStars; i++) {
+        stars.push({
+          x: Math.random() * W,
+          y: Math.random() * H,
+          size: Math.random() * 1.5 + 0.5,
+          baseAlpha: Math.random() * 0.6 + 0.3,
+          twinkleSpeed: Math.random() * 0.01 + 0.005, // Замедлил мерцание
+          phase: Math.random() * Math.PI * 2,
+          depth: Math.random() * 0.8 + 0.2
+        });
+      }
+    }
+
+    function drawStars(time) {
+      ctx.clearRect(0, 0, W, H);
+      
+      // Замедлил сглаживание движения (было 0.05, стало 0.02)
+      currentMouseX += (targetMouseX - currentMouseX) * 0.02;
+      currentMouseY += (targetMouseY - currentMouseY) * 0.02;
+
+      stars.forEach(star => {
+        const twinkle = Math.sin(time * star.twinkleSpeed + star.phase);
+        const alpha = star.baseAlpha + twinkle * 0.3;
+        
+        // Замедлил параллакс (было 0.03, стало 0.01)
+        const offsetX = (currentMouseX - W / 2) * star.depth * 0.01;
+        const offsetY = (currentMouseY - H / 2) * star.depth * 0.01;
+
+        ctx.fillStyle = `rgba(255, 255, 255, ${Math.max(0, alpha)})`;
+        ctx.beginPath();
+        ctx.arc(star.x + offsetX, star.y + offsetY, star.size, 0, Math.PI * 2);
+        ctx.fill();
+      });
+    }
+
+    let startTime = performance.now();
+    function animateStars(time) {
+      drawStars(time - startTime);
+      requestAnimationFrame(animateStars);
+    }
+
+    window.addEventListener('resize', resize);
+    window.addEventListener('mousemove', (e) => {
+      targetMouseX = e.clientX;
+      targetMouseY = e.clientY;
+    });
+
+    resize();
+    requestAnimationFrame(animateStars);
+
+    // ===== ЛОГИКА МОДАЛЬНОГО ОКНА =====
+    const infoBtn = document.getElementById('infoBtn');
+    const infoModal = document.getElementById('infoModal');
+    const closeModalBtn = document.getElementById('closeModalBtn');
+
+    infoBtn.addEventListener('click', () => {
+      infoModal.classList.add('active');
+    });
+
+    closeModalBtn.addEventListener('click', () => {
+      infoModal.classList.remove('active');
+    });
+
+    infoModal.addEventListener('click', (e) => {
+      if (e.target === infoModal) {
+        infoModal.classList.remove('active');
+      }
+    });
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && infoModal.classList.contains('active')) {
+        infoModal.classList.remove('active');
+      }
+    });
+  </script>
 </body>
 </html>
