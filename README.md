@@ -80,12 +80,12 @@
 
 ```text
 vadimtychkov17-a11y.github.io/
-├── index.html             # Главный лаунчер проектов
-├── cover1.PNG             # Обложка "Уничтожение солнца"
-├── cover2.PNG             # Обложка "Аудио визуализатор"
-├── cover3.PNG             # Обложка "VinClick"
-├── logo.png               # Логотип vindim (если добавишь)
-├── favicon.ico            # Иконка сайта
-├── sun-game/              # Исходники 3D-фильма
-├── visualizer/            # Исходники визуализатора
-└── clicker/               # Исходники кликера
+├── index.html
+├── cover1.PNG
+├── cover2.PNG
+├── cover3.PNG
+├── logo.png
+├── favicon.ico
+├── sun-game/
+├── visualizer/
+└── clicker/
