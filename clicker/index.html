@@ -1,0 +1,627 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>vindim — Clicker</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  
+  body, html {
+    width: 100%; height: 100%;
+    background: #050510;
+    overflow: hidden;
+    font-family: 'Inter', -apple-system, sans-serif;
+    color: #fff;
+    user-select: none;
+    touch-action: none;
+  }
+
+  /* ===== ЗАСТАВКА VINDIM ===== */
+  #splash {
+    position: fixed; inset: 0; z-index: 9999; background: #050510;
+    display: flex; align-items: center; justify-content: center;
+    transition: opacity 1s ease;
+  }
+  #splash.hidden { opacity: 0; pointer-events: none; }
+  .splash-logo {
+    font-family: 'Segoe Script', 'Brush Script MT', cursive;
+    font-size: clamp(60px, 15vw, 150px);
+    color: #e8d5ff;
+    text-shadow: 0 0 30px rgba(180, 100, 255, 0.8), 0 0 80px rgba(140, 60, 220, 0.6);
+    animation: logoAnim 3s ease forwards;
+  }
+  @keyframes logoAnim {
+    0% { opacity: 0; transform: scale(0.9); filter: blur(10px); }
+    20% { opacity: 1; transform: scale(1); filter: blur(0); }
+    80% { opacity: 1; }
+    100% { opacity: 0; transform: scale(1.05); }
+  }
+
+  /* ===== ОСНОВНОЙ ФОН (Свечение) ===== */
+  .bg-glow {
+    position: absolute; inset: 0; z-index: 0; pointer-events: none;
+    background: 
+      radial-gradient(circle at 20% 30%, rgba(0, 150, 255, 0.15) 0%, transparent 50%),
+      radial-gradient(circle at 80% 70%, rgba(180, 0, 255, 0.15) 0%, transparent 50%);
+    filter: blur(40px);
+  }
+
+  /* ===== ИНТЕРФЕЙС ===== */
+  .game-container {
+    position: relative; z-index: 1;
+    width: 100%; height: 100%;
+    display: grid;
+    grid-template-columns: 350px 1fr 350px;
+    gap: 20px;
+    padding: 20px;
+    max-width: 1600px;
+    margin: 0 auto;
+  }
+
+  /* Стеклянные панели (Liquid Glass) */
+  .glass-panel {
+    background: rgba(20, 20, 30, 0.6);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 28px;
+    box-shadow: 
+      0 20px 40px rgba(0, 0, 0, 0.4),
+      inset 0 1px 0 rgba(255, 255, 255, 0.15);
+    display: flex;
+    flex-direction: column;
+    padding: 20px;
+    overflow: hidden;
+  }
+
+  /* --- ЦЕНТР (Кликер) --- */
+  .center-panel {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+  }
+
+  .score-display {
+    text-align: center;
+    margin-bottom: 30px;
+    text-shadow: 0 0 20px rgba(0, 255, 255, 0.5);
+  }
+  .score-value {
+    font-size: clamp(40px, 6vw, 72px);
+    font-weight: 900;
+    color: #fff;
+    line-height: 1;
+    letter-spacing: -1px;
+  }
+  .score-label { font-size: 14px; text-transform: uppercase; color: rgba(255,255,255,0.6); letter-spacing: 2px; margin-top: 8px; }
+  .income-display { font-size: 18px; color: #00ff88; margin-top: 10px; font-weight: 600; }
+
+  /* Главная кнопка */
+  .main-btn {
+    width: 240px; height: 240px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, rgba(0, 255, 255, 0.2), rgba(124, 58, 237, 0.2));
+    border: 2px solid rgba(0, 255, 255, 0.5);
+    box-shadow: 
+      0 0 40px rgba(0, 255, 255, 0.3),
+      inset 0 0 40px rgba(0, 255, 255, 0.2);
+    cursor: pointer;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    transition: transform 0.1s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.1s;
+    position: relative;
+  }
+  .main-btn:active { transform: scale(0.92); box-shadow: 0 0 80px rgba(0, 255, 255, 0.6), inset 0 0 60px rgba(0, 255, 255, 0.4); }
+  .main-btn svg { width: 80px; height: 80px; fill: #fff; filter: drop-shadow(0 0 10px rgba(255,255,255,0.5)); }
+  .main-btn .btn-text { font-size: 16px; font-weight: bold; margin-top: 10px; letter-spacing: 2px; color: rgba(255,255,255,0.8); }
+
+  /* Летящие цифры */
+  .floating-text {
+    position: absolute;
+    font-size: 28px; font-weight: 900;
+    color: #00ffff;
+    text-shadow: 0 0 10px rgba(0,255,255,0.8);
+    pointer-events: none;
+    animation: floatUp 1s ease-out forwards;
+    z-index: 100;
+  }
+  @keyframes floatUp {
+    0% { opacity: 1; transform: translateY(0) scale(1); }
+    100% { opacity: 0; transform: translateY(-100px) scale(1.5); }
+  }
+
+  /* --- ЛЕВАЯ ПАНЕЛЬ (Магазин) --- */
+  .panel-title {
+    font-size: 20px; font-weight: 700;
+    margin-bottom: 15px; padding-bottom: 10px;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+    display: flex; justify-content: space-between; align-items: center;
+  }
+
+  .shop-list {
+    flex: 1; overflow-y: auto; padding-right: 10px;
+    display: flex; flex-direction: column; gap: 10px;
+  }
+  .shop-list::-webkit-scrollbar { width: 6px; }
+  .shop-list::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 3px; }
+
+  .shop-item {
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 16px;
+    padding: 12px 16px;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex; align-items: center; gap: 15px;
+  }
+  .shop-item:hover { background: rgba(255,255,255,0.1); transform: translateX(5px); }
+  .shop-item.disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+  
+  .shop-icon { font-size: 28px; }
+  .shop-info { flex: 1; }
+  .shop-name { font-size: 15px; font-weight: 600; }
+  .shop-cost { font-size: 13px; color: #ffdd00; margin-top: 2px; }
+  .shop-count { font-size: 20px; font-weight: 900; color: rgba(255,255,255,0.2); }
+
+  /* --- ПРАВАЯ ПАНЕЛЬ (Достижения / Престиж) --- */
+  .prestige-btn {
+    width: 100%; padding: 15px;
+    background: linear-gradient(135deg, #aa00ff, #5500ff);
+    border: none; border-radius: 16px;
+    color: #fff; font-size: 16px; font-weight: bold;
+    cursor: pointer; margin-bottom: 15px;
+    box-shadow: 0 0 20px rgba(170, 0, 255, 0.4);
+    transition: all 0.3s;
+    display: none; /* Появится позже */
+  }
+  .prestige-btn:hover { box-shadow: 0 0 40px rgba(170, 0, 255, 0.8); transform: scale(1.02); }
+  .prestige-btn.show { display: block; }
+
+  .achievements-list {
+    flex: 1; overflow-y: auto; padding-right: 10px;
+    display: flex; flex-direction: column; gap: 8px;
+  }
+  .achievement {
+    background: rgba(0,0,0,0.2);
+    border-left: 3px solid #555;
+    padding: 10px 12px;
+    border-radius: 8px;
+    font-size: 13px; color: rgba(255,255,255,0.5);
+    transition: all 0.3s;
+  }
+  .achievement.unlocked {
+    border-left-color: #00ff88;
+    color: #fff;
+    background: rgba(0, 255, 136, 0.1);
+  }
+
+  /* ===== ЗОЛОТАЯ КНОПКА (Golden Cookie) ===== */
+  #goldenCookie {
+    position: absolute;
+    width: 60px; height: 60px;
+    background: radial-gradient(circle, #ffdd00, #ff8800);
+    border-radius: 50%;
+    box-shadow: 0 0 30px #ffdd00, 0 0 60px #ffaa00;
+    display: none; /* Скрыта */
+    cursor: pointer;
+    z-index: 999;
+    animation: pulseCookie 1s infinite alternate, spinCookie 10s linear infinite;
+  }
+  #goldenCookie.show { display: block; }
+  @keyframes pulseCookie { 0% { transform: scale(1); } 100% { transform: scale(1.2); } }
+  @keyframes spinCookie { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+  /* Буфф (x7) */
+  #buffIndicator {
+    position: absolute; top: 20px; left: 50%; transform: translateX(-50%);
+    background: rgba(255, 200, 0, 0.2); border: 1px solid #ffdd00;
+    padding: 8px 20px; border-radius: 20px;
+    color: #ffdd00; font-weight: bold; font-size: 18px;
+    display: none; z-index: 100;
+    animation: flashBuff 0.5s infinite alternate;
+  }
+  @keyframes flashBuff { 0% { opacity: 0.7; } 100% { opacity: 1; } }
+
+  /* Адаптив */
+  @media (max-width: 1000px) {
+    .game-container { grid-template-columns: 1fr; grid-template-rows: auto 1fr auto; overflow-y: auto; }
+    .glass-panel { min-height: 250px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ЗАСТАВКА -->
+<div id="splash">
+  <div class="splash-logo">vindim</div>
+</div>
+
+<div class="bg-glow"></div>
+
+<!-- ИНДИКАТОР БУФФА -->
+<div id="buffIndicator">🔥 x7 ДОХОД! 🔥</div>
+
+<!-- ЗОЛОТАЯ КНОПКА -->
+<div id="goldenCookie"></div>
+
+<div class="game-container">
+  
+  <!-- ЛЕВАЯ ПАНЕЛЬ: МАГАЗИН -->
+  <div class="glass-panel">
+    <div class="panel-title">
+      Магазин
+      <span style="font-size: 12px; color: rgba(255,255,255,0.4);">Улучшения</span>
+    </div>
+    <div class="shop-list" id="shopList">
+      <!-- Генерируется через JS -->
+    </div>
+  </div>
+
+  <!-- ЦЕНТР: КЛИКЕР -->
+  <div class="glass-panel center-panel">
+    <div class="score-display">
+      <div class="score-value" id="scoreValue">0</div>
+      <div class="score-label">Очков</div>
+      <div class="income-display" id="incomeValue">0/сек</div>
+    </div>
+
+    <button class="main-btn" id="mainButton">
+      <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm0-14c-3.31 0-6 2.69-6 6s2.69 6 6 6 6-2.69 6-6-2.69-6-6-6zm0 10c-2.21 0-4-1.79-4-4s1.79-4 4-4 4 1.79 4 4-1.79 4-4 4z"/></svg>
+      <div class="btn-text">КЛИК</div>
+    </button>
+  </div>
+
+  <!-- ПРАВАЯ ПАНЕЛЬ: ПРЕСТИЖ И ДОСТИЖЕНИЯ -->
+  <div class="glass-panel">
+    <div class="panel-title">Прогресс</div>
+    
+    <!-- Кнопка Престижа -->
+    <button class="prestige-btn" id="prestigeBtn">ПЕРЕРОЖДЕНИЕ (+0)</button>
+
+    <div class="achievements-list" id="achievementsList">
+      <!-- Генерируется через JS -->
+    </div>
+  </div>
+
+</div>
+
+<script>
+/* ==========================================
+   1. АУДИО (Синтез звука клика)
+   ========================================== */
+let audioCtx = null;
+function playClickSound() {
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+  osc.type = 'sine';
+  osc.frequency.setValueAtTime(600 + Math.random() * 200, audioCtx.currentTime);
+  osc.frequency.exponentialRampToValueAtTime(300, audioCtx.currentTime + 0.1);
+  gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+  gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.1);
+  osc.connect(gain);
+  gain.connect(audioCtx.destination);
+  osc.start();
+  osc.stop(audioCtx.currentTime + 0.1);
+}
+
+function playBuySound() {
+  if (!audioCtx) return;
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+  osc.type = 'triangle';
+  osc.frequency.setValueAtTime(400, audioCtx.currentTime);
+  osc.frequency.linearRampToValueAtTime(800, audioCtx.currentTime + 0.1);
+  gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+  gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.2);
+  osc.connect(gain);
+  gain.connect(audioCtx.destination);
+  osc.start();
+  osc.stop(audioCtx.currentTime + 0.2);
+}
+
+/* ==========================================
+   2. ИГРОВЫЕ ДАННЫЕ
+   ========================================== */
+let score = 0;
+let totalScore = 0;
+let clickPower = 1;
+let autoPower = 0;
+let prestigeMultiplier = 1;
+let prestigePoints = 0;
+
+// Буфф
+let buffMultiplier = 1;
+let buffTimer = 0;
+
+// Апгрейды
+const upgrades = [
+  { id: 'cursor', name: 'Курсор', icon: '👆', baseCost: 10, costMult: 1.15, type: 'click', value: 1, count: 0 },
+  { id: 'robot', name: 'Робот-Кликер', icon: '🤖', baseCost: 100, costMult: 1.15, type: 'auto', value: 1, count: 0 },
+  { id: 'factory', name: 'Фабрика', icon: '🏭', baseCost: 1000, costMult: 1.15, type: 'auto', value: 5, count: 0 },
+  { id: 'mine', name: 'Шахта', icon: '⛏️', baseCost: 5000, costMult: 1.15, type: 'auto', value: 20, count: 0 },
+  { id: 'bank', name: 'Банк', icon: '🏦', baseCost: 50000, costMult: 1.15, type: 'auto', value: 100, count: 0 },
+  { id: 'temple', name: 'Храм', icon: '🏛️', baseCost: 500000, costMult: 1.15, type: 'auto', value: 500, count: 0 },
+  { id: 'space', name: 'Космостанция', icon: '🚀', baseCost: 1000000, costMult: 1.15, type: 'auto', value: 2000, count: 0 }
+];
+
+// Достижения
+const achievementsList = [
+  { id: 'first_click', name: 'Первый клик', desc: 'Сделай 1 клик', unlocked: false, check: () => totalScore >= 1 },
+  { id: 'hundred', name: 'Сотня', desc: 'Накопи 100 очков', unlocked: false, check: () => totalScore >= 100 },
+  { id: 'first_buy', name: 'Шопоголик', desc: 'Купи первое улучшение', unlocked: false, check: () => upgrades.some(u => u.count > 0) },
+  { id: 'million', name: 'Миллионер', desc: 'Накопи 1,000,000 очков', unlocked: false, check: () => totalScore >= 1e6 },
+  { id: 'billion', name: 'Миллиардер', desc: 'Накопи 1,000,000,000 очков', unlocked: false, check: () => totalScore >= 1e9 },
+  { id: 'golden', name: 'Золотая лихорадка', desc: 'Поймай золотую кнопку', unlocked: false, check: () => hasCaughtGolden },
+  { id: 'prestige', name: 'Новая жизнь', desc: 'Сделай перерождение', unlocked: false, check: () => prestigePoints > 0 }
+];
+let hasCaughtGolden = false;
+
+/* ==========================================
+   3. ФОРМАТИРОВАНИЕ ЧИСЕЛ
+   ========================================== */
+function formatNumber(num) {
+  if (num < 1000) return Math.floor(num).toString();
+  const suffixes = ['', 'K', 'M', 'B', 'T', 'Qa', 'Qi', 'Sx', 'Sp', 'Oc', 'No', 'Dc'];
+  const tier = Math.floor(Math.log10(Math.abs(num)) / 3);
+  if (tier === 0) return num.toString();
+  const suffix = suffixes[tier];
+  const scale = Math.pow(10, tier * 3);
+  const scaled = num / scale;
+  return scaled.toFixed(2) + suffix;
+}
+
+/* ==========================================
+   4. РЕНДЕР ИНТЕРФЕЙСА
+   ========================================== */
+const scoreEl = document.getElementById('scoreValue');
+const incomeEl = document.getElementById('incomeValue');
+const shopListEl = document.getElementById('shopList');
+const achListEl = document.getElementById('achievementsList');
+const prestigeBtn = document.getElementById('prestigeBtn');
+const buffEl = document.getElementById('buffIndicator');
+
+function updateUI() {
+  // Очки
+  scoreEl.textContent = formatNumber(score);
+  
+  // Доход в секунду
+  let currentAuto = autoPower * prestigeMultiplier;
+  if (buffTimer > 0) currentAuto *= buffMultiplier;
+  incomeEl.textContent = formatNumber(currentAuto) + '/сек';
+  
+  // Магазин
+  shopListEl.innerHTML = '';
+  upgrades.forEach((up, index) => {
+    const currentCost = Math.floor(up.baseCost * Math.pow(up.costMult, up.count));
+    const canAfford = score >= currentCost;
+    
+    const div = document.createElement('div');
+    div.className = `shop-item ${canAfford ? '' : 'disabled'}`;
+    div.innerHTML = `
+      <div class="shop-icon">${up.icon}</div>
+      <div class="shop-info">
+        <div class="shop-name">${up.name}</div>
+        <div class="shop-cost">${formatNumber(currentCost)} очков</div>
+      </div>
+      <div class="shop-count">${up.count}</div>
+    `;
+    if (canAfford) div.onclick = () => buyUpgrade(index);
+    shopListEl.appendChild(div);
+  });
+
+  // Достижения
+  achListEl.innerHTML = '';
+  achievementsList.forEach(ach => {
+    // Проверка
+    if (!ach.unlocked && ach.check()) {
+      ach.unlocked = true;
+      playBuySound(); // Звук ачивки
+    }
+    const div = document.createElement('div');
+    div.className = `achievement ${ach.unlocked ? 'unlocked' : ''}`;
+    div.innerHTML = `<b>${ach.name}</b><br>${ach.desc}`;
+    achListEl.appendChild(div);
+  });
+
+  // Престиж
+  const possiblePoints = Math.floor(Math.sqrt(totalScore / 1000000));
+  if (possiblePoints > prestigePoints) {
+    prestigeBtn.classList.add('show');
+    prestigeBtn.textContent = `ПЕРЕРОЖДЕНИЕ (+${possiblePoints - prestigePoints}%)`;
+  } else {
+    prestigeBtn.classList.remove('show');
+  }
+
+  // Буфф
+  if (buffTimer > 0) {
+    buffEl.style.display = 'block';
+    buffEl.textContent = `🔥 x7 ДОХОД! (${Math.ceil(buffTimer)}с) 🔥`;
+  } else {
+    buffEl.style.display = 'none';
+  }
+}
+
+/* ==========================================
+   5. ЛОГИКА
+   ========================================== */
+function clickMainButton(e) {
+  const multiplier = buffTimer > 0 ? buffMultiplier : 1;
+  let earned = clickPower * prestigeMultiplier * multiplier;
+  
+  score += earned;
+  totalScore += earned;
+  
+  playClickSound();
+  
+  // Спавн летящей цифры
+  const rect = e.currentTarget.getBoundingClientRect();
+  const floatEl = document.createElement('div');
+  floatEl.className = 'floating-text';
+  floatEl.textContent = `+${formatNumber(earned)}`;
+  // Позиция относительно окна
+  floatEl.style.left = `${e.clientX}px`;
+  floatEl.style.top = `${e.clientY}px`;
+  document.body.appendChild(floatEl);
+  
+  setTimeout(() => floatEl.remove(), 1000);
+  
+  updateUI();
+}
+
+function buyUpgrade(index) {
+  const up = upgrades[index];
+  const cost = Math.floor(up.baseCost * Math.pow(up.costMult, up.count));
+  
+  if (score >= cost) {
+    score -= cost;
+    up.count++;
+    
+    if (up.type === 'click') clickPower += up.value;
+    if (up.type === 'auto') autoPower += up.value;
+    
+    playBuySound();
+    updateUI();
+  }
+}
+
+// Игровой цикл (тик каждую секунду)
+setInterval(() => {
+  if (buffTimer > 0) buffTimer--;
+  
+  let multiplier = buffTimer > 0 ? buffMultiplier : 1;
+  let earned = autoPower * prestigeMultiplier * multiplier;
+  
+  score += earned;
+  totalScore += earned;
+  
+  updateUI();
+}, 1000);
+
+/* ==========================================
+   6. ЗОЛОТАЯ КНОПКА (Переменное вознаграждение)
+   ========================================== */
+const goldenBtn = document.getElementById('goldenCookie');
+
+function spawnGoldenCookie() {
+  if (buffTimer > 0) return; // Не спавним во время буффа
+  
+  // Случайная позиция (в пределах окна)
+  const x = Math.random() * (window.innerWidth - 100);
+  const y = Math.random() * (window.innerHeight - 100);
+  
+  goldenBtn.style.left = `${x}px`;
+  goldenBtn.style.top = `${y}px`;
+  goldenBtn.classList.add('show');
+  
+  // Исчезает через 10 секунд, если не кликнуть
+  const timeout = setTimeout(() => {
+    goldenBtn.classList.remove('show');
+  }, 10000);
+  
+  goldenBtn.onclick = () => {
+    clearTimeout(timeout);
+    goldenBtn.classList.remove('show');
+    
+    // Активация буффа (15 секунд)
+    buffMultiplier = 7;
+    buffTimer = 15;
+    hasCaughtGolden = true;
+    
+    playBuySound();
+    updateUI();
+  };
+}
+
+// Спавн раз в 60-120 секунд
+setInterval(() => {
+  if (Math.random() < 0.2) { // Шанс 20% каждые 10 сек
+    spawnGoldenCookie();
+  }
+}, 10000);
+
+/* ==========================================
+   7. ПРЕСТИЖ (Перерождение)
+   ========================================== */
+prestigeBtn.addEventListener('click', () => {
+  const pointsToGain = Math.floor(Math.sqrt(totalScore / 1000000)) - prestigePoints;
+  if (pointsToGain <= 0) return;
+  
+  if (confirm(`Вы уверены? Вы получите +${pointsToGain}% к доходу навсегда, но сбросите все улучшения и очки.`)) {
+    prestigePoints += pointsToGain;
+    prestigeMultiplier = 1 + (prestigePoints * 0.01); // +1% за каждый поинт
+    
+    // Сброс
+    score = 0;
+    totalScore = 0;
+    clickPower = 1;
+    autoPower = 0;
+    upgrades.forEach(u => u.count = 0);
+    
+    playBuySound();
+    updateUI();
+  }
+});
+
+/* ==========================================
+   8. СОХРАНЕНИЕ (LocalStorage)
+   ========================================== */
+function saveGame() {
+  const data = {
+    score, totalScore, clickPower, autoPower, prestigeMultiplier, prestigePoints,
+    upgrades: upgrades.map(u => u.count),
+    lastSave: Date.now()
+  };
+  localStorage.setItem('vindimClicker', JSON.stringify(data));
+}
+
+function loadGame() {
+  const saved = localStorage.getItem('vindimClicker');
+  if (saved) {
+    const data = JSON.parse(saved);
+    score = data.score || 0;
+    totalScore = data.totalScore || 0;
+    clickPower = data.clickPower || 1;
+    autoPower = data.autoPower || 0;
+    prestigeMultiplier = data.prestigeMultiplier || 1;
+    prestigePoints = data.prestigePoints || 0;
+    
+    if (data.upgrades) {
+      upgrades.forEach((u, i) => u.count = data.upgrades[i] || 0);
+    }
+
+    // Оффлайн доход (максимум 2 часа)
+    if (data.lastSave) {
+      const offlineSecs = Math.min((Date.now() - data.lastSave) / 1000, 7200);
+      const offlineEarned = autoPower * prestigeMultiplier * offlineSecs;
+      score += offlineEarned;
+      totalScore += offlineEarned;
+      
+      if (offlineEarned > 0) {
+        setTimeout(() => alert(`Пока тебя не было, ты заработал: ${formatNumber(offlineEarned)} очков!`), 1000);
+      }
+    }
+  }
+}
+
+// Автосохранение каждые 10 секунд
+setInterval(saveGame, 10000);
+window.addEventListener('beforeunload', saveGame);
+
+/* ==========================================
+   9. ИНИЦИАЛИЗАЦИЯ
+   ========================================== */
+document.getElementById('mainButton').addEventListener('click', clickMainButton);
+
+// Заставка
+setTimeout(() => {
+  document.getElementById('splash').classList.add('hidden');
+  loadGame();
+  updateUI();
+}, 3000);
+
+</script>
+</body>
+</html>
