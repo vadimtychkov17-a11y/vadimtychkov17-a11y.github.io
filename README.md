@@ -1,7 +1,8 @@
 <div align="center">
-
-  <!-- КРАСИВЫЙ ЗАГОЛОВОК (Фиолетовые облака, рукописный шрифт) -->
-  <img src="https://capsule-render.vercel.app/api?type=waving&color=7c3aed&height=180&section=header&text=vindim&fontSize=90&fontColor=e8d5ff&fontFamily=Pacifico&animation=twinkling&fontAlignY=35" width="100%" alt="vindim header" />
+  <!-- Твоя анимированная плашка с волнами и текстом -->
+  <img src="header.svg" width="100%" alt="vindim">
+  
+  <br><br>
 
   <p><b>Экосистема интерактивных веб-проектов.</b></p>
 
@@ -12,8 +13,18 @@
     <img src="https://img.shields.io/badge/Three.js-black?style=for-the-badge&logo=three.js&logoColor=white" alt="Three.js">
     <img src="https://img.shields.io/badge/License-MIT-a855f7?style=for-the-badge" alt="MIT License">
   </p>
-
 </div>
+
+---
+
+## 🗺️ Навигация
+
+- [О проекте](#-о-проекте)
+- [Наши проекты](#-наши-проекты)
+- [Технические особенности](#-технические-особенности)
+- [Структура репозитория](#-структура-репозитория)
+- [Быстрый старт](#-быстрый-старт)
+- [Планы на будущее](#-планы-на-будущее)
 
 ---
 
@@ -30,26 +41,29 @@
 
 <table>
   <tr>
-    <td width="50%" align="center">
+    <td width="50%" align="center" valign="top">
+      <img src="https://img.shields.io/badge/Статус-Онлайн-00ff88?style=flat-square" alt="Онлайн"><br><br>
       <h3>☀️ Уничтожение солнца</h3>
-      <p>Кинематографичный 3D-фильм-катастрофа.<br>Почувствуй мощь лазера и гибель вселенной.</p>
+      <p>Кинематографичный 3D-фильм-катастрофа. Почувствуй мощь лазера и гибель вселенной.</p>
       <a href="https://vadimtychkov17-a11y.github.io/sun-game/">
         <img src="https://img.shields.io/badge/▶_ЗАПУСТИТЬ-7c3aed?style=for-the-badge" alt="Запустить">
       </a>
     </td>
-    <td width="50%" align="center">
+    <td width="50%" align="center" valign="top">
+      <img src="https://img.shields.io/badge/Статус-Онлайн-00ff88?style=flat-square" alt="Онлайн"><br><br>
       <h3>🎵 Аудио Визуализатор</h3>
-      <p>100 уникальных режимов, Web Audio API,<br>запись видео и пиксельный глитч.</p>
+      <p>100 уникальных режимов, Web Audio API, запись видео и пиксельный глитч.</p>
       <a href="https://vadimtychkov17-a11y.github.io/visualizer/">
         <img src="https://img.shields.io/badge/▶_ЗАПУСТИТЬ-7c3aed?style=for-the-badge" alt="Запустить">
       </a>
     </td>
   </tr>
   <tr>
-    <td colspan="2" align="center">
+    <td colspan="2" align="center" valign="top">
       <br>
-      <h3>👆 VinClick <i>(Самый новый продукт)</i></h3>
-      <p>Затягивающий кликер с престижем, золотыми кнопками,<br>комбо-системой и оффлайн-доходом.</p>
+      <img src="https://img.shields.io/badge/🔥_Самый_новый_продукт-ff00aa?style=for-the-badge" alt="Новинка">
+      <h3>👆 VinClick</h3>
+      <p>Затягивающий кликер с престижем, золотыми кнопками, комбо-системой и оффлайн-доходом.</p>
       <a href="https://vadimtychkov17-a11y.github.io/clicker/">
         <img src="https://img.shields.io/badge/▶_ЗАПУСТИТЬ-ff00aa?style=for-the-badge" alt="Запустить">
       </a>
@@ -62,11 +76,38 @@
 
 ## 🛠 Технические особенности
 
-* **Liquid Glass Design**: Интерфейсы с эффектом матового стекла, мягкими свечениями и глубокими тенями.
-* **3D-графика на лету**: Использование библиотеки `Three.js` для симуляции плазмы, теней и пост-обработки (Bloom).
-* **Звук без файлов**: Генерация всех звуков через `Web Audio API` (синтезаторы, басы, шумы).
-* **Адаптивность**: Полная поддержка мобильных устройств, планшетов и ПК.
-* **Хранение данных**: Сохранение прогресса и настроек через `localStorage`.
+<table>
+  <tr>
+    <td width="50%" valign="top">
+      <h4>🎨 Liquid Glass Design</h4>
+      <p>Интерфейсы с эффектом матового стекла, мягкими свечениями, градиентами и глубокими тенями, вдохновлённые iOS.</p>
+    </td>
+    <td width="50%" valign="top">
+      <h4>🌌 3D-графика на лету</h4>
+      <p>Использование библиотеки <code>Three.js</code> для симуляции плазмы, реалистичного света, теней и пост-обработки (Bloom).</p>
+    </td>
+  </tr>
+  <tr>
+    <td width="50%" valign="top">
+      <h4>🔊 Звук без файлов</h4>
+      <p>Генерация всех звуков (клики, взрывы, фоновый эмбиент) через <code>Web Audio API</code>. Никаких внешних mp3.</p>
+    </td>
+    <td width="50%" valign="top">
+      <h4>📱 Адаптивность и Оптимизация</h4>
+      <p>Полная поддержка мобильных устройств, планшетов и ПК. Плавная работа до 60 FPS даже на слабых устройствах.</p>
+    </td>
+  </tr>
+  <tr>
+    <td width="50%" valign="top">
+      <h4>💾 Хранение данных</h4>
+      <p>Сохранение игрового прогресса, рекордов и настроек через <code>localStorage</code>. Оффлайн-доход в кликере.</p>
+    </td>
+    <td width="50%" valign="top">
+      <h4>✨ Чистый код</h4>
+      <p>Отсутствие тяжёлых фреймворков (React, Vue). Всё написано на чистом Vanilla JS, HTML и CSS.</p>
+    </td>
+  </tr>
+</table>
 
 ---
 
@@ -74,11 +115,21 @@
 
 ```text
 vadimtychkov17-a11y.github.io/
-├── index.html             # Главный лаунчер проектов
-├── cover1.PNG             # Обложка "Уничтожение солнца"
-├── cover2.PNG             # Обложка "Аудио визуализатор"
-├── cover3.PNG             # Обложка "VinClick"
-├── favicon.ico            # Иконка сайта
-├── sun-game/              # Исходники 3D-фильма
-├── visualizer/            # Исходники визуализатора
-└── clicker/               # Исходники кликера
+│
+├── 📁 sun-game/           # 3D-игра "Уничтожение солнца"
+│   └── index.html         # Исходный код игры
+│
+├── 📁 visualizer/         # Аудио визуализатор
+│   └── index.html         # Исходный код визуализатора
+│
+├── 📁 clicker/            # Кликер VinClick
+│   └── index.html         # Исходный код кликера
+│
+├── 📄 index.html          # Главный лаунчер (выбор проектов)
+├── 🖼️ cover1.PNG          # Обложка для "Уничтожение солнца"
+├── 🖼️ cover2.PNG          # Обложка для "Аудио визуализатор"
+├── 🖼️ cover3.PNG          # Обложка для "VinClick"
+├── 🖼️ header.svg          # Анимированная шапка с логотипом
+├── 🖼️ favicon.ico         # Иконка сайта
+├── 📜 LICENSE             # Лицензия MIT
+└── 📖 README.md           # Этот файл
