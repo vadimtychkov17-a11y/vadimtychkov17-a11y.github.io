@@ -1,0 +1,55 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 250" width="100%">
+  <defs>
+    <!-- Фиолетовый градиент для передней волны -->
+    <linearGradient id="grad1" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#7c3aed" />
+      <stop offset="100%" stop-color="#a855f7" />
+    </linearGradient>
+    
+    <style>
+      /* Анимация задней волны */
+      @keyframes moveWave1 {
+        0% { transform: translateX(0); }
+        100% { transform: translateX(-200px); }
+      }
+      
+      /* Анимация передней волны */
+      @keyframes moveWave2 {
+        0% { transform: translateX(0); }
+        100% { transform: translateX(200px); }
+      }
+      
+      /* Плавное парение текста */
+      @keyframes floatText {
+        0%, 100% { transform: translateY(0px); }
+        50% { transform: translateY(-12px); }
+      }
+      
+      /* Пульсация свечения текста */
+      @keyframes glowText {
+        0%, 100% { filter: drop-shadow(0 0 10px rgba(232, 213, 255, 0.6)); }
+        50% { filter: drop-shadow(0 0 25px rgba(232, 213, 255, 1)); }
+      }
+      
+      .wave-bg { animation: moveWave1 8s ease-in-out infinite alternate; }
+      .wave-front { animation: moveWave2 6s ease-in-out infinite alternate; }
+      .text-wrap { animation: floatText 4s ease-in-out infinite; }
+      .text-main { animation: glowText 2.5s ease-in-out infinite; }
+    </style>
+  </defs>
+  
+  <!-- Задняя волна (полупрозрачная) -->
+  <g class="wave-bg">
+    <path fill="rgba(124, 58, 237, 0.25)" d="M-300,0 L-300,150 C -100,220 100,100 300,150 C 500,200 700,100 900,150 C 1100,200 1300,100 1500,150 L1500,0 Z" />
+  </g>
+  
+  <!-- Передняя волна (яркая) -->
+  <g class="wave-front">
+    <path fill="url(#grad1)" d="M-300,0 L-300,170 C -100,100 100,220 300,160 C 500,100 700,220 900,160 C 1100,100 1300,220 1500,160 L1500,0 Z" />
+  </g>
+  
+  <!-- Текст vindim (без обводки) -->
+  <g class="text-wrap">
+    <text x="600" y="140" text-anchor="middle" font-family="'Segoe Script', 'Brush Script MT', cursive" font-size="110" font-weight="bold" fill="#e8d5ff" class="text-main">vindim</text>
+  </g>
+</svg>
