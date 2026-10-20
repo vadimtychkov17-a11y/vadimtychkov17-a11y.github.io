@@ -12,39 +12,40 @@
     width: 100%; min-height: 100vh;
     background: transparent;
     color: #fff;
-    font-family: -apple-system, 'Segoe UI', Roboto, sans-serif;
+    font-family: 'Inter', -apple-system, 'Segoe UI', Roboto, sans-serif;
     overflow-x: hidden;
     display: flex;
     flex-direction: column;
+    -webkit-font-smoothing: antialiased;
   }
 
-  /* Звёздный канвас */
+  /* ===== ЗВЁЗДНЫЙ КАНВАС ===== */
   #starfield {
     position: fixed;
     top: 0; left: 0;
     width: 100%; height: 100%;
     z-index: 0;
     pointer-events: none;
-    background-color: #0a0a0f;
+    background-color: #050508; /* Более глубокий черный */
   }
 
-  /* Градиентные пятна */
+  /* ===== ФОНОВЫЕ СВЕЧЕНИЯ ===== */
   .glow-bg {
     position: fixed; inset: 0;
     z-index: 1;
     pointer-events: none;
     background: 
-      radial-gradient(circle at 15% 50%, rgba(124, 58, 237, 0.12), transparent 45%),
-      radial-gradient(circle at 85% 30%, rgba(236, 72, 153, 0.08), transparent 45%);
+      radial-gradient(circle at 10% 40%, rgba(124, 58, 237, 0.15), transparent 40%),
+      radial-gradient(circle at 90% 60%, rgba(0, 255, 255, 0.1), transparent 40%);
     animation: bgPulse 15s infinite alternate ease-in-out;
   }
 
   @keyframes bgPulse {
-    0% { opacity: 0.8; transform: scale(1); }
-    100% { opacity: 1; transform: scale(1.02); }
+    0% { opacity: 0.7; transform: scale(1); }
+    100% { opacity: 1; transform: scale(1.05); }
   }
 
-  /* Контент поверх фона */
+  /* Весь контент выше фона */
   .header, .projects-container, .btn-info {
     position: relative;
     z-index: 10;
@@ -53,144 +54,187 @@
   /* ===== ШАПКА ===== */
   .header {
     text-align: center;
-    padding: 60px 20px 40px;
+    padding: 80px 20px 50px;
   }
 
   .logo {
     font-family: 'Segoe Script', 'Brush Script MT', cursive;
-    font-size: clamp(50px, 10vw, 90px);
-    color: #e8d5ff;
+    font-size: clamp(60px, 10vw, 100px);
+    color: #fff;
     text-shadow: 
-      0 0 20px rgba(180, 100, 255, 0.6),
-      0 0 50px rgba(140, 60, 220, 0.4);
+      0 0 20px rgba(180, 100, 255, 0.8),
+      0 0 60px rgba(140, 60, 220, 0.6);
     letter-spacing: 2px;
-    margin-bottom: 12px;
-    animation: logoFloat 12s ease-in-out infinite, fadeInDown 1.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+    margin-bottom: 16px;
+    animation: logoFloat 8s ease-in-out infinite, fadeInDown 1s cubic-bezier(0.2, 0.8, 0.2, 1);
   }
 
   @keyframes logoFloat {
     0%, 100% { transform: translateY(0) scale(1); }
-    50% { transform: translateY(-8px) scale(1.01); }
+    50% { transform: translateY(-10px) scale(1.02); }
   }
 
   .subtitle {
     font-size: clamp(14px, 2vw, 18px);
-    color: rgba(255,255,255,0.6);
-    letter-spacing: 4px;
+    color: rgba(255,255,255,0.5);
+    letter-spacing: 6px;
     text-transform: uppercase;
+    font-weight: 600;
     animation: fadeIn 1.5s ease;
   }
 
   /* ===== СЕТКА ПРОЕКТОВ ===== */
   .projects-container {
     flex: 1;
-    display: flex;
-    justify-content: center;
-    align-items: stretch;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 30px;
     padding: 20px 40px 100px;
-    max-width: 1100px;
+    max-width: 1300px;
     margin: 0 auto;
     width: 100%;
-    gap: 40px;
-    flex-wrap: wrap;
-    animation: fadeInUp 1.2s cubic-bezier(0.2, 0.8, 0.2, 1) 0.3s both;
+    align-content: start;
   }
 
-  /* Карточка проекта */
+  /* ===== КАРТОЧКА ===== */
   .project-card {
-    background: rgba(30, 30, 40, 0.5);
+    background: rgba(25, 25, 35, 0.4);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.08);
     border-radius: 28px;
-    width: 100%;
-    max-width: 480px;
     display: flex;
     flex-direction: column;
-    transition: all 0.8s cubic-bezier(0.2, 0.8, 0.2, 1);
     position: relative;
     overflow: hidden;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+    transition: all 0.5s cubic-bezier(0.2, 0.8, 0.2, 1);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    animation: cardAppear 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  }
+
+  /* Задержки для появления карточек по очереди */
+  .project-card:nth-child(1) { animation-delay: 0.1s; }
+  .project-card:nth-child(2) { animation-delay: 0.2s; }
+  .project-card:nth-child(3) { animation-delay: 0.3s; }
+
+  @keyframes cardAppear {
+    from { opacity: 0; transform: translateY(40px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* Свечение при наведении */
+  .project-card::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 28px;
+    padding: 2px;
+    background: linear-gradient(135deg, rgba(255,255,255,0.3), transparent, rgba(124, 58, 237, 0.3));
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    opacity: 0;
+    transition: opacity 0.4s ease;
+    pointer-events: none;
   }
 
   .project-card:hover {
-    transform: translateY(-8px) scale(1.01);
-    border-color: rgba(0, 200, 100, 0.3);
-    background: rgba(40, 40, 55, 0.65);
-    box-shadow: 
-      0 20px 40px rgba(0,0,0,0.6),
-      0 0 40px rgba(0, 200, 100, 0.1);
+    transform: translateY(-10px);
+    background: rgba(35, 35, 50, 0.6);
+    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.6), 0 0 40px rgba(124, 58, 237, 0.15);
+  }
+
+  .project-card:hover::after { opacity: 1; }
+
+  .cover-container {
+    width: 100%;
+    height: 220px;
+    overflow: hidden;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+    position: relative;
   }
 
   .project-cover {
     width: 100%;
-    height: 240px;
+    height: 100%;
     object-fit: cover;
-    object-position: center;
-    border-bottom: 1px solid rgba(255,255,255,0.05);
-    background-color: #111;
-    transition: transform 1.5s cubic-bezier(0.2, 0.8, 0.2, 1);
+    transition: transform 0.8s cubic-bezier(0.2, 0.8, 0.2, 1);
   }
 
   .project-card:hover .project-cover {
-    transform: scale(1.03);
+    transform: scale(1.05);
   }
 
   .project-content {
-    padding: 30px;
+    padding: 24px;
     display: flex;
     flex-direction: column;
     flex: 1;
   }
 
   .project-title {
-    font-size: 26px;
+    font-size: 24px;
     font-weight: 800;
-    margin-bottom: 12px;
+    margin-bottom: 10px;
     color: #fff;
-    letter-spacing: 0.5px;
   }
 
   .project-desc {
-    font-size: 16px;
-    color: rgba(255,255,255,0.7);
+    font-size: 15px;
+    color: rgba(255,255,255,0.6);
     line-height: 1.6;
-    margin-bottom: 30px;
+    margin-bottom: 24px;
     flex: 1;
   }
 
-  /* ===== ТЁМНАЯ ЗЕЛЁНАЯ КНОПКА ===== */
+  /* ===== КНОПКА ИГРАТЬ ===== */
   .btn-play {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    padding: 18px 40px;
-    font-size: 16px;
-    font-weight: 800;
+    padding: 16px 30px;
+    font-size: 15px;
+    font-weight: 700;
     text-transform: uppercase;
-    letter-spacing: 2px;
+    letter-spacing: 1.5px;
     color: #fff;
     text-decoration: none;
     background: linear-gradient(135deg, #0f5c3c, #0d7a4b);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.15);
     border-radius: 16px;
-    transition: all 0.5s cubic-bezier(0.2, 0.8, 0.2, 1);
-    box-shadow: 
-      0 8px 20px rgba(0, 0, 0, 0.4),
-      inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    transition: all 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
   }
 
   .btn-play:hover {
     transform: translateY(-3px);
     background: linear-gradient(135deg, #147a50, #10a363);
-    box-shadow: 
-      0 12px 25px rgba(0, 0, 0, 0.5),
-      0 0 30px rgba(16, 163, 99, 0.2),
-      inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    border-color: rgba(0, 255, 136, 0.4);
+    box-shadow: 0 8px 25px rgba(16, 163, 99, 0.3);
   }
 
-  .btn-play:active {
-    transform: translateY(1px) scale(0.99);
+  /* ===== БЕЙДЖ "САМЫЙ НОВЫЙ" ===== */
+  .badge-new {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    background: linear-gradient(135deg, #ff00aa, #ffaa00);
+    color: #fff;
+    font-size: 11px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    padding: 6px 14px;
+    border-radius: 20px;
+    box-shadow: 0 4px 15px rgba(255, 0, 170, 0.4);
+    z-index: 5;
+    animation: pulseBadge 2s infinite;
+  }
+
+  @keyframes pulseBadge {
+    0% { transform: scale(1); box-shadow: 0 0 10px rgba(255, 0, 170, 0.4); }
+    50% { transform: scale(1.05); box-shadow: 0 0 20px rgba(255, 0, 170, 0.8); }
+    100% { transform: scale(1); box-shadow: 0 0 10px rgba(255, 0, 170, 0.4); }
   }
 
   /* ===== КНОПКА ИНФО ===== */
@@ -198,27 +242,26 @@
     position: fixed;
     bottom: 30px;
     right: 30px;
-    width: 50px;
-    height: 50px;
-    background: rgba(255,255,255,0.08);
-    border: 1px solid rgba(255,255,255,0.25);
+    width: 54px;
+    height: 54px;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.15);
     border-radius: 50%;
-    color: rgba(255,255,255,0.8);
+    color: rgba(255,255,255,0.7);
     font-size: 24px;
     font-family: 'Times New Roman', serif;
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    transition: all 0.5s cubic-bezier(0.2, 0.8, 0.2, 1);
+    transition: all 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
     backdrop-filter: blur(10px);
   }
 
   .btn-info:hover {
     background: rgba(255,255,255,0.15);
     color: #fff;
-    border-color: rgba(255,255,255,0.4);
-    transform: scale(1.1) rotate(5deg);
+    transform: scale(1.1) rotate(10deg);
   }
 
   /* ===== МОДАЛЬНОЕ ОКНО ===== */
@@ -226,8 +269,7 @@
     position: fixed;
     inset: 0;
     background: rgba(0,0,0,0.8);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
+    backdrop-filter: blur(10px);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -235,51 +277,30 @@
     z-index: 100;
     opacity: 0;
     pointer-events: none;
-    transition: opacity 0.5s ease;
+    transition: opacity 0.4s ease;
   }
 
-  .modal-overlay.active {
-    opacity: 1;
-    pointer-events: auto;
-  }
+  .modal-overlay.active { opacity: 1; pointer-events: auto; }
 
   .modal {
-    background: #1a1a22;
-    border: 1px solid rgba(255,255,255,0.15);
-    border-radius: 24px;
+    background: #121218;
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 28px;
     padding: 40px;
     max-width: 500px;
     width: 100%;
-    transform: scale(0.95) translateY(20px);
-    transition: all 0.6s cubic-bezier(0.2, 0.8, 0.2, 1);
+    transform: scale(0.9) translateY(20px);
+    transition: all 0.5s cubic-bezier(0.2, 0.8, 0.2, 1);
     box-shadow: 0 20px 60px rgba(0,0,0,0.8);
   }
 
-  .modal-overlay.active .modal {
-    transform: scale(1) translateY(0);
-  }
+  .modal-overlay.active .modal { transform: scale(1) translateY(0); }
 
-  .modal h2 {
-    font-size: 24px;
-    margin-bottom: 20px;
-    color: #e8d5ff;
-  }
+  .modal h2 { font-size: 26px; margin-bottom: 20px; color: #fff; }
+  .modal p { font-size: 15px; color: rgba(255,255,255,0.7); line-height: 1.6; margin-bottom: 16px; }
+  .modal ul { margin-left: 20px; margin-bottom: 24px; color: rgba(255,255,255,0.6); line-height: 1.6; }
+  .modal strong { color: #fff; }
 
-  .modal p {
-    font-size: 15px;
-    color: rgba(255,255,255,0.8);
-    line-height: 1.6;
-    margin-bottom: 16px;
-  }
-
-  .modal ul {
-    margin-left: 20px;
-    margin-bottom: 24px;
-    color: rgba(255,255,255,0.7);
-    line-height: 1.6;
-  }
-
-  /* Ссылка на репозиторий */
   .repo-link {
     display: inline-flex;
     align-items: center;
@@ -289,11 +310,10 @@
     margin-bottom: 24px;
     background: rgba(255, 255, 255, 0.05);
     border: 1px solid rgba(255, 255, 255, 0.15);
-    border-radius: 12px;
+    border-radius: 14px;
     color: #00d2ff;
     text-decoration: none;
     font-weight: 600;
-    font-size: 15px;
     transition: all 0.3s ease;
   }
 
@@ -301,15 +321,14 @@
     background: rgba(0, 210, 255, 0.1);
     border-color: rgba(0, 210, 255, 0.4);
     transform: translateY(-2px);
-    box-shadow: 0 5px 15px rgba(0, 210, 255, 0.2);
   }
 
   .btn-close {
     width: 100%;
     padding: 16px;
-    background: rgba(255,255,255,0.1);
+    background: rgba(255,255,255,0.08);
     border: none;
-    border-radius: 12px;
+    border-radius: 14px;
     color: #fff;
     font-size: 16px;
     font-weight: 600;
@@ -317,17 +336,11 @@
     transition: all 0.3s ease;
   }
 
-  .btn-close:hover { 
-    background: rgba(255,255,255,0.2); 
-  }
+  .btn-close:hover { background: rgba(255,255,255,0.15); }
 
-  /* ===== АНИМАЦИИ ===== */
+  /* Анимации */
   @keyframes fadeInDown {
     from { opacity: 0; transform: translateY(-30px); }
-    to { opacity: 1; transform: translateY(0); }
-  }
-  @keyframes fadeInUp {
-    from { opacity: 0; transform: translateY(30px); }
     to { opacity: 1; transform: translateY(0); }
   }
   @keyframes fadeIn {
@@ -335,34 +348,37 @@
     to { opacity: 1; }
   }
 
+  /* Адаптивность */
   @media (max-width: 768px) {
+    .header { padding: 50px 20px 30px; }
     .projects-container { padding: 20px 20px 100px; gap: 20px; }
-    .project-card { max-width: 100%; }
-    .project-cover { height: 200px; }
-    .project-content { padding: 24px; }
-    .btn-info { bottom: 20px; right: 20px; width: 44px; height: 44px; font-size: 20px; }
-    .modal { padding: 30px 24px; }
+    .project-card { border-radius: 20px; }
+    .cover-container { height: 180px; }
+    .project-content { padding: 20px; }
+    .btn-info { bottom: 20px; right: 20px; width: 46px; height: 46px; font-size: 20px; }
   }
 </style>
 </head>
 <body>
 
-  <!-- Звёздный фон на Canvas -->
+  <!-- Звёздный фон -->
   <canvas id="starfield"></canvas>
   <div class="glow-bg"></div>
 
   <!-- Шапка -->
   <header class="header">
     <div class="logo">vindim</div>
-    <div class="subtitle">Проекты</div>
+    <div class="subtitle">Экосистема проектов</div>
   </header>
 
   <!-- Сетка проектов -->
   <main class="projects-container">
     
-    <!-- Карточка 1 -->
+    <!-- Карточка 1: Уничтожение солнца -->
     <div class="project-card">
-      <img src="cover1.PNG" alt="Уничтожение солнца" class="project-cover" onerror="this.style.display='none'">
+      <div class="cover-container">
+        <img src="cover1.PNG" alt="Уничтожение солнца" class="project-cover" onerror="this.style.display='none'">
+      </div>
       <div class="project-content">
         <h1 class="project-title">Уничтожение солнца</h1>
         <p class="project-desc">Там есть баг когда прыгаешь пушка снова запускается, не прыгай!</p>
@@ -370,13 +386,28 @@
       </div>
     </div>
 
-    <!-- Карточка 2 -->
+    <!-- Карточка 2: Аудио визуализатор -->
     <div class="project-card">
-      <img src="cover2.PNG" alt="Аудио визуализатор" class="project-cover" onerror="this.style.display='none'">
+      <div class="cover-container">
+        <img src="cover2.PNG" alt="Аудио визуализатор" class="project-cover" onerror="this.style.display='none'">
+      </div>
       <div class="project-content">
         <h1 class="project-title">Аудио визуализатор</h1>
-        <p class="project-desc">Есть баги не злись</p>
+        <p class="project-desc">Есть баги не злись. 100 режимов, запись видео и пиксели.</p>
         <a href="https://vadimtychkov17-a11y.github.io/visualizer/" class="btn-play">Играть</a>
+      </div>
+    </div>
+
+    <!-- Карточка 3: VinClick (Новый) -->
+    <div class="project-card">
+      <div class="badge-new">Самый новый продукт</div>
+      <div class="cover-container">
+        <img src="cover3.PNG" alt="VinClick" class="project-cover" onerror="this.style.display='none'">
+      </div>
+      <div class="project-content">
+        <h1 class="project-title">VinClick</h1>
+        <p class="project-desc">Кликер, который затянет тебя на часы. Зарабатывай, покупай и перерождайся.</p>
+        <a href="https://vadimtychkov17-a11y.github.io/clicker/" class="btn-play">Играть</a>
       </div>
     </div>
 
@@ -402,7 +433,7 @@
         📁 Репозиторий сайта
       </a>
 
-      <p style="font-size: 13px; color: rgba(255,255,255,0.5);">Версия лаунчера: 1.0.3</p>
+      <p style="font-size: 13px; color: rgba(255,255,255,0.4); text-align: center;">Версия лаунчера: 1.1.0</p>
       
       <button class="btn-close" id="closeModalBtn">Закрыть</button>
     </div>
@@ -425,13 +456,13 @@
 
     function initStars() {
       stars = [];
-      const numStars = 300;
+      const numStars = 250;
       for (let i = 0; i < numStars; i++) {
         stars.push({
           x: Math.random() * W,
           y: Math.random() * H,
           size: Math.random() * 1.5 + 0.5,
-          baseAlpha: Math.random() * 0.6 + 0.3,
+          baseAlpha: Math.random() * 0.5 + 0.3,
           twinkleSpeed: Math.random() * 0.01 + 0.005,
           phase: Math.random() * Math.PI * 2,
           depth: Math.random() * 0.8 + 0.2
@@ -474,23 +505,16 @@
     resize();
     requestAnimationFrame(animateStars);
 
-    // ===== ЛОГИКА МОДАЛЬНОГО ОКНА =====
+    // ===== МОДАЛЬНОЕ ОКНО =====
     const infoBtn = document.getElementById('infoBtn');
     const infoModal = document.getElementById('infoModal');
     const closeModalBtn = document.getElementById('closeModalBtn');
 
-    infoBtn.addEventListener('click', () => {
-      infoModal.classList.add('active');
-    });
-
-    closeModalBtn.addEventListener('click', () => {
-      infoModal.classList.remove('active');
-    });
-
+    infoBtn.addEventListener('click', () => infoModal.classList.add('active'));
+    closeModalBtn.addEventListener('click', () => infoModal.classList.remove('active'));
+    
     infoModal.addEventListener('click', (e) => {
-      if (e.target === infoModal) {
-        infoModal.classList.remove('active');
-      }
+      if (e.target === infoModal) infoModal.classList.remove('active');
     });
 
     document.addEventListener('keydown', (e) => {
