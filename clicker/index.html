@@ -1,3 +1,387 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>vindim — Clicker ULTRA</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  
+  body, html {
+    width: 100%; height: 100%;
+    background: #050510; overflow: hidden;
+    font-family: 'Inter', -apple-system, sans-serif; color: #fff;
+    user-select: none; touch-action: none;
+  }
+
+  .back-btn {
+    position: fixed; top: 15px; left: 15px; z-index: 1000;
+    display: flex; align-items: center; gap: 6px;
+    padding: 8px 14px;
+    background: rgba(20, 20, 30, 0.7);
+    backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 10px; color: rgba(255,255,255,0.7); text-decoration: none;
+    font-weight: 600; font-size: 12px; transition: 0.3s;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.5); cursor: pointer;
+  }
+  .back-btn:hover { background: rgba(255, 255, 255, 0.15); color: #fff; border-color: rgba(0,255,255,0.4); }
+
+  #splash {
+    position: fixed; inset: 0; z-index: 9999; background: #050510;
+    display: flex; align-items: center; justify-content: center;
+    transition: opacity 1s ease;
+  }
+  #splash.hidden { opacity: 0; pointer-events: none; }
+  .splash-logo {
+    font-family: 'Segoe Script', 'Brush Script MT', cursive;
+    font-size: clamp(60px, 15vw, 150px); color: #e8d5ff;
+    text-shadow: 0 0 30px rgba(180, 100, 255, 0.8), 0 0 80px rgba(140, 60, 220, 0.6);
+    animation: logoAnim 3s ease forwards;
+  }
+  @keyframes logoAnim {
+    0% { opacity: 0; transform: scale(0.9); filter: blur(10px); }
+    20% { opacity: 1; transform: scale(1); filter: blur(0); }
+    80% { opacity: 1; }
+    100% { opacity: 0; transform: scale(1.05); }
+  }
+
+  .bg-glow {
+    position: absolute; inset: 0; z-index: 0; pointer-events: none;
+    background: 
+      radial-gradient(circle at 20% 30%, rgba(0, 150, 255, 0.15) 0%, transparent 50%),
+      radial-gradient(circle at 80% 70%, rgba(180, 0, 255, 0.15) 0%, transparent 50%);
+    filter: blur(40px);
+  }
+
+  .game-container {
+    position: relative; z-index: 1;
+    width: 100%; height: 100%;
+    display: grid; grid-template-columns: 350px 1fr 350px;
+    gap: 20px; padding: 60px 20px 20px; max-width: 1600px; margin: 0 auto;
+  }
+
+  .glass-panel {
+    background: rgba(20, 20, 30, 0.6);
+    backdrop-filter: blur(30px); -webkit-backdrop-filter: blur(30px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 28px;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.15);
+    display: flex; flex-direction: column; padding: 20px; overflow: hidden;
+  }
+
+  .center-panel { display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; }
+
+  .player-level {
+    position: absolute; top: 20px; left: 20px; right: 20px;
+    background: rgba(0,0,0,0.3); border-radius: 12px; padding: 10px;
+    text-align: center; font-weight: bold; border: 1px solid rgba(255,255,255,0.05);
+  }
+  .lvl-bar-bg { width: 100%; height: 6px; background: rgba(255,255,255,0.1); border-radius: 3px; margin-top: 8px; overflow: hidden; }
+  .lvl-bar-fill { height: 100%; width: 0%; background: linear-gradient(90deg, #00ffff, #aa00ff); transition: width 0.3s; box-shadow: 0 0 10px #00ffff; }
+
+  .score-display { text-align: center; margin-top: 40px; margin-bottom: 20px; position: relative; }
+  .score-value {
+    font-size: clamp(50px, 7vw, 90px); font-weight: 900; line-height: 1;
+    letter-spacing: -2px; background: linear-gradient(135deg, #00ffff, #aa00ff, #00ff88);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    filter: drop-shadow(0 0 20px rgba(0, 255, 255, 0.3));
+  }
+  .score-label { font-size: 14px; text-transform: uppercase; color: rgba(255,255,255,0.6); letter-spacing: 2px; margin-top: 5px; }
+  .income-display { font-size: 20px; color: #00ff88; margin-top: 10px; font-weight: 700; text-shadow: 0 0 10px rgba(0,255,136,0.5); }
+
+  .btn-wrapper { position: relative; display: flex; align-items: center; justify-content: center; width: 280px; height: 280px; }
+  .btn-ring { position: absolute; inset: -10px; border-radius: 50%; border: 2px dashed rgba(0, 255, 255, 0.3); animation: spinRing 20s linear infinite; pointer-events: none; }
+  @keyframes spinRing { 100% { transform: rotate(360deg); } }
+
+  .main-btn {
+    width: 240px; height: 240px; border-radius: 50%;
+    background: linear-gradient(135deg, rgba(0, 255, 255, 0.2), rgba(124, 58, 237, 0.2));
+    border: 2px solid rgba(0, 255, 255, 0.5); box-shadow: 0 0 40px rgba(0, 255, 255, 0.3);
+    cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center;
+    transition: transform 0.05s cubic-bezier(0.4, 0, 0.2, 1); position: relative; z-index: 2; outline: none;
+  }
+  .main-btn:active { transform: scale(0.9); box-shadow: 0 0 100px rgba(0, 255, 255, 0.8); }
+  .main-btn svg { width: 90px; height: 90px; fill: #fff; filter: drop-shadow(0 0 15px rgba(255,255,255,0.5)); pointer-events: none; }
+  
+  #comboText {
+    position: absolute; top: -30px; left: 50%; transform: translateX(-50%);
+    font-size: 24px; font-weight: 900; color: #ffaa00; text-shadow: 0 0 20px #ffaa00;
+    opacity: 0; transition: opacity 0.2s; pointer-events: none;
+  }
+  #comboText.active { opacity: 1; animation: popCombo 0.3s ease; }
+  @keyframes popCombo { 0% { transform: translateX(-50%) scale(0.5); } 100% { transform: translateX(-50%) scale(1); } }
+
+  .floating-text {
+    position: absolute; font-size: 32px; font-weight: 900; color: #00ffff;
+    text-shadow: 0 0 15px rgba(0,255,255,0.8); pointer-events: none;
+    animation: floatUp 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) forwards; z-index: 100;
+  }
+  .floating-text.crit { color: #ff00aa; font-size: 48px; text-shadow: 0 0 20px rgba(255,0,170,0.9); }
+  @keyframes floatUp { 0% { opacity: 1; transform: translateY(0) scale(1); } 100% { opacity: 0; transform: translateY(-120px) scale(1.5); } }
+
+  .pet { position: absolute; border-radius: 50%; background: radial-gradient(circle, #fff, transparent); box-shadow: 0 0 10px #00ffff; pointer-events: none; z-index: 1; animation: orbit 4s linear infinite; }
+  @keyframes orbit { 0% { transform: rotate(0deg) translateX(140px) rotate(0deg); } 100% { transform: rotate(360deg) translateX(140px) rotate(-360deg); } }
+
+  .panel-title { font-size: 18px; font-weight: 700; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid rgba(255,255,255,0.1); display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
+  
+  .tabs { display: flex; gap: 5px; margin-bottom: 10px; background: rgba(0,0,0,0.3); padding: 5px; border-radius: 10px; flex-shrink: 0; }
+  .tab-btn { flex: 1; padding: 8px; background: transparent; border: none; color: rgba(255,255,255,0.5); font-weight: bold; font-size: 13px; cursor: pointer; border-radius: 6px; transition: 0.2s; }
+  .tab-btn.active { background: rgba(255,255,255,0.1); color: #fff; box-shadow: 0 0 10px rgba(255,255,255,0.05); }
+  .tab-btn:hover:not(.active) { color: #fff; }
+
+  .tab-content { display: none; flex-direction: column; flex: 1; overflow-y: auto; padding-right: 8px; }
+  .tab-content.active { display: flex; }
+  .tab-content::-webkit-scrollbar { width: 4px; }
+  .tab-content::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 2px; }
+
+  .shop-list, .ach-list { display: flex; flex-direction: column; gap: 8px; }
+
+  .shop-item { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 10px 12px; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; gap: 10px; }
+  .shop-item:hover { background: rgba(255,255,255,0.1); border-color: rgba(0,255,255,0.3); }
+  .shop-item.disabled { opacity: 0.4; cursor: not-allowed; }
+  .shop-icon { font-size: 24px; }
+  .shop-info { flex: 1; }
+  .shop-name { font-size: 14px; font-weight: 600; }
+  .shop-cost { font-size: 12px; color: #ffdd00; margin-top: 2px; }
+  .shop-count { font-size: 18px; font-weight: 900; color: rgba(255,255,255,0.2); }
+
+  .achievement { 
+    background: rgba(0,0,0,0.2); border-left: 3px solid #555; padding: 10px 12px; 
+    border-radius: 6px; font-size: 12px; color: rgba(255,255,255,0.5); transition: all 0.3s;
+    display: flex; flex-direction: column; gap: 4px;
+  }
+  .achievement-header { display: flex; justify-content: space-between; align-items: center; }
+  .achievement-reward { font-size: 11px; color: #ffdd00; font-weight: bold; }
+  .achievement-progress { font-size: 11px; color: #00ffff; margin-top: 2px; }
+  .achievement.unlocked { border-left-color: #00ff88; color: #fff; background: rgba(0, 255, 136, 0.1); }
+  .achievement.unlocked .achievement-progress { display: none; }
+
+  .update-block { margin-bottom: 20px; background: rgba(0,0,0,0.2); padding: 15px; border-radius: 12px; border-left: 3px solid #7c3aed; }
+  .update-title { font-size: 16px; font-weight: bold; color: #00ffff; margin-bottom: 5px; display: flex; justify-content: space-between; }
+  .update-date { font-size: 11px; color: #888; font-weight: normal; }
+  .update-list { list-style-type: none; padding-left: 0; font-size: 13px; color: rgba(255,255,255,0.8); line-height: 1.5; }
+  .update-list li { margin-bottom: 8px; padding-left: 15px; position: relative; }
+  .update-list li::before { content: '•'; position: absolute; left: 0; color: #00ff88; font-weight: bold; }
+  .update-list strong { color: #fff; }
+
+  .prestige-btn { width: 100%; padding: 12px; background: linear-gradient(135deg, #ff00aa, #5500ff); border: none; border-radius: 12px; color: #fff; font-size: 14px; font-weight: bold; cursor: pointer; margin-bottom: 10px; box-shadow: 0 0 20px rgba(255, 0, 170, 0.4); transition: all 0.3s; display: none; flex-shrink: 0; }
+  .prestige-btn:hover { transform: scale(1.02); }
+  .prestige-btn.show { display: block; }
+  
+  .talent-btn { width: 100%; padding: 10px; background: rgba(124, 58, 237, 0.2); border: 1px solid rgba(124, 58, 237, 0.5); border-radius: 8px; color: #fff; font-size: 12px; cursor: pointer; margin-bottom: 5px; text-align: left; display: flex; justify-content: space-between; transition: 0.2s; flex-shrink: 0; }
+  .talent-btn:hover { background: rgba(124, 58, 237, 0.4); }
+  .talent-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+
+  #toast-container { position: fixed; top: 70px; right: 20px; display: flex; flex-direction: column; gap: 10px; z-index: 10000; pointer-events: none; }
+  .toast { background: rgba(20, 20, 30, 0.9); backdrop-filter: blur(15px); border: 1px solid rgba(0, 255, 255, 0.3); border-left: 4px solid #00ffff; padding: 12px 18px; border-radius: 10px; color: #fff; font-size: 13px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); animation: slideInRight 0.4s ease forwards; max-width: 280px; }
+  @keyframes slideInRight { from { opacity: 0; transform: translateX(100%); } to { opacity: 1; transform: translateX(0); } }
+  .toast.fade-out { animation: fadeOut 0.5s forwards; }
+  @keyframes fadeOut { to { opacity: 0; transform: translateY(-20px); } }
+
+  #goldenCookie { position: absolute; width: 50px; height: 50px; background: radial-gradient(circle, #ffdd00, #ff8800); border-radius: 50%; box-shadow: 0 0 30px #ffdd00, 0 0 60px #ffaa00; display: none; cursor: pointer; z-index: 999; animation: pulseCookie 0.8s infinite alternate, spinCookie 10s linear infinite; }
+  #goldenCookie.show { display: block; }
+  @keyframes pulseCookie { 0% { transform: scale(1); } 100% { transform: scale(1.2); } }
+  @keyframes spinCookie { 100% { transform: rotate(360deg); } }
+
+  #buffIndicator { position: absolute; top: 70px; left: 50%; transform: translateX(-50%); background: rgba(255, 200, 0, 0.2); border: 1px solid #ffdd00; padding: 6px 16px; border-radius: 20px; color: #ffdd00; font-weight: bold; display: none; z-index: 100; animation: flashBuff 0.5s infinite alternate; font-size: 14px; }
+  @keyframes flashBuff { 0% { opacity: 0.7; } 100% { opacity: 1; } }
+
+  @keyframes shake { 0% { transform: translate(1px, 1px) rotate(0deg); } 10% { transform: translate(-1px, -2px) rotate(-1deg); } 20% { transform: translate(-3px, 0px) rotate(1deg); } 30% { transform: translate(3px, 2px) rotate(0deg); } 40% { transform: translate(1px, -1px) rotate(1deg); } 50% { transform: translate(-1px, 2px) rotate(-1deg); } 60% { transform: translate(-3px, 1px) rotate(0deg); } 70% { transform: translate(2px, 1px) rotate(-1deg); } 80% { transform: translate(-1px, -1px) rotate(1deg); } 90% { transform: translate(2px, 2px) rotate(0deg); } 100% { transform: translate(1px, -2px) rotate(-1deg); } }
+  .shake { animation: shake 0.3s cubic-bezier(.36,.07,.19,.97) both; }
+
+  @media (max-width: 1000px) {
+    .game-container { grid-template-columns: 1fr; grid-template-rows: auto 1fr auto; overflow-y: auto; padding-top: 60px; }
+    .glass-panel { min-height: 200px; }
+  }
+</style>
+</head>
+<body>
+
+<div id="splash"><div class="splash-logo">vindim</div></div>
+
+<a href="https://vadimtychkov17-a11y.github.io/" class="back-btn"><span>←</span> Назад</a>
+
+<div id="toast-container"></div>
+<div class="bg-glow"></div>
+<div id="buffIndicator">🔥 x7 ДОХОД! 🔥</div>
+<div id="goldenCookie"></div>
+
+<div class="game-container">
+  
+  <div class="glass-panel">
+    <div class="panel-title">Магазин <span style="font-size: 11px; color: #888;">Кликеры</span></div>
+    <div class="shop-list" id="shopList"></div>
+  </div>
+
+  <div class="glass-panel center-panel">
+    
+    <div class="player-level">
+      <div style="display: flex; justify-content: space-between; font-size: 12px; color: rgba(255,255,255,0.7);">
+        <span>Уровень <span id="lvlText" style="color: #00ffff; font-weight: 900;">1</span></span>
+        <span id="xpText">0 / 100 XP</span>
+      </div>
+      <div class="lvl-bar-bg"><div class="lvl-bar-fill" id="xpFill"></div></div>
+    </div>
+
+    <div class="score-display">
+      <div class="score-value" id="scoreValue">0</div>
+      <div class="score-label">Очков</div>
+      <div class="income-display" id="incomeValue">0/сек</div>
+    </div>
+
+    <div class="btn-wrapper">
+      <div id="comboText">x1</div>
+      <div class="btn-ring"></div>
+      <button class="main-btn" id="mainButton">
+        <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm0-14c-3.31 0-6 2.69-6 6s2.69 6 6 6 6-2.69 6-6-2.69-6-6-6zm0 10c-2.21 0-4-1.79-4-4s1.79-4 4-4 4 1.79 4 4-1.79 4-4 4z"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <div class="glass-panel">
+    
+    <div class="tabs">
+      <button class="tab-btn active" onclick="switchTab('progress')">Прогресс</button>
+      <button class="tab-btn" onclick="switchTab('updates')">Обновления (v2.0)</button>
+    </div>
+
+    <div class="tab-content active" id="tab-progress">
+      <button class="prestige-btn" id="prestigeBtn">ПЕРЕРОЖДЕНИЕ</button>
+      
+      <div id="talentsContainer" style="display: none; margin-bottom: 15px;">
+        <div style="font-size: 12px; color: #aaa; margin-bottom: 5px;">Дерево талантов</div>
+        <button class="talent-btn" id="talentClick">Сила клика +50% <span>1 очко</span></button>
+        <button class="talent-btn" id="talentAuto">Автодоход +50% <span>1 очко</span></button>
+        <button class="talent-btn" id="talentCrit">Шанс крита +5% <span>2 очка</span></button>
+      </div>
+
+      <div class="panel-title" style="margin-top: 5px; font-size: 14px;">Достижения</div>
+      <div class="ach-list" id="achievementsList"></div>
+    </div>
+
+    <div class="tab-content" id="tab-updates">
+      
+      <div class="update-block">
+        <div class="update-title">Версия 2.0 <span class="update-date">Текущая</span></div>
+        <ul class="update-list">
+          <li><strong>Критические клики:</strong> Шанс нанести x10 урона (клика). С добавлением талантов шанс растет.</li>
+          <li><strong>Система уровней:</strong> Получай XP за клики и покупки. Каждый уровень дает +1 к базовой силе клика.</li>
+          <li><strong>Дерево Талантов:</strong> Очки престижа теперь можно тратить на усиление клика, автодохода или критов.</li>
+          <li><strong>Объединенные достижения:</strong> Задания и ачивки слиты в один список. За выполнение дают бонусные очки.</li>
+          <li><strong>Оптимизация:</strong> Исправлен баг с лагами при кликах (перерисовка DOM).</li>
+          <li><strong>Дизайн:</strong> Кнопка "Назад", тряска экрана при критах, эффект стекла для вкладок.</li>
+        </ul>
+      </div>
+
+      <div class="update-block" style="border-left-color: #555;">
+        <div class="update-title" style="color: #aaa;">Версия 1.0 <span class="update-date">Оригинал</span></div>
+        <ul class="update-list">
+          <li>Базовый кликер с 10 видами улучшений.</li>
+          <li>Простая система комбо-кликов (до x10).</li>
+          <li>Золотая кнопка (бафф на x7 доход).</li>
+          <li>Базовые достижения без сохранения прогресса (сбрасывались при перезагрузке).</li>
+          <li>Примитивная система престижа (без талантов).</li>
+          <li>Сохранение через localStorage, но с багами при чтении.</li>
+        </ul>
+      </div>
+
+    </div>
+
+  </div>
+
+</div>
+
+<script>
+let audioCtx = null;
+function initAudio() {
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+}
+function playSound(type, freq = 600) {
+  initAudio();
+  const osc = audioCtx.createOscillator(), gain = audioCtx.createGain();
+  osc.type = type === 'crit' ? 'square' : (type === 'buy' ? 'triangle' : 'sine');
+  osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+  osc.frequency.exponentialRampToValueAtTime(freq * 0.5, audioCtx.currentTime + 0.1);
+  gain.gain.setValueAtTime(type === 'crit' ? 0.2 : 0.1, audioCtx.currentTime);
+  gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.1);
+  osc.connect(gain); gain.connect(audioCtx.destination);
+  osc.start(); osc.stop(audioCtx.currentTime + 0.1);
+}
+
+function switchTab(tabName) {
+  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  
+  if (tabName === 'progress') {
+    document.getElementById('tab-progress').classList.add('active');
+    document.querySelectorAll('.tab-btn')[0].classList.add('active');
+  } else {
+    document.getElementById('tab-updates').classList.add('active');
+    document.querySelectorAll('.tab-btn')[1].classList.add('active');
+  }
+}
+
+let score = 0;
+let lifetimeScore = 0;
+let clickPower = 1;
+let autoPower = 0;
+let prestigeMultiplier = 1;
+let prestigePoints = 0;
+let critChance = 0.05;
+let critMultiplier = 10;
+let totalClicks = 0;
+
+let comboCount = 0, comboTimer = 0, currentCombo = 1, lastClickTime = 0;
+let buffMultiplier = 1, buffTimer = 0;
+let hasCaughtGolden = false, hasCrit = false;
+
+let level = 1;
+let xp = 0;
+let xpNeeded = 100;
+
+let talents = { click: 0, auto: 0, crit: 0 };
+
+const upgrades = [
+  { id: 'cursor', name: 'Курсор', icon: '👆', baseCost: 10, costMult: 1.15, type: 'click', value: 1, count: 0 },
+  { id: 'robot', name: 'Робот', icon: '🤖', baseCost: 100, costMult: 1.15, type: 'auto', value: 1, count: 0 },
+  { id: 'factory', name: 'Фабрика', icon: '🏭', baseCost: 1000, costMult: 1.15, type: 'auto', value: 5, count: 0 },
+  { id: 'mine', name: 'Шахта', icon: '⛏️', baseCost: 5000, costMult: 1.15, type: 'auto', value: 20, count: 0 },
+  { id: 'bank', name: 'Банк', icon: '🏦', baseCost: 50000, costMult: 1.15, type: 'auto', value: 100, count: 0 },
+  { id: 'temple', name: 'Храм', icon: '🏛️', baseCost: 500000, costMult: 1.15, type: 'auto', value: 500, count: 0 },
+  { id: 'space', name: 'Космостанция', icon: '🚀', baseCost: 1e6, costMult: 1.15, type: 'auto', value: 2000, count: 0 },
+  { id: 'quantum', name: 'Квантовый ПК', icon: '⚛️', baseCost: 1e7, costMult: 1.15, type: 'auto', value: 10000, count: 0 },
+  { id: 'luck', name: 'Кристалл удачи', icon: '💎', baseCost: 25000, costMult: 2.5, type: 'crit', value: 0.05, count: 0 }
+];
+
+const achievementsList = [
+  { id: 'a1', name: 'Первый клик', desc: 'Сделай 1 клик', target: 1, progress: 0, reward: 10, unlocked: false, type: 'clicks' },
+  { id: 'a2', name: 'Сотня', desc: 'Накопи 100 очков', target: 100, progress: 0, reward: 0, unlocked: false, type: 'score' },
+  { id: 'a3', name: 'Кликер-маньяк', desc: 'Сделай 50 кликов', target: 50, progress: 0, reward: 100, unlocked: false, type: 'clicks' },
+  { id: 'a4', name: 'Шопоголик', desc: 'Купи 3 роботов', target: 3, progress: 0, reward: 500, unlocked: false, type: 'robot' },
+  { id: 'a5', name: 'Критический удар', desc: 'Соверши крит', target: 1, progress: 0, reward: 100, unlocked: false, type: 'crit' },
+  { id: 'a6', name: 'Накопитель', desc: 'Накопи 10,000 очков', target: 10000, progress: 0, reward: 2000, unlocked: false, type: 'score' },
+  { id: 'a7', name: 'Ветеран', desc: 'Достигни 5 уровня', target: 5, progress: 1, reward: 5000, unlocked: false, type: 'level' },
+  { id: 'a8', name: 'Миллионер', desc: 'Накопи 1,000,000 очков', target: 1000000, progress: 0, reward: 50000, unlocked: false, type: 'score' },
+  { id: 'a9', name: 'Золотая лихорадка', desc: 'Поймай золотую кнопку', target: 1, progress: 0, reward: 1000, unlocked: false, type: 'golden' }
+];
+
+function formatNumber(num) {
+  if (num < 1000) return Math.floor(num).toString();
+  const suffixes = ['', 'K', 'M', 'B', 'T', 'Qa', 'Qi', 'Sx', 'Sp'];
+  const tier = Math.floor(Math.log10(Math.abs(num)) / 3);
+  const suffix = suffixes[Math.min(tier, suffixes.length - 1)];
+  return (num / Math.pow(10, tier * 3)).toFixed(2) + suffix;
+}
+
+function showToast(text, color = '#00ffff') {
+  const toast = document.createElement('div');
+  toast.className = 'toast'; toast.style.borderLeftColor = color; toast.innerHTML = text;
+  document.getElementById('toast-container').appendChild(toast);
+  setTimeout(() => { toast.classList.add('fade-out'); setTimeout(() => toast.remove(), 500); }, 3000);
+}
+
 function updateUI() {
   document.getElementById('scoreValue').textContent = formatNumber(score);
   
@@ -9,7 +393,6 @@ function updateUI() {
   document.getElementById('xpText').textContent = `${Math.floor(xp)} / ${xpNeeded} XP`;
   document.getElementById('xpFill').style.width = `${Math.min((xp / xpNeeded) * 100, 100)}%`;
 
-  // Магазин
   const shopList = document.getElementById('shopList');
   if (shopList.children.length === 0) {
     upgrades.forEach((up, i) => {
@@ -26,7 +409,6 @@ function updateUI() {
     document.getElementById(`shop-item-${i}`).className = `shop-item ${score >= cost ? '' : 'disabled'}`;
   });
 
-  // Достижения
   const achList = document.getElementById('achievementsList');
   if (achList.children.length === 0) {
     achievementsList.forEach((ach, i) => {
@@ -70,14 +452,11 @@ function updateUI() {
   });
 
   // ИСПРАВЛЕНИЕ БАГА С МИНУСОВЫМ ПРЕСТИЖЕМ:
-  // Считаем чистую разницу
   const rawPPoints = Math.floor(Math.sqrt(Math.max(0, lifetimeScore) / 1000000)) - prestigePoints;
-  // Если разница меньше нуля, значит мы просто не заработали новых очков
   const pPoints = Math.max(0, rawPPoints); 
 
   const pBtn = document.getElementById('prestigeBtn');
   
-  // Показываем кнопку перерождения только если есть смысл (накоплено больше, чем есть)
   if (pPoints > 0) {
     pBtn.classList.add('show');
     pBtn.textContent = `ПЕРЕРОЖДЕНИЕ (+${pPoints})`;
@@ -85,7 +464,6 @@ function updateUI() {
     pBtn.classList.remove('show');
   }
 
-  // Дерево талантов теперь зависит от текущего количества очков престижа, а не от будущего перерождения
   if (prestigePoints > 0) {
     document.getElementById('talentsContainer').style.display = 'block';
   }
@@ -97,3 +475,172 @@ function updateUI() {
   document.getElementById('buffIndicator').style.display = buffTimer > 0 ? 'block' : 'none';
   if(buffTimer > 0) document.getElementById('buffIndicator').textContent = `🔥 x${buffMultiplier} ДОХОД! (${buffTimer}с) 🔥`;
 }
+
+function addXP(amount) {
+  xp += amount;
+  if (xp >= xpNeeded) {
+    xp -= xpNeeded;
+    level++;
+    xpNeeded = Math.floor(xpNeeded * 1.5);
+    clickPower += 1;
+    showToast(`🌟 <b>УРОВЕНЬ ${level}!</b><br>+1 к силе клика!`, '#00ffff');
+    playSound('buy', 1200);
+  }
+}
+
+document.getElementById('mainButton').addEventListener('click', (e) => {
+  initAudio();
+  const now = performance.now();
+  totalClicks++;
+
+  if (now - lastClickTime < 300) {
+    comboCount++;
+    if (comboCount > 5) currentCombo = Math.min(1 + Math.floor(comboCount / 5), 10);
+  } else { comboCount = 1; currentCombo = 1; }
+  lastClickTime = now;
+
+  const comboTxt = document.getElementById('comboText');
+  if (currentCombo > 1) {
+    comboTxt.textContent = `x${currentCombo}`; comboTxt.classList.add('active');
+    clearTimeout(comboTimer);
+    comboTimer = setTimeout(() => { comboTxt.classList.remove('active'); currentCombo = 1; comboCount = 0; }, 1000);
+  }
+
+  const isCrit = Math.random() < critChance;
+  if (isCrit) { hasCrit = true; document.body.classList.add('shake'); setTimeout(() => document.body.classList.remove('shake'), 300); }
+
+  const buffMult = buffTimer > 0 ? buffMultiplier : 1;
+  let earned = clickPower * prestigeMultiplier * currentCombo * buffMult * (1 + talents.click * 0.5);
+  if (isCrit) earned *= critMultiplier;
+  
+  score += earned; lifetimeScore += earned;
+  addXP(1);
+  
+  playSound(isCrit ? 'crit' : 'click', isCrit ? 900 : (600 + currentCombo * 50));
+
+  const floatEl = document.createElement('div');
+  floatEl.className = `floating-text ${isCrit ? 'crit' : ''}`;
+  floatEl.textContent = `+${formatNumber(earned)}${isCrit ? ' CRIT!' : ''}`;
+  floatEl.style.left = `${e.clientX - 20}px`; floatEl.style.top = `${e.clientY - 20}px`;
+  document.body.appendChild(floatEl);
+  setTimeout(() => floatEl.remove(), 800);
+
+  updateUI();
+});
+
+function buyUpgrade(index) {
+  const up = upgrades[index];
+  const cost = Math.floor(up.baseCost * Math.pow(up.costMult, up.count));
+  if (score >= cost) {
+    score -= cost; up.count++;
+    if (up.type === 'click') clickPower += up.value;
+    if (up.type === 'auto') autoPower += up.value;
+    if (up.type === 'crit') critChance += up.value;
+    
+    playSound('buy');
+    addXP(10);
+    updateUI();
+  }
+}
+
+setInterval(() => {
+  if (buffTimer > 0) buffTimer--;
+  let buffMult = buffTimer > 0 ? buffMultiplier : 1;
+  let earned = autoPower * prestigeMultiplier * buffMult * (1 + talents.auto * 0.5);
+  
+  if (earned > 0) {
+    score += earned; lifetimeScore += earned;
+    addXP(earned / 50);
+  }
+  updateUI();
+}, 1000);
+
+const goldenBtn = document.getElementById('goldenCookie');
+setInterval(() => {
+  if (buffTimer > 0 || Math.random() > 0.15) return;
+  goldenBtn.style.left = `${Math.random() * (window.innerWidth - 100) + 20}px`;
+  goldenBtn.style.top = `${Math.random() * (window.innerHeight - 100) + 20}px`;
+  goldenBtn.classList.add('show');
+  
+  const timeout = setTimeout(() => goldenBtn.classList.remove('show'), 8000);
+  goldenBtn.onclick = () => {
+    clearTimeout(timeout); goldenBtn.classList.remove('show');
+    buffMultiplier = 7; buffTimer = 15; hasCaughtGolden = true;
+    playSound('buy', 1500);
+    showToast('🔥 <b>ЗОЛОТАЯ ЛИХОРАДКА!</b><br>Доход x7 на 15 секунд!', '#ffdd00');
+    updateUI();
+  };
+}, 10000);
+
+document.getElementById('prestigeBtn').addEventListener('click', () => {
+  const pGain = Math.floor(Math.sqrt(lifetimeScore / 1000000)) - prestigePoints;
+  if (pGain <= 0) return;
+  if (confirm(`Переродиться и получить +${pGain} очков? (Очки и улучшения сбросятся)`)) {
+    prestigePoints += pGain;
+    prestigeMultiplier = 1 + (prestigePoints * 0.01);
+    score = 0; lifetimeScore = 0; clickPower = 1; autoPower = 0; critChance = 0.05;
+    upgrades.forEach(u => u.count = 0);
+    document.querySelectorAll('.pet').forEach(p => p.remove());
+    showToast('🌌 <b>ПЕРЕРОЖДЕНИЕ!</b>', '#aa00ff');
+    saveGame(); updateUI();
+  }
+});
+
+document.getElementById('talentClick').onclick = () => { if(prestigePoints >= 1) { prestigePoints--; talents.click++; showToast('Талант: +50% Сила клика', '#7c3aed'); updateUI(); saveGame(); } };
+document.getElementById('talentAuto').onclick = () => { if(prestigePoints >= 1) { prestigePoints--; talents.auto++; showToast('Талант: +50% Автодоход', '#7c3aed'); updateUI(); saveGame(); } };
+document.getElementById('talentCrit').onclick = () => { if(prestigePoints >= 2) { prestigePoints -= 2; talents.crit++; critChance += 0.05; showToast('Талант: +5% Шанс крита', '#7c3aed'); updateUI(); saveGame(); } };
+
+function saveGame() {
+  try {
+    localStorage.setItem('vindimClicker_v4', JSON.stringify({
+      score, lifetimeScore, clickPower, autoPower, prestigeMultiplier, prestigePoints, critChance,
+      level, xp, xpNeeded, totalClicks, talents, hasCrit, hasCaughtGolden,
+      upgrades: upgrades.map(u => u.count),
+      achievements: achievementsList.map(a => ({ id: a.id, unlocked: a.unlocked, progress: a.progress })),
+      lastSave: Date.now()
+    }));
+  } catch(e) {}
+}
+
+function loadGame() {
+  try {
+    const saved = localStorage.getItem('vindimClicker_v4');
+    if (saved) {
+      const d = JSON.parse(saved);
+      score = d.score || 0; lifetimeScore = d.lifetimeScore || 0;
+      clickPower = d.clickPower || 1; autoPower = d.autoPower || 0;
+      prestigeMultiplier = d.prestigeMultiplier || 1; prestigePoints = d.prestigePoints || 0;
+      critChance = d.critChance || 0.05; level = d.level || 1; xp = d.xp || 0; xpNeeded = d.xpNeeded || 100;
+      totalClicks = d.totalClicks || 0; talents = d.talents || { click: 0, auto: 0, crit: 0 };
+      hasCrit = d.hasCrit || false; hasCaughtGolden = d.hasCaughtGolden || false;
+      
+      if (d.upgrades) upgrades.forEach((u, i) => u.count = d.upgrades[i] || 0);
+      
+      if (d.achievements) {
+        achievementsList.forEach(a => {
+          const savedA = d.achievements.find(sa => sa.id === a.id);
+          if (savedA) { a.unlocked = savedA.unlocked; a.progress = savedA.progress; }
+        });
+      }
+
+      if (d.lastSave) {
+        const offSec = Math.min((Date.now() - d.lastSave) / 1000, 7200);
+        const offEarn = autoPower * prestigeMultiplier * offSec;
+        if (offEarn > 0) { score += offEarn; lifetimeScore += offEarn; if (offEarn > 10) showToast(`💤 Оффлайн доход: +${formatNumber(offEarn)}`, '#00d2ff'); }
+      }
+    }
+  } catch(e) {}
+}
+
+setInterval(saveGame, 10000);
+window.addEventListener('beforeunload', saveGame);
+
+setTimeout(() => {
+  document.getElementById('splash').classList.add('hidden');
+  loadGame();
+  updateUI();
+}, 3000);
+
+</script>
+</body>
+</html>
