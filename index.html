@@ -5,7 +5,11 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>vindim — Проекты</title>
 <link rel="shortcut icon" href="favicon.ico" type="image/x-icon">
+
 <style>
+  /* Основной шрифт для текста */
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap');
+
   * { 
     margin: 0; 
     padding: 0; 
@@ -15,13 +19,14 @@
   
   body, html {
     width: 100%; min-height: 100vh;
-    background: transparent;
+    background: #050508; 
     color: #fff;
     font-family: 'Inter', -apple-system, 'Segoe UI', Roboto, sans-serif;
     overflow-x: hidden;
     display: flex;
     flex-direction: column;
     -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
 
   /* ===== ЗВЁЗДНЫЙ КАНВАС ===== */
@@ -62,14 +67,17 @@
   }
 
   .logo {
+    /* ВОТ ОН, РОДНОЙ WINDOWS-ШРИФТ */
     font-family: 'Segoe Script', 'Brush Script MT', cursive;
     font-size: clamp(60px, 10vw, 100px);
+    font-weight: normal;
     color: #fff;
     text-shadow: 
       0 0 20px rgba(180, 100, 255, 0.8),
       0 0 60px rgba(140, 60, 220, 0.6);
     letter-spacing: 2px;
     margin-bottom: 16px;
+    line-height: 1.2;
     animation: logoFloat 8s ease-in-out infinite, fadeInDown 1s cubic-bezier(0.2, 0.8, 0.2, 1);
   }
 
@@ -114,20 +122,19 @@
     transition: all 0.5s cubic-bezier(0.2, 0.8, 0.2, 1);
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
     animation: cardAppear 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+    transform: translateZ(0);
   }
 
-  /* Задержки для появления карточек по очереди */
   .project-card:nth-child(1) { animation-delay: 0.1s; }
   .project-card:nth-child(2) { animation-delay: 0.2s; }
   .project-card:nth-child(3) { animation-delay: 0.3s; }
-  .project-card:nth-child(4) { animation-delay: 0.4s; } /* Задержка для 4-й карточки */
+  .project-card:nth-child(4) { animation-delay: 0.4s; }
 
   @keyframes cardAppear {
     from { opacity: 0; transform: translateY(40px); }
     to { opacity: 1; transform: translateY(0); }
   }
 
-  /* Свечение при наведении */
   .project-card::after {
     content: '';
     position: absolute;
@@ -150,6 +157,13 @@
   }
 
   .project-card:hover::after { opacity: 1; }
+
+  .project-card.old-project {
+    opacity: 0.8;
+  }
+  .project-card.old-project:hover {
+    opacity: 1;
+  }
 
   .cover-container {
     width: 100%;
@@ -182,6 +196,9 @@
     font-weight: 800;
     margin-bottom: 10px;
     color: #fff;
+    display: flex;
+    align-items: center;
+    gap: 10px;
   }
 
   .project-desc {
@@ -218,12 +235,23 @@
     box-shadow: 0 8px 25px rgba(16, 163, 99, 0.3);
   }
 
-  /* ===== БЕЙДЖ "САМЫЙ НОВЫЙ" ===== */
-  .badge-new {
+  .old-project .btn-play {
+    background: linear-gradient(135deg, #333, #444);
+    color: #aaa;
+    border-color: rgba(255,255,255,0.1);
+    box-shadow: none;
+  }
+  .old-project .btn-play:hover {
+    background: linear-gradient(135deg, #444, #555);
+    color: #fff;
+    border-color: rgba(255,255,255,0.2);
+  }
+
+  /* ===== БЕЙДЖИ ===== */
+  .badge {
     position: absolute;
     top: 16px;
     right: 16px;
-    background: linear-gradient(135deg, #ff00aa, #ffaa00);
     color: #fff;
     font-size: 11px;
     font-weight: 800;
@@ -231,9 +259,25 @@
     letter-spacing: 1px;
     padding: 6px 14px;
     border-radius: 20px;
-    box-shadow: 0 4px 15px rgba(255, 0, 170, 0.4);
     z-index: 5;
+  }
+
+  .badge.new {
+    background: linear-gradient(135deg, #ff00aa, #ffaa00);
+    box-shadow: 0 4px 15px rgba(255, 0, 170, 0.4);
     animation: pulseBadge 2s infinite;
+  }
+
+  .badge.update {
+    background: linear-gradient(135deg, #00d2ff, #0077ff);
+    box-shadow: 0 4px 15px rgba(0, 119, 255, 0.4);
+  }
+
+  .badge.old {
+    background: rgba(50, 50, 50, 0.8);
+    color: #888;
+    border: 1px solid #555;
+    backdrop-filter: blur(10px);
   }
 
   @keyframes pulseBadge {
@@ -261,6 +305,7 @@
     cursor: pointer;
     transition: all 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
     backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
   }
 
   .btn-info:hover {
@@ -275,6 +320,7 @@
     inset: 0;
     background: rgba(0,0,0,0.8);
     backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -343,7 +389,6 @@
 
   .btn-close:hover { background: rgba(255,255,255,0.15); }
 
-  /* Анимации */
   @keyframes fadeInDown {
     from { opacity: 0; transform: translateY(-30px); }
     to { opacity: 1; transform: translateY(0); }
@@ -353,7 +398,6 @@
     to { opacity: 1; }
   }
 
-  /* Адаптивность */
   @media (max-width: 768px) {
     .header { padding: 50px 20px 30px; }
     .projects-container { padding: 20px 20px 100px; gap: 20px; }
@@ -376,19 +420,33 @@
 
   <main class="projects-container">
     
-    <!-- Карточка 1: Уничтожение солнца -->
+    <!-- 1. Тетрис (Новый) -->
     <div class="project-card">
+      <div class="badge new">Самый новый продукт</div>
       <div class="cover-container">
-        <img src="cover1.PNG" alt="Уничтожение солнца" class="project-cover" onerror="this.style.display='none'">
+        <img src="cover4.PNG" alt="Геометрический Тетрис" class="project-cover" onerror="this.style.display='none'">
       </div>
       <div class="project-content">
-        <h1 class="project-title">Уничтожение солнца</h1>
-        <p class="project-desc">Там есть баг когда прыгаешь пушка снова запускается, не прыгай!</p>
-        <a href="https://vadimtychkov17-a11y.github.io/sun-game/" class="btn-play">Играть</a>
+        <h1 class="project-title">Геометрический Тетрис</h1>
+        <p class="project-desc">Классика в неоновом стиле. 7 фигур, 10 уровней скорости и процедурные звуки.</p>
+        <a href="https://vadimtychkov17-a11y.github.io/tetris/" class="btn-play">Играть</a>
       </div>
     </div>
 
-    <!-- Карточка 2: Аудио визуализатор -->
+    <!-- 2. Кликер -->
+    <div class="project-card">
+      <div class="badge update">Будут обновления</div>
+      <div class="cover-container">
+        <img src="cover3.PNG" alt="VinClick" class="project-cover" onerror="this.style.display='none'">
+      </div>
+      <div class="project-content">
+        <h1 class="project-title">VinClick</h1>
+        <p class="project-desc">Кликер, который затянет тебя на часы. Зарабатывай, покупай и перерождайся.</p>
+        <a href="https://vadimtychkov17-a11y.github.io/clicker/" class="btn-play">Играть</a>
+      </div>
+    </div>
+
+    <!-- 3. Визуализатор -->
     <div class="project-card">
       <div class="cover-container">
         <img src="cover2.PNG" alt="Аудио визуализатор" class="project-cover" onerror="this.style.display='none'">
@@ -400,29 +458,16 @@
       </div>
     </div>
 
-    <!-- Карточка 3: VinClick (Новый) -->
-    <div class="project-card">
-      <div class="badge-new">Самый новый продукт</div>
+    <!-- 4. Уничтожение солнца (Старое) -->
+    <div class="project-card old-project">
+      <div class="badge old">Старое</div>
       <div class="cover-container">
-        <img src="cover3.PNG" alt="VinClick" class="project-cover" onerror="this.style.display='none'">
+        <img src="cover1.PNG" alt="Уничтожение солнца" class="project-cover" onerror="this.style.display='none'">
       </div>
       <div class="project-content">
-        <h1 class="project-title">VinClick</h1>
-        <p class="project-desc">Кликер, который затянет тебя на часы. Зарабатывай, покупай и перерождайся.</p>
-        <a href="https://vadimtychkov17-a11y.github.io/clicker/" class="btn-play">Играть</a>
-      </div>
-    </div>
-
-    <!-- Карточка 4: Тетрис -->
-    <div class="project-card">
-      <div class="cover-container">
-        <img src="cover4.PNG" alt="Геометрический Тетрис" class="project-cover" onerror="this.style.display='none'">
-      </div>
-      <div class="project-content">
-        <h1 class="project-title">Геометрический Тетрис</h1>
-        <p class="project-desc">Классика в неоновом стиле. 7 фигур, 10 уровней скорости и процедурные звуки.</p>
-        <!-- ВАЖНО: Убедись, что папка с тетрисом называется 'tetris' или измени ссылку здесь -->
-        <a href="https://vadimtychkov17-a11y.github.io/tetris/" class="btn-play">Играть</a>
+        <h1 class="project-title">Уничтожение солнца</h1>
+        <p class="project-desc">Там есть баг когда прыгаешь пушка снова запускается, не прыгай!</p>
+        <a href="https://vadimtychkov17-a11y.github.io/sun-game/" class="btn-play">Играть</a>
       </div>
     </div>
 
@@ -446,14 +491,14 @@
         📁 Репозиторий сайта
       </a>
 
-      <p style="font-size: 13px; color: rgba(255,255,255,0.4); text-align: center;">Версия лаунчера: 1.2.0</p>
+      <p style="font-size: 13px; color: rgba(255,255,255,0.4); text-align: center;">Версия лаунчера: 1.2.1</p>
       
       <button class="btn-close" id="closeModalBtn">Закрыть</button>
     </div>
   </div>
 
   <script>
-    // ===== ГЕНЕРАТОР ЗВЁЗД =====
+    // ===== ГЕНЕРАТОР ЗВЁЗД (Исправлен белый экран) =====
     const canvas = document.getElementById('starfield');
     const ctx = canvas.getContext('2d');
     let W, H;
@@ -462,14 +507,21 @@
     let currentMouseX = 0, currentMouseY = 0;
 
     function resize() {
-      W = canvas.width = window.innerWidth;
-      H = canvas.height = window.innerHeight;
+      const dpr = window.devicePixelRatio || 1;
+      canvas.width = window.innerWidth * dpr;
+      canvas.height = window.innerHeight * dpr;
+      canvas.style.width = window.innerWidth + 'px';
+      canvas.style.height = window.innerHeight + 'px';
+      ctx.scale(dpr, dpr);
+      
+      W = window.innerWidth;
+      H = window.innerHeight;
       initStars();
     }
 
     function initStars() {
       stars = [];
-      const numStars = 250;
+      const numStars = window.innerWidth < 768 ? 150 : 250;
       for (let i = 0; i < numStars; i++) {
         stars.push({
           x: Math.random() * W,
