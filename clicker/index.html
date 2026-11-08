@@ -5,6 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>vindim — Clicker ULTRA</title>
 <style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap');
+
   * { margin: 0; padding: 0; box-sizing: border-box; }
   
   body, html {
@@ -12,6 +14,44 @@
     background: #050510; overflow: hidden;
     font-family: 'Inter', -apple-system, sans-serif; color: #fff;
     user-select: none; touch-action: none;
+  }
+
+  /* ==========================================
+     ЗАСТАВКА (INTRO)
+     ========================================== */
+  #intro-container {
+    position: fixed; inset: 0;
+    background-color: #050508;
+    z-index: 9999;
+    display: flex; justify-content: center; align-items: center;
+    transition: opacity 1s ease;
+  }
+  
+  #intro-container.hidden {
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  #introCanvas {
+    position: absolute;
+    top: 0; left: 0;
+    display: block;
+  }
+
+  /* ==========================================
+     КЛИКЕР (GAME)
+     ========================================== */
+  #game-wrapper {
+    position: absolute; inset: 0;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 1s ease;
+    z-index: 1;
+  }
+
+  #game-wrapper.active {
+    opacity: 1;
+    pointer-events: auto;
   }
 
   .back-btn {
@@ -26,25 +66,6 @@
     box-shadow: 0 5px 15px rgba(0,0,0,0.5); cursor: pointer;
   }
   .back-btn:hover { background: rgba(255, 255, 255, 0.15); color: #fff; border-color: rgba(0,255,255,0.4); }
-
-  #splash {
-    position: fixed; inset: 0; z-index: 9999; background: #050510;
-    display: flex; align-items: center; justify-content: center;
-    transition: opacity 1s ease;
-  }
-  #splash.hidden { opacity: 0; pointer-events: none; }
-  .splash-logo {
-    font-family: 'Segoe Script', 'Brush Script MT', cursive;
-    font-size: clamp(60px, 15vw, 150px); color: #e8d5ff;
-    text-shadow: 0 0 30px rgba(180, 100, 255, 0.8), 0 0 80px rgba(140, 60, 220, 0.6);
-    animation: logoAnim 3s ease forwards;
-  }
-  @keyframes logoAnim {
-    0% { opacity: 0; transform: scale(0.9); filter: blur(10px); }
-    20% { opacity: 1; transform: scale(1); filter: blur(0); }
-    80% { opacity: 1; }
-    100% { opacity: 0; transform: scale(1.05); }
-  }
 
   .bg-glow {
     position: absolute; inset: 0; z-index: 0; pointer-events: none;
@@ -198,449 +219,624 @@
 </head>
 <body>
 
-<div id="splash"><div class="splash-logo">vindim</div></div>
-
-<a href="https://vadimtychkov17-a11y.github.io/" class="back-btn"><span>←</span> Назад</a>
-
-<div id="toast-container"></div>
-<div class="bg-glow"></div>
-<div id="buffIndicator">🔥 x7 ДОХОД! 🔥</div>
-<div id="goldenCookie"></div>
-
-<div class="game-container">
-  
-  <div class="glass-panel">
-    <div class="panel-title">Магазин <span style="font-size: 11px; color: #888;">Кликеры</span></div>
-    <div class="shop-list" id="shopList"></div>
+  <!-- ЗАСТАВКА -->
+  <div id="intro-container">
+    <canvas id="introCanvas"></canvas>
   </div>
 
-  <div class="glass-panel center-panel">
-    
-    <div class="player-level">
-      <div style="display: flex; justify-content: space-between; font-size: 12px; color: rgba(255,255,255,0.7);">
-        <span>Уровень <span id="lvlText" style="color: #00ffff; font-weight: 900;">1</span></span>
-        <span id="xpText">0 / 100 XP</span>
-      </div>
-      <div class="lvl-bar-bg"><div class="lvl-bar-fill" id="xpFill"></div></div>
-    </div>
+  <!-- САМ КЛИКЕР -->
+  <div id="game-wrapper">
+    <div class="bg-glow"></div>
+    <div id="toast-container"></div>
+    <div id="buffIndicator">🔥 x7 ДОХОД! 🔥</div>
+    <div id="goldenCookie"></div>
 
-    <div class="score-display">
-      <div class="score-value" id="scoreValue">0</div>
-      <div class="score-label">Очков</div>
-      <div class="income-display" id="incomeValue">0/сек</div>
-    </div>
+    <a href="https://vadimtychkov17-a11y.github.io/" class="back-btn"><span>←</span> Назад</a>
 
-    <div class="btn-wrapper">
-      <div id="comboText">x1</div>
-      <div class="btn-ring"></div>
-      <button class="main-btn" id="mainButton">
-        <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm0-14c-3.31 0-6 2.69-6 6s2.69 6 6 6 6-2.69 6-6-2.69-6-6-6zm0 10c-2.21 0-4-1.79-4-4s1.79-4 4-4 4 1.79 4 4-1.79 4-4 4z"/></svg>
-      </button>
-    </div>
-  </div>
-
-  <div class="glass-panel">
-    
-    <div class="tabs">
-      <button class="tab-btn active" onclick="switchTab('progress')">Прогресс</button>
-      <button class="tab-btn" onclick="switchTab('updates')">Обновления (v2.0)</button>
-    </div>
-
-    <div class="tab-content active" id="tab-progress">
-      <button class="prestige-btn" id="prestigeBtn">ПЕРЕРОЖДЕНИЕ</button>
+    <div class="game-container">
       
-      <div id="talentsContainer" style="display: none; margin-bottom: 15px;">
-        <div style="font-size: 12px; color: #aaa; margin-bottom: 5px;">Дерево талантов</div>
-        <button class="talent-btn" id="talentClick">Сила клика +50% <span>1 очко</span></button>
-        <button class="talent-btn" id="talentAuto">Автодоход +50% <span>1 очко</span></button>
-        <button class="talent-btn" id="talentCrit">Шанс крита +5% <span>2 очка</span></button>
+      <div class="glass-panel">
+        <div class="panel-title">Магазин <span style="font-size: 11px; color: #888;">Кликеры</span></div>
+        <div class="shop-list" id="shopList"></div>
       </div>
 
-      <div class="panel-title" style="margin-top: 5px; font-size: 14px;">Достижения</div>
-      <div class="ach-list" id="achievementsList"></div>
-    </div>
-
-    <div class="tab-content" id="tab-updates">
-      
-      <div class="update-block">
-        <div class="update-title">Версия 2.0 <span class="update-date">Текущая</span></div>
-        <ul class="update-list">
-          <li><strong>Критические клики:</strong> Шанс нанести x10 урона (клика). С добавлением талантов шанс растет.</li>
-          <li><strong>Система уровней:</strong> Получай XP за клики и покупки. Каждый уровень дает +1 к базовой силе клика.</li>
-          <li><strong>Дерево Талантов:</strong> Очки престижа теперь можно тратить на усиление клика, автодохода или критов.</li>
-          <li><strong>Объединенные достижения:</strong> Задания и ачивки слиты в один список. За выполнение дают бонусные очки.</li>
-          <li><strong>Оптимизация:</strong> Исправлен баг с лагами при кликах (перерисовка DOM).</li>
-          <li><strong>Дизайн:</strong> Кнопка "Назад", тряска экрана при критах, эффект стекла для вкладок.</li>
-        </ul>
-      </div>
-
-      <div class="update-block" style="border-left-color: #555;">
-        <div class="update-title" style="color: #aaa;">Версия 1.0 <span class="update-date">Оригинал</span></div>
-        <ul class="update-list">
-          <li>Базовый кликер с 10 видами улучшений.</li>
-          <li>Простая система комбо-кликов (до x10).</li>
-          <li>Золотая кнопка (бафф на x7 доход).</li>
-          <li>Базовые достижения без сохранения прогресса (сбрасывались при перезагрузке).</li>
-          <li>Примитивная система престижа (без талантов).</li>
-          <li>Сохранение через localStorage, но с багами при чтении.</li>
-        </ul>
-      </div>
-
-    </div>
-
-  </div>
-
-</div>
-
-<script>
-let audioCtx = null;
-function initAudio() {
-  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-  if (audioCtx.state === 'suspended') audioCtx.resume();
-}
-function playSound(type, freq = 600) {
-  initAudio();
-  const osc = audioCtx.createOscillator(), gain = audioCtx.createGain();
-  osc.type = type === 'crit' ? 'square' : (type === 'buy' ? 'triangle' : 'sine');
-  osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
-  osc.frequency.exponentialRampToValueAtTime(freq * 0.5, audioCtx.currentTime + 0.1);
-  gain.gain.setValueAtTime(type === 'crit' ? 0.2 : 0.1, audioCtx.currentTime);
-  gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.1);
-  osc.connect(gain); gain.connect(audioCtx.destination);
-  osc.start(); osc.stop(audioCtx.currentTime + 0.1);
-}
-
-function switchTab(tabName) {
-  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
-  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-  
-  if (tabName === 'progress') {
-    document.getElementById('tab-progress').classList.add('active');
-    document.querySelectorAll('.tab-btn')[0].classList.add('active');
-  } else {
-    document.getElementById('tab-updates').classList.add('active');
-    document.querySelectorAll('.tab-btn')[1].classList.add('active');
-  }
-}
-
-let score = 0;
-let lifetimeScore = 0;
-let clickPower = 1;
-let autoPower = 0;
-let prestigeMultiplier = 1;
-let prestigePoints = 0;
-let critChance = 0.05;
-let critMultiplier = 10;
-let totalClicks = 0;
-
-let comboCount = 0, comboTimer = 0, currentCombo = 1, lastClickTime = 0;
-let buffMultiplier = 1, buffTimer = 0;
-let hasCaughtGolden = false, hasCrit = false;
-
-let level = 1;
-let xp = 0;
-let xpNeeded = 100;
-
-let talents = { click: 0, auto: 0, crit: 0 };
-
-const upgrades = [
-  { id: 'cursor', name: 'Курсор', icon: '👆', baseCost: 10, costMult: 1.15, type: 'click', value: 1, count: 0 },
-  { id: 'robot', name: 'Робот', icon: '🤖', baseCost: 100, costMult: 1.15, type: 'auto', value: 1, count: 0 },
-  { id: 'factory', name: 'Фабрика', icon: '🏭', baseCost: 1000, costMult: 1.15, type: 'auto', value: 5, count: 0 },
-  { id: 'mine', name: 'Шахта', icon: '⛏️', baseCost: 5000, costMult: 1.15, type: 'auto', value: 20, count: 0 },
-  { id: 'bank', name: 'Банк', icon: '🏦', baseCost: 50000, costMult: 1.15, type: 'auto', value: 100, count: 0 },
-  { id: 'temple', name: 'Храм', icon: '🏛️', baseCost: 500000, costMult: 1.15, type: 'auto', value: 500, count: 0 },
-  { id: 'space', name: 'Космостанция', icon: '🚀', baseCost: 1e6, costMult: 1.15, type: 'auto', value: 2000, count: 0 },
-  { id: 'quantum', name: 'Квантовый ПК', icon: '⚛️', baseCost: 1e7, costMult: 1.15, type: 'auto', value: 10000, count: 0 },
-  { id: 'luck', name: 'Кристалл удачи', icon: '💎', baseCost: 25000, costMult: 2.5, type: 'crit', value: 0.05, count: 0 }
-];
-
-const achievementsList = [
-  { id: 'a1', name: 'Первый клик', desc: 'Сделай 1 клик', target: 1, progress: 0, reward: 10, unlocked: false, type: 'clicks' },
-  { id: 'a2', name: 'Сотня', desc: 'Накопи 100 очков', target: 100, progress: 0, reward: 0, unlocked: false, type: 'score' },
-  { id: 'a3', name: 'Кликер-маньяк', desc: 'Сделай 50 кликов', target: 50, progress: 0, reward: 100, unlocked: false, type: 'clicks' },
-  { id: 'a4', name: 'Шопоголик', desc: 'Купи 3 роботов', target: 3, progress: 0, reward: 500, unlocked: false, type: 'robot' },
-  { id: 'a5', name: 'Критический удар', desc: 'Соверши крит', target: 1, progress: 0, reward: 100, unlocked: false, type: 'crit' },
-  { id: 'a6', name: 'Накопитель', desc: 'Накопи 10,000 очков', target: 10000, progress: 0, reward: 2000, unlocked: false, type: 'score' },
-  { id: 'a7', name: 'Ветеран', desc: 'Достигни 5 уровня', target: 5, progress: 1, reward: 5000, unlocked: false, type: 'level' },
-  { id: 'a8', name: 'Миллионер', desc: 'Накопи 1,000,000 очков', target: 1000000, progress: 0, reward: 50000, unlocked: false, type: 'score' },
-  { id: 'a9', name: 'Золотая лихорадка', desc: 'Поймай золотую кнопку', target: 1, progress: 0, reward: 1000, unlocked: false, type: 'golden' }
-];
-
-function formatNumber(num) {
-  if (num < 1000) return Math.floor(num).toString();
-  const suffixes = ['', 'K', 'M', 'B', 'T', 'Qa', 'Qi', 'Sx', 'Sp'];
-  const tier = Math.floor(Math.log10(Math.abs(num)) / 3);
-  const suffix = suffixes[Math.min(tier, suffixes.length - 1)];
-  return (num / Math.pow(10, tier * 3)).toFixed(2) + suffix;
-}
-
-function showToast(text, color = '#00ffff') {
-  const toast = document.createElement('div');
-  toast.className = 'toast'; toast.style.borderLeftColor = color; toast.innerHTML = text;
-  document.getElementById('toast-container').appendChild(toast);
-  setTimeout(() => { toast.classList.add('fade-out'); setTimeout(() => toast.remove(), 500); }, 3000);
-}
-
-function updateUI() {
-  document.getElementById('scoreValue').textContent = formatNumber(score);
-  
-  let currentAuto = autoPower * prestigeMultiplier * (1 + talents.auto * 0.5);
-  if (buffTimer > 0) currentAuto *= buffMultiplier;
-  document.getElementById('incomeValue').textContent = formatNumber(currentAuto) + '/сек';
-
-  document.getElementById('lvlText').textContent = level;
-  document.getElementById('xpText').textContent = `${Math.floor(xp)} / ${xpNeeded} XP`;
-  document.getElementById('xpFill').style.width = `${Math.min((xp / xpNeeded) * 100, 100)}%`;
-
-  const shopList = document.getElementById('shopList');
-  if (shopList.children.length === 0) {
-    upgrades.forEach((up, i) => {
-      const div = document.createElement('div'); div.className = 'shop-item'; div.id = `shop-item-${i}`;
-      div.innerHTML = `<div class="shop-icon">${up.icon}</div><div class="shop-info"><div class="shop-name">${up.name}</div><div class="shop-cost" id="cost-${i}">0</div></div><div class="shop-count" id="count-${i}">0</div>`;
-      div.onclick = () => buyUpgrade(i);
-      shopList.appendChild(div);
-    });
-  }
-  upgrades.forEach((up, i) => {
-    const cost = Math.floor(up.baseCost * Math.pow(up.costMult, up.count));
-    document.getElementById(`cost-${i}`).textContent = formatNumber(cost);
-    document.getElementById(`count-${i}`).textContent = up.count;
-    document.getElementById(`shop-item-${i}`).className = `shop-item ${score >= cost ? '' : 'disabled'}`;
-  });
-
-  const achList = document.getElementById('achievementsList');
-  if (achList.children.length === 0) {
-    achievementsList.forEach((ach, i) => {
-      const div = document.createElement('div'); div.className = 'achievement'; div.id = `ach-${i}`;
-      div.innerHTML = `
-        <div class="achievement-header">
-          <b>${ach.name}</b>
-          ${ach.reward > 0 ? `<span class="achievement-reward">+${formatNumber(ach.reward)}</span>` : ''}
+      <div class="glass-panel center-panel">
+        
+        <div class="player-level">
+          <div style="display: flex; justify-content: space-between; font-size: 12px; color: rgba(255,255,255,0.7);">
+            <span>Уровень <span id="lvlText" style="color: #00ffff; font-weight: 900;">1</span></span>
+            <span id="xpText">0 / 100 XP</span>
+          </div>
+          <div class="lvl-bar-bg"><div class="lvl-bar-fill" id="xpFill"></div></div>
         </div>
-        <div>${ach.desc}</div>
-        <div class="achievement-progress" id="prog-${i}">0/${ach.target}</div>
-      `;
-      achList.appendChild(div);
-    });
-  }
 
-  achievementsList.forEach((ach, i) => {
-    if (!ach.unlocked) {
-      if (ach.type === 'clicks') ach.progress = totalClicks;
-      if (ach.type === 'score') ach.progress = lifetimeScore;
-      if (ach.type === 'level') ach.progress = level;
-      if (ach.type === 'robot') ach.progress = upgrades.find(u => u.id === 'robot').count;
-      if (ach.type === 'crit') ach.progress = hasCrit ? 1 : 0;
-      if (ach.type === 'golden') ach.progress = hasCaughtGolden ? 1 : 0;
+        <div class="score-display">
+          <div class="score-value" id="scoreValue">0</div>
+          <div class="score-label">Очков</div>
+          <div class="income-display" id="incomeValue">0/сек</div>
+        </div>
 
-      document.getElementById(`prog-${i}`).textContent = `${Math.floor(ach.progress)}/${ach.target}`;
+        <div class="btn-wrapper">
+          <div id="comboText">x1</div>
+          <div class="btn-ring"></div>
+          <button class="main-btn" id="mainButton">
+            <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm0-14c-3.31 0-6 2.69-6 6s2.69 6 6 6 6-2.69 6-6-2.69-6-6-6zm0 10c-2.21 0-4-1.79-4-4s1.79-4 4-4 4 1.79 4 4-1.79 4-4 4z"/></svg>
+          </button>
+        </div>
+      </div>
 
-      if (ach.progress >= ach.target) {
-        ach.unlocked = true;
-        if (ach.reward > 0) {
-          score += ach.reward;
-          lifetimeScore += ach.reward;
-          showToast(`🏆 <b>${ach.name}</b><br>Награда: +${formatNumber(ach.reward)}`, '#00ff88');
-        } else {
-          showToast(`🏆 Достижение: <b>${ach.name}</b>`, '#00ff88');
-        }
-        playSound('buy', 1000);
+      <div class="glass-panel">
+        
+        <div class="tabs">
+          <button class="tab-btn active" onclick="switchTab('progress')">Прогресс</button>
+          <button class="tab-btn" onclick="switchTab('updates')">Обновления (v2.0)</button>
+        </div>
+
+        <div class="tab-content active" id="tab-progress">
+          <button class="prestige-btn" id="prestigeBtn">ПЕРЕРОЖДЕНИЕ</button>
+          
+          <div id="talentsContainer" style="display: none; margin-bottom: 15px;">
+            <div style="font-size: 12px; color: #aaa; margin-bottom: 5px;">Дерево талантов</div>
+            <button class="talent-btn" id="talentClick">Сила клика +50% <span>1 очко</span></button>
+            <button class="talent-btn" id="talentAuto">Автодоход +50% <span>1 очко</span></button>
+            <button class="talent-btn" id="talentCrit">Шанс крита +5% <span>2 очка</span></button>
+          </div>
+
+          <div class="panel-title" style="margin-top: 5px; font-size: 14px;">Достижения</div>
+          <div class="ach-list" id="achievementsList"></div>
+        </div>
+
+        <div class="tab-content" id="tab-updates">
+          <div class="update-block">
+            <div class="update-title">Версия 2.0 <span class="update-date">Текущая</span></div>
+            <ul class="update-list">
+              <li><strong>Критические клики:</strong> Шанс нанести x10 урона.</li>
+              <li><strong>Система уровней:</strong> Получай XP за клики и покупки.</li>
+              <li><strong>Дерево Талантов:</strong> Трать очки престижа на усиления.</li>
+              <li><strong>Объединенные достижения:</strong> Награды за выполнение.</li>
+              <li><strong>Оптимизация:</strong> Исправлен баг с лагами.</li>
+              <li><strong>Дизайн:</strong> Тряска экрана при критах.</li>
+            </ul>
+          </div>
+          <div class="update-block" style="border-left-color: #555;">
+            <div class="update-title" style="color: #aaa;">Версия 1.0 <span class="update-date">Оригинал</span></div>
+            <ul class="update-list">
+              <li>Базовый кликер с 10 видами улучшений.</li>
+              <li>Простая система комбо-кликов.</li>
+              <li>Золотая кнопка (бафф на x7 доход).</li>
+              <li>Базовые достижения.</li>
+            </ul>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.19.0/matter.min.js"></script>
+
+  <script>
+    // ==========================================
+    // 1. ЛОГИКА ЗАСТАВКИ (INTRO)
+    // ==========================================
+    const { Engine, Runner, Bodies, Composite, Body, Events } = Matter;
+    
+    const introCanvas = document.getElementById('introCanvas');
+    const ctx = introCanvas.getContext('2d');
+    const dpr = window.devicePixelRatio || 1;
+
+    function resizeIntro() {
+      introCanvas.width = window.innerWidth * dpr;
+      introCanvas.height = window.innerHeight * dpr;
+      introCanvas.style.width = window.innerWidth + 'px';
+      introCanvas.style.height = window.innerHeight + 'px';
+      ctx.scale(dpr, dpr); 
+    }
+    resizeIntro();
+
+    const engine = Engine.create();
+    const world = engine.world;
+    engine.gravity.y = 2.0;
+    const runner = Runner.create();
+    Runner.run(runner, engine);
+
+    const letters = ['v', 'i', 'n', 'd', 'i', 'm'];
+    const bodies = [];
+    const fontSize = 120;
+    const fontStr = `bold ${fontSize}px "Segoe Script", "Brush Script MT", cursive`;
+    
+    const letterSpacing = 70;
+    const totalWidth = letters.length * letterSpacing;
+    const startX = window.innerWidth / 2 - (totalWidth / 2) + (letterSpacing / 2);
+    const baselineY = window.innerHeight / 2 + 20;
+
+    let currentLetterIndex = 0;
+    let cameraZoom = 1.0;
+    let isAssembling = false;
+    let assemblyProgress = 0;
+    let showFinalText = false; 
+    let assemblyStartPositions = [];
+
+    function spawnNextLetter() {
+      if (currentLetterIndex >= letters.length) return;
+
+      const i = currentLetterIndex;
+      const char = letters[i];
+      const targetX = startX + (i * letterSpacing);
+      
+      const startXPos = targetX + (Math.random() - 0.5) * 50; 
+      const startYPos = -150;
+      
+      const body = Bodies.rectangle(startXPos, startYPos, 70, fontSize, {
+        restitution: 0, friction: 1, render: { fillStyle: 'transparent' }
+      });
+      
+      body.customLetter = char;
+      body.targetX = targetX;
+      body.targetY = baselineY - 60 + (Math.random() - 0.5) * 60;
+      body.isFrozen = false;
+      
+      bodies.push(body);
+      Composite.add(world, body);
+
+      currentLetterIndex++;
+
+      if (currentLetterIndex < letters.length) {
+        setTimeout(spawnNextLetter, 800);
+      } else {
+        setTimeout(fixLetters, 1200);
       }
     }
-    if (ach.unlocked) document.getElementById(`ach-${i}`).classList.add('unlocked');
-  });
 
-  // ИСПРАВЛЕНИЕ БАГА С МИНУСОВЫМ ПРЕСТИЖЕМ:
-  const rawPPoints = Math.floor(Math.sqrt(Math.max(0, lifetimeScore) / 1000000)) - prestigePoints;
-  const pPoints = Math.max(0, rawPPoints); 
+    Events.on(engine, 'beforeUpdate', () => {
+      bodies.forEach(body => {
+        if (!body.isFrozen && body.position.y >= body.targetY) {
+          Body.setStatic(body, true);
+          body.isFrozen = true;
+        }
+      });
+    });
 
-  const pBtn = document.getElementById('prestigeBtn');
-  
-  if (pPoints > 0) {
-    pBtn.classList.add('show');
-    pBtn.textContent = `ПЕРЕРОЖДЕНИЕ (+${pPoints})`;
-  } else {
-    pBtn.classList.remove('show');
-  }
+    function fixLetters() {
+      isAssembling = true;
+      assemblyProgress = 0;
+      bodies.forEach(body => {
+        assemblyStartPositions.push({ x: body.position.x, y: body.position.y, angle: body.angle });
+      });
+    }
 
-  if (prestigePoints > 0) {
-    document.getElementById('talentsContainer').style.display = 'block';
-  }
-  
-  document.getElementById('talentClick').disabled = prestigePoints < 1;
-  document.getElementById('talentAuto').disabled = prestigePoints < 1;
-  document.getElementById('talentCrit').disabled = prestigePoints < 2;
+    function introLoop() {
+      ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
 
-  document.getElementById('buffIndicator').style.display = buffTimer > 0 ? 'block' : 'none';
-  if(buffTimer > 0) document.getElementById('buffIndicator').textContent = `🔥 x${buffMultiplier} ДОХОД! (${buffTimer}с) 🔥`;
-}
+      if (isAssembling) {
+        assemblyProgress += 0.02; 
+        if (assemblyProgress >= 1) {
+          assemblyProgress = 1;
+          isAssembling = false;
+          showFinalText = true; // Мгновенно включаем финальный текст
+          
+          // ТРИГГЕР ПЕРЕХОДА К КЛИКЕРУ ЧЕРЕЗ 1.5 СЕК
+          setTimeout(() => {
+            document.getElementById('intro-container').classList.add('hidden');
+            document.getElementById('game-wrapper').classList.add('active');
+            Runner.stop(runner);
+            
+            loadGame();
+            updateUI();
+          }, 1500);
+        }
 
-function addXP(amount) {
-  xp += amount;
-  if (xp >= xpNeeded) {
-    xp -= xpNeeded;
-    level++;
-    xpNeeded = Math.floor(xpNeeded * 1.5);
-    clickPower += 1;
-    showToast(`🌟 <b>УРОВЕНЬ ${level}!</b><br>+1 к силе клика!`, '#00ffff');
-    playSound('buy', 1200);
-  }
-}
+        let ease = 1 - Math.pow(1 - assemblyProgress, 3);
+        cameraZoom = 1 + (0.15 * ease);
 
-document.getElementById('mainButton').addEventListener('click', (e) => {
-  initAudio();
-  const now = performance.now();
-  totalClicks++;
+        bodies.forEach((body, i) => {
+          const start = assemblyStartPositions[i];
+          const targetX = body.targetX;
+          const targetY = baselineY; 
+          
+          let currX = start.x + (targetX - start.x) * ease;
+          let currY = start.y + (targetY - start.y) * ease;
+          
+          let normalizedStartAngle = start.angle % (Math.PI * 2);
+          if (normalizedStartAngle > Math.PI) normalizedStartAngle -= Math.PI * 2;
+          if (normalizedStartAngle < -Math.PI) normalizedStartAngle += Math.PI * 2;
+          
+          let currAngle = normalizedStartAngle * (1 - ease);
 
-  if (now - lastClickTime < 300) {
-    comboCount++;
-    if (comboCount > 5) currentCombo = Math.min(1 + Math.floor(comboCount / 5), 10);
-  } else { comboCount = 1; currentCombo = 1; }
-  lastClickTime = now;
-
-  const comboTxt = document.getElementById('comboText');
-  if (currentCombo > 1) {
-    comboTxt.textContent = `x${currentCombo}`; comboTxt.classList.add('active');
-    clearTimeout(comboTimer);
-    comboTimer = setTimeout(() => { comboTxt.classList.remove('active'); currentCombo = 1; comboCount = 0; }, 1000);
-  }
-
-  const isCrit = Math.random() < critChance;
-  if (isCrit) { hasCrit = true; document.body.classList.add('shake'); setTimeout(() => document.body.classList.remove('shake'), 300); }
-
-  const buffMult = buffTimer > 0 ? buffMultiplier : 1;
-  let earned = clickPower * prestigeMultiplier * currentCombo * buffMult * (1 + talents.click * 0.5);
-  if (isCrit) earned *= critMultiplier;
-  
-  score += earned; lifetimeScore += earned;
-  addXP(1);
-  
-  playSound(isCrit ? 'crit' : 'click', isCrit ? 900 : (600 + currentCombo * 50));
-
-  const floatEl = document.createElement('div');
-  floatEl.className = `floating-text ${isCrit ? 'crit' : ''}`;
-  floatEl.textContent = `+${formatNumber(earned)}${isCrit ? ' CRIT!' : ''}`;
-  floatEl.style.left = `${e.clientX - 20}px`; floatEl.style.top = `${e.clientY - 20}px`;
-  document.body.appendChild(floatEl);
-  setTimeout(() => floatEl.remove(), 800);
-
-  updateUI();
-});
-
-function buyUpgrade(index) {
-  const up = upgrades[index];
-  const cost = Math.floor(up.baseCost * Math.pow(up.costMult, up.count));
-  if (score >= cost) {
-    score -= cost; up.count++;
-    if (up.type === 'click') clickPower += up.value;
-    if (up.type === 'auto') autoPower += up.value;
-    if (up.type === 'crit') critChance += up.value;
-    
-    playSound('buy');
-    addXP(10);
-    updateUI();
-  }
-}
-
-setInterval(() => {
-  if (buffTimer > 0) buffTimer--;
-  let buffMult = buffTimer > 0 ? buffMultiplier : 1;
-  let earned = autoPower * prestigeMultiplier * buffMult * (1 + talents.auto * 0.5);
-  
-  if (earned > 0) {
-    score += earned; lifetimeScore += earned;
-    addXP(earned / 50);
-  }
-  updateUI();
-}, 1000);
-
-const goldenBtn = document.getElementById('goldenCookie');
-setInterval(() => {
-  if (buffTimer > 0 || Math.random() > 0.15) return;
-  goldenBtn.style.left = `${Math.random() * (window.innerWidth - 100) + 20}px`;
-  goldenBtn.style.top = `${Math.random() * (window.innerHeight - 100) + 20}px`;
-  goldenBtn.classList.add('show');
-  
-  const timeout = setTimeout(() => goldenBtn.classList.remove('show'), 8000);
-  goldenBtn.onclick = () => {
-    clearTimeout(timeout); goldenBtn.classList.remove('show');
-    buffMultiplier = 7; buffTimer = 15; hasCaughtGolden = true;
-    playSound('buy', 1500);
-    showToast('🔥 <b>ЗОЛОТАЯ ЛИХОРАДКА!</b><br>Доход x7 на 15 секунд!', '#ffdd00');
-    updateUI();
-  };
-}, 10000);
-
-document.getElementById('prestigeBtn').addEventListener('click', () => {
-  const pGain = Math.floor(Math.sqrt(lifetimeScore / 1000000)) - prestigePoints;
-  if (pGain <= 0) return;
-  if (confirm(`Переродиться и получить +${pGain} очков? (Очки и улучшения сбросятся)`)) {
-    prestigePoints += pGain;
-    prestigeMultiplier = 1 + (prestigePoints * 0.01);
-    score = 0; lifetimeScore = 0; clickPower = 1; autoPower = 0; critChance = 0.05;
-    upgrades.forEach(u => u.count = 0);
-    document.querySelectorAll('.pet').forEach(p => p.remove());
-    showToast('🌌 <b>ПЕРЕРОЖДЕНИЕ!</b>', '#aa00ff');
-    saveGame(); updateUI();
-  }
-});
-
-document.getElementById('talentClick').onclick = () => { if(prestigePoints >= 1) { prestigePoints--; talents.click++; showToast('Талант: +50% Сила клика', '#7c3aed'); updateUI(); saveGame(); } };
-document.getElementById('talentAuto').onclick = () => { if(prestigePoints >= 1) { prestigePoints--; talents.auto++; showToast('Талант: +50% Автодоход', '#7c3aed'); updateUI(); saveGame(); } };
-document.getElementById('talentCrit').onclick = () => { if(prestigePoints >= 2) { prestigePoints -= 2; talents.crit++; critChance += 0.05; showToast('Талант: +5% Шанс крита', '#7c3aed'); updateUI(); saveGame(); } };
-
-function saveGame() {
-  try {
-    localStorage.setItem('vindimClicker_v4', JSON.stringify({
-      score, lifetimeScore, clickPower, autoPower, prestigeMultiplier, prestigePoints, critChance,
-      level, xp, xpNeeded, totalClicks, talents, hasCrit, hasCaughtGolden,
-      upgrades: upgrades.map(u => u.count),
-      achievements: achievementsList.map(a => ({ id: a.id, unlocked: a.unlocked, progress: a.progress })),
-      lastSave: Date.now()
-    }));
-  } catch(e) {}
-}
-
-function loadGame() {
-  try {
-    const saved = localStorage.getItem('vindimClicker_v4');
-    if (saved) {
-      const d = JSON.parse(saved);
-      score = d.score || 0; lifetimeScore = d.lifetimeScore || 0;
-      clickPower = d.clickPower || 1; autoPower = d.autoPower || 0;
-      prestigeMultiplier = d.prestigeMultiplier || 1; prestigePoints = d.prestigePoints || 0;
-      critChance = d.critChance || 0.05; level = d.level || 1; xp = d.xp || 0; xpNeeded = d.xpNeeded || 100;
-      totalClicks = d.totalClicks || 0; talents = d.talents || { click: 0, auto: 0, crit: 0 };
-      hasCrit = d.hasCrit || false; hasCaughtGolden = d.hasCaughtGolden || false;
-      
-      if (d.upgrades) upgrades.forEach((u, i) => u.count = d.upgrades[i] || 0);
-      
-      if (d.achievements) {
-        achievementsList.forEach(a => {
-          const savedA = d.achievements.find(sa => sa.id === a.id);
-          if (savedA) { a.unlocked = savedA.unlocked; a.progress = savedA.progress; }
+          Body.setPosition(body, { x: currX, y: currY });
+          Body.setAngle(body, currAngle);
         });
       }
 
-      if (d.lastSave) {
-        const offSec = Math.min((Date.now() - d.lastSave) / 1000, 7200);
-        const offEarn = autoPower * prestigeMultiplier * offSec;
-        if (offEarn > 0) { score += offEarn; lifetimeScore += offEarn; if (offEarn > 10) showToast(`💤 Оффлайн доход: +${formatNumber(offEarn)}`, '#00d2ff'); }
+      const centerX = window.innerWidth / 2;
+      const centerY = window.innerHeight / 2;
+
+      if (!showFinalText) {
+        // ФАЗА 1: Рисуем отдельные буквы во время сборки
+        ctx.save();
+        ctx.translate(centerX, centerY);
+        ctx.scale(cameraZoom, cameraZoom);
+        ctx.translate(-centerX, -centerY);
+
+        ctx.font = fontStr;
+        ctx.fillStyle = '#ffffff';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.shadowColor = '#b46eff';
+        ctx.shadowBlur = 30;
+
+        bodies.forEach(body => {
+          ctx.save();
+          ctx.translate(body.position.x, body.position.y);
+          ctx.rotate(body.angle);
+          ctx.fillText(body.customLetter, 0, 0);
+          ctx.restore();
+        });
+
+        ctx.restore();
+        requestAnimationFrame(introLoop); 
+      } else {
+        // ФАЗА 2: Рисуем идеальный текст один раз (чтобы свечение не глючило)
+        ctx.save();
+        ctx.translate(centerX, centerY);
+        ctx.scale(1.15, 1.15);
+        ctx.translate(-centerX, -centerY);
+
+        ctx.font = fontStr;
+        ctx.fillStyle = '#ffffff';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.shadowColor = '#b46eff';
+        ctx.shadowBlur = 30;
+
+        ctx.fillText("vindim", centerX, baselineY);
+        ctx.restore();
+        
+        // Останавливаем requestAnimationFrame, так как текст уже нарисован и застыл
       }
     }
-  } catch(e) {}
-}
 
-setInterval(saveGame, 10000);
-window.addEventListener('beforeunload', saveGame);
+    // Запуск заставки сразу
+    spawnNextLetter();
+    introLoop();
 
-setTimeout(() => {
-  document.getElementById('splash').classList.add('hidden');
-  loadGame();
-  updateUI();
-}, 3000);
+    window.addEventListener('resize', resizeIntro);
 
-</script>
+
+    // ==========================================
+    // 2. ЛОГИКА КЛИКЕРА (GAME)
+    // ==========================================
+    let audioCtx = null;
+    function initAudio() {
+      if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      if (audioCtx.state === 'suspended') audioCtx.resume();
+    }
+
+    function playSound(type, freq = 600) {
+      if(!audioCtx) return;
+      const osc = audioCtx.createOscillator(), gain = audioCtx.createGain();
+      osc.type = type === 'crit' ? 'square' : (type === 'buy' ? 'triangle' : 'sine');
+      osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(freq * 0.5, audioCtx.currentTime + 0.1);
+      gain.gain.setValueAtTime(type === 'crit' ? 0.2 : 0.1, audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.1);
+      osc.connect(gain); gain.connect(audioCtx.destination);
+      osc.start(); osc.stop(audioCtx.currentTime + 0.1);
+    }
+
+    function switchTab(tabName) {
+      document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      
+      if (tabName === 'progress') {
+        document.getElementById('tab-progress').classList.add('active');
+        document.querySelectorAll('.tab-btn')[0].classList.add('active');
+      } else {
+        document.getElementById('tab-updates').classList.add('active');
+        document.querySelectorAll('.tab-btn')[1].classList.add('active');
+      }
+    }
+
+    let score = 0, lifetimeScore = 0, clickPower = 1, autoPower = 0;
+    let prestigeMultiplier = 1, prestigePoints = 0;
+    let critChance = 0.05, critMultiplier = 10, totalClicks = 0;
+    let comboCount = 0, comboTimer = 0, currentCombo = 1, lastClickTime = 0;
+    let buffMultiplier = 1, buffTimer = 0;
+    let hasCaughtGolden = false, hasCrit = false;
+    let level = 1, xp = 0, xpNeeded = 100;
+    let talents = { click: 0, auto: 0, crit: 0 };
+
+    const upgrades = [
+      { id: 'cursor', name: 'Курсор', icon: '👆', baseCost: 10, costMult: 1.15, type: 'click', value: 1, count: 0 },
+      { id: 'robot', name: 'Робот', icon: '🤖', baseCost: 100, costMult: 1.15, type: 'auto', value: 1, count: 0 },
+      { id: 'factory', name: 'Фабрика', icon: '🏭', baseCost: 1000, costMult: 1.15, type: 'auto', value: 5, count: 0 },
+      { id: 'mine', name: 'Шахта', icon: '⛏️', baseCost: 5000, costMult: 1.15, type: 'auto', value: 20, count: 0 },
+      { id: 'bank', name: 'Банк', icon: '🏦', baseCost: 50000, costMult: 1.15, type: 'auto', value: 100, count: 0 },
+      { id: 'temple', name: 'Храм', icon: '🏛️', baseCost: 500000, costMult: 1.15, type: 'auto', value: 500, count: 0 },
+      { id: 'space', name: 'Космостанция', icon: '🚀', baseCost: 1e6, costMult: 1.15, type: 'auto', value: 2000, count: 0 },
+      { id: 'quantum', name: 'Квантовый ПК', icon: '⚛️', baseCost: 1e7, costMult: 1.15, type: 'auto', value: 10000, count: 0 },
+      { id: 'luck', name: 'Кристалл удачи', icon: '💎', baseCost: 25000, costMult: 2.5, type: 'crit', value: 0.05, count: 0 }
+    ];
+
+    const achievementsList = [
+      { id: 'a1', name: 'Первый клик', desc: 'Сделай 1 клик', target: 1, progress: 0, reward: 10, unlocked: false, type: 'clicks' },
+      { id: 'a2', name: 'Сотня', desc: 'Накопи 100 очков', target: 100, progress: 0, reward: 0, unlocked: false, type: 'score' },
+      { id: 'a3', name: 'Кликер-маньяк', desc: 'Сделай 50 кликов', target: 50, progress: 0, reward: 100, unlocked: false, type: 'clicks' },
+      { id: 'a4', name: 'Шопоголик', desc: 'Купи 3 роботов', target: 3, progress: 0, reward: 500, unlocked: false, type: 'robot' },
+      { id: 'a5', name: 'Критический удар', desc: 'Соверши крит', target: 1, progress: 0, reward: 100, unlocked: false, type: 'crit' },
+      { id: 'a6', name: 'Накопитель', desc: 'Накопи 10,000 очков', target: 10000, progress: 0, reward: 2000, unlocked: false, type: 'score' },
+      { id: 'a7', name: 'Ветеран', desc: 'Достигни 5 уровня', target: 5, progress: 1, reward: 5000, unlocked: false, type: 'level' },
+      { id: 'a8', name: 'Миллионер', desc: 'Накопи 1,000,000 очков', target: 1000000, progress: 0, reward: 50000, unlocked: false, type: 'score' },
+      { id: 'a9', name: 'Золотая лихорадка', desc: 'Поймай золотую кнопку', target: 1, progress: 0, reward: 1000, unlocked: false, type: 'golden' }
+    ];
+
+    function formatNumber(num) {
+      if (num < 1000) return Math.floor(num).toString();
+      const suffixes = ['', 'K', 'M', 'B', 'T', 'Qa', 'Qi', 'Sx', 'Sp'];
+      const tier = Math.floor(Math.log10(Math.abs(num)) / 3);
+      const suffix = suffixes[Math.min(tier, suffixes.length - 1)];
+      return (num / Math.pow(10, tier * 3)).toFixed(2) + suffix;
+    }
+
+    function showToast(text, color = '#00ffff') {
+      const toast = document.createElement('div');
+      toast.className = 'toast'; toast.style.borderLeftColor = color; toast.innerHTML = text;
+      document.getElementById('toast-container').appendChild(toast);
+      setTimeout(() => { toast.classList.add('fade-out'); setTimeout(() => toast.remove(), 500); }, 3000);
+    }
+
+    function updateUI() {
+      document.getElementById('scoreValue').textContent = formatNumber(score);
+      
+      let currentAuto = autoPower * prestigeMultiplier * (1 + talents.auto * 0.5);
+      if (buffTimer > 0) currentAuto *= buffMultiplier;
+      document.getElementById('incomeValue').textContent = formatNumber(currentAuto) + '/сек';
+
+      document.getElementById('lvlText').textContent = level;
+      document.getElementById('xpText').textContent = `${Math.floor(xp)} / ${xpNeeded} XP`;
+      document.getElementById('xpFill').style.width = `${Math.min((xp / xpNeeded) * 100, 100)}%`;
+
+      const shopList = document.getElementById('shopList');
+      if (shopList.children.length === 0) {
+        upgrades.forEach((up, i) => {
+          const div = document.createElement('div'); div.className = 'shop-item'; div.id = `shop-item-${i}`;
+          div.innerHTML = `<div class="shop-icon">${up.icon}</div><div class="shop-info"><div class="shop-name">${up.name}</div><div class="shop-cost" id="cost-${i}">0</div></div><div class="shop-count" id="count-${i}">0</div>`;
+          div.onclick = () => buyUpgrade(i);
+          shopList.appendChild(div);
+        });
+      }
+      upgrades.forEach((up, i) => {
+        const cost = Math.floor(up.baseCost * Math.pow(up.costMult, up.count));
+        document.getElementById(`cost-${i}`).textContent = formatNumber(cost);
+        document.getElementById(`count-${i}`).textContent = up.count;
+        document.getElementById(`shop-item-${i}`).className = `shop-item ${score >= cost ? '' : 'disabled'}`;
+      });
+
+      const achList = document.getElementById('achievementsList');
+      if (achList.children.length === 0) {
+        achievementsList.forEach((ach, i) => {
+          const div = document.createElement('div'); div.className = 'achievement'; div.id = `ach-${i}`;
+          div.innerHTML = `
+            <div class="achievement-header">
+              <b>${ach.name}</b>
+              ${ach.reward > 0 ? `<span class="achievement-reward">+${formatNumber(ach.reward)}</span>` : ''}
+            </div>
+            <div>${ach.desc}</div>
+            <div class="achievement-progress" id="prog-${i}">0/${ach.target}</div>
+          `;
+          achList.appendChild(div);
+        });
+      }
+
+      achievementsList.forEach((ach, i) => {
+        if (!ach.unlocked) {
+          if (ach.type === 'clicks') ach.progress = totalClicks;
+          if (ach.type === 'score') ach.progress = lifetimeScore;
+          if (ach.type === 'level') ach.progress = level;
+          if (ach.type === 'robot') ach.progress = upgrades.find(u => u.id === 'robot').count;
+          if (ach.type === 'crit') ach.progress = hasCrit ? 1 : 0;
+          if (ach.type === 'golden') ach.progress = hasCaughtGolden ? 1 : 0;
+
+          document.getElementById(`prog-${i}`).textContent = `${Math.floor(ach.progress)}/${ach.target}`;
+
+          if (ach.progress >= ach.target) {
+            ach.unlocked = true;
+            if (ach.reward > 0) {
+              score += ach.reward;
+              lifetimeScore += ach.reward;
+              showToast(`🏆 <b>${ach.name}</b><br>Награда: +${formatNumber(ach.reward)}`, '#00ff88');
+            } else {
+              showToast(`🏆 Достижение: <b>${ach.name}</b>`, '#00ff88');
+            }
+            playSound('buy', 1000);
+          }
+        }
+        if (ach.unlocked) document.getElementById(`ach-${i}`).classList.add('unlocked');
+      });
+
+      const rawPPoints = Math.floor(Math.sqrt(Math.max(0, lifetimeScore) / 1000000)) - prestigePoints;
+      const pPoints = Math.max(0, rawPPoints); 
+
+      const pBtn = document.getElementById('prestigeBtn');
+      
+      if (pPoints > 0) {
+        pBtn.classList.add('show');
+        pBtn.textContent = `ПЕРЕРОЖДЕНИЕ (+${pPoints})`;
+      } else {
+        pBtn.classList.remove('show');
+      }
+
+      if (prestigePoints > 0) {
+        document.getElementById('talentsContainer').style.display = 'block';
+      }
+      
+      document.getElementById('talentClick').disabled = prestigePoints < 1;
+      document.getElementById('talentAuto').disabled = prestigePoints < 1;
+      document.getElementById('talentCrit').disabled = prestigePoints < 2;
+
+      document.getElementById('buffIndicator').style.display = buffTimer > 0 ? 'block' : 'none';
+      if(buffTimer > 0) document.getElementById('buffIndicator').textContent = `🔥 x${buffMultiplier} ДОХОД! (${buffTimer}с) 🔥`;
+    }
+
+    function addXP(amount) {
+      xp += amount;
+      if (xp >= xpNeeded) {
+        xp -= xpNeeded;
+        level++;
+        xpNeeded = Math.floor(xpNeeded * 1.5);
+        clickPower += 1;
+        showToast(`🌟 <b>УРОВЕНЬ ${level}!</b><br>+1 к силе клика!`, '#00ffff');
+        playSound('buy', 1200);
+      }
+    }
+
+    document.getElementById('mainButton').addEventListener('click', (e) => {
+      initAudio();
+      const now = performance.now();
+      totalClicks++;
+
+      if (now - lastClickTime < 300) {
+        comboCount++;
+        if (comboCount > 5) currentCombo = Math.min(1 + Math.floor(comboCount / 5), 10);
+      } else { comboCount = 1; currentCombo = 1; }
+      lastClickTime = now;
+
+      const comboTxt = document.getElementById('comboText');
+      if (currentCombo > 1) {
+        comboTxt.textContent = `x${currentCombo}`; comboTxt.classList.add('active');
+        clearTimeout(comboTimer);
+        comboTimer = setTimeout(() => { comboTxt.classList.remove('active'); currentCombo = 1; comboCount = 0; }, 1000);
+      }
+
+      const isCrit = Math.random() < critChance;
+      if (isCrit) { hasCrit = true; document.body.classList.add('shake'); setTimeout(() => document.body.classList.remove('shake'), 300); }
+
+      const buffMult = buffTimer > 0 ? buffMultiplier : 1;
+      let earned = clickPower * prestigeMultiplier * currentCombo * buffMult * (1 + talents.click * 0.5);
+      if (isCrit) earned *= critMultiplier;
+      
+      score += earned; lifetimeScore += earned;
+      addXP(1);
+      
+      playSound(isCrit ? 'crit' : 'click', isCrit ? 900 : (600 + currentCombo * 50));
+
+      const floatEl = document.createElement('div');
+      floatEl.className = `floating-text ${isCrit ? 'crit' : ''}`;
+      floatEl.textContent = `+${formatNumber(earned)}${isCrit ? ' CRIT!' : ''}`;
+      floatEl.style.left = `${e.clientX - 20}px`; floatEl.style.top = `${e.clientY - 20}px`;
+      document.body.appendChild(floatEl);
+      setTimeout(() => floatEl.remove(), 800);
+
+      updateUI();
+    });
+
+    function buyUpgrade(index) {
+      const up = upgrades[index];
+      const cost = Math.floor(up.baseCost * Math.pow(up.costMult, up.count));
+      if (score >= cost) {
+        score -= cost; up.count++;
+        if (up.type === 'click') clickPower += up.value;
+        if (up.type === 'auto') autoPower += up.value;
+        if (up.type === 'crit') critChance += up.value;
+        
+        playSound('buy');
+        addXP(10);
+        updateUI();
+      }
+    }
+
+    setInterval(() => {
+      if (buffTimer > 0) buffTimer--;
+      let buffMult = buffTimer > 0 ? buffMultiplier : 1;
+      let earned = autoPower * prestigeMultiplier * buffMult * (1 + talents.auto * 0.5);
+      
+      if (earned > 0) {
+        score += earned; lifetimeScore += earned;
+        addXP(earned / 50);
+      }
+      updateUI();
+    }, 1000);
+
+    const goldenBtn = document.getElementById('goldenCookie');
+    setInterval(() => {
+      if (buffTimer > 0 || Math.random() > 0.15) return;
+      goldenBtn.style.left = `${Math.random() * (window.innerWidth - 100) + 20}px`;
+      goldenBtn.style.top = `${Math.random() * (window.innerHeight - 100) + 20}px`;
+      goldenBtn.classList.add('show');
+      
+      const timeout = setTimeout(() => goldenBtn.classList.remove('show'), 8000);
+      goldenBtn.onclick = () => {
+        clearTimeout(timeout); goldenBtn.classList.remove('show');
+        buffMultiplier = 7; buffTimer = 15; hasCaughtGolden = true;
+        playSound('buy', 1500);
+        showToast('🔥 <b>ЗОЛОТАЯ ЛИХОРАДКА!</b><br>Доход x7 на 15 секунд!', '#ffdd00');
+        updateUI();
+      };
+    }, 10000);
+
+    document.getElementById('prestigeBtn').addEventListener('click', () => {
+      const pGain = Math.floor(Math.sqrt(lifetimeScore / 1000000)) - prestigePoints;
+      if (pGain <= 0) return;
+      if (confirm(`Переродиться и получить +${pGain} очков? (Очки и улучшения сбросятся)`)) {
+        prestigePoints += pGain;
+        prestigeMultiplier = 1 + (prestigePoints * 0.01);
+        score = 0; lifetimeScore = 0; clickPower = 1; autoPower = 0; critChance = 0.05;
+        upgrades.forEach(u => u.count = 0);
+        document.querySelectorAll('.pet').forEach(p => p.remove());
+        showToast('🌌 <b>ПЕРЕРОЖДЕНИЕ!</b>', '#aa00ff');
+        saveGame(); updateUI();
+      }
+    });
+
+    document.getElementById('talentClick').onclick = () => { if(prestigePoints >= 1) { prestigePoints--; talents.click++; showToast('Талант: +50% Сила клика', '#7c3aed'); updateUI(); saveGame(); } };
+    document.getElementById('talentAuto').onclick = () => { if(prestigePoints >= 1) { prestigePoints--; talents.auto++; showToast('Талант: +50% Автодоход', '#7c3aed'); updateUI(); saveGame(); } };
+    document.getElementById('talentCrit').onclick = () => { if(prestigePoints >= 2) { prestigePoints -= 2; talents.crit++; critChance += 0.05; showToast('Талант: +5% Шанс крита', '#7c3aed'); updateUI(); saveGame(); } };
+
+    function saveGame() {
+      try {
+        localStorage.setItem('vindimClicker_v4', JSON.stringify({
+          score, lifetimeScore, clickPower, autoPower, prestigeMultiplier, prestigePoints, critChance,
+          level, xp, xpNeeded, totalClicks, talents, hasCrit, hasCaughtGolden,
+          upgrades: upgrades.map(u => u.count),
+          achievements: achievementsList.map(a => ({ id: a.id, unlocked: a.unlocked, progress: a.progress })),
+          lastSave: Date.now()
+        }));
+      } catch(e) {}
+    }
+
+    function loadGame() {
+      try {
+        const saved = localStorage.getItem('vindimClicker_v4');
+        if (saved) {
+          const d = JSON.parse(saved);
+          score = d.score || 0; lifetimeScore = d.lifetimeScore || 0;
+          clickPower = d.clickPower || 1; autoPower = d.autoPower || 0;
+          prestigeMultiplier = d.prestigeMultiplier || 1; prestigePoints = d.prestigePoints || 0;
+          critChance = d.critChance || 0.05; level = d.level || 1; xp = d.xp || 0; xpNeeded = d.xpNeeded || 100;
+          totalClicks = d.totalClicks || 0; talents = d.talents || { click: 0, auto: 0, crit: 0 };
+          hasCrit = d.hasCrit || false; hasCaughtGolden = d.hasCaughtGolden || false;
+          
+          if (d.upgrades) upgrades.forEach((u, i) => u.count = d.upgrades[i] || 0);
+          
+          if (d.achievements) {
+            achievementsList.forEach(a => {
+              const savedA = d.achievements.find(sa => sa.id === a.id);
+              if (savedA) { a.unlocked = savedA.unlocked; a.progress = savedA.progress; }
+            });
+          }
+
+          if (d.lastSave) {
+            const offSec = Math.min((Date.now() - d.lastSave) / 1000, 7200);
+            const offEarn = autoPower * prestigeMultiplier * offSec;
+            if (offEarn > 0) { score += offEarn; lifetimeScore += offEarn; if (offEarn > 10) showToast(`💤 Оффлайн доход: +${formatNumber(offEarn)}`, '#00d2ff'); }
+          }
+        }
+      } catch(e) {}
+    }
+
+    setInterval(saveGame, 10000);
+    window.addEventListener('beforeunload', saveGame);
+  </script>
 </body>
 </html>
