@@ -2,11 +2,16 @@
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>vindim — Проекты</title>
 <link rel="shortcut icon" href="favicon.ico" type="image/x-icon">
 <style>
-  * { margin: 0; padding: 0; box-sizing: border-box; }
+  * { 
+    margin: 0; 
+    padding: 0; 
+    box-sizing: border-box; 
+    -webkit-tap-highlight-color: transparent; 
+  }
   
   body, html {
     width: 100%; min-height: 100vh;
@@ -26,7 +31,7 @@
     width: 100%; height: 100%;
     z-index: 0;
     pointer-events: none;
-    background-color: #050508; /* Более глубокий черный */
+    background-color: #050508;
   }
 
   /* ===== ФОНОВЫЕ СВЕЧЕНИЯ ===== */
@@ -45,7 +50,6 @@
     100% { opacity: 1; transform: scale(1.05); }
   }
 
-  /* Весь контент выше фона */
   .header, .projects-container, .btn-info {
     position: relative;
     z-index: 10;
@@ -116,6 +120,7 @@
   .project-card:nth-child(1) { animation-delay: 0.1s; }
   .project-card:nth-child(2) { animation-delay: 0.2s; }
   .project-card:nth-child(3) { animation-delay: 0.3s; }
+  .project-card:nth-child(4) { animation-delay: 0.4s; } /* Задержка для 4-й карточки */
 
   @keyframes cardAppear {
     from { opacity: 0; transform: translateY(40px); }
@@ -361,17 +366,14 @@
 </head>
 <body>
 
-  <!-- Звёздный фон -->
   <canvas id="starfield"></canvas>
   <div class="glow-bg"></div>
 
-  <!-- Шапка -->
   <header class="header">
     <div class="logo">vindim</div>
     <div class="subtitle">Экосистема проектов</div>
   </header>
 
-  <!-- Сетка проектов -->
   <main class="projects-container">
     
     <!-- Карточка 1: Уничтожение солнца -->
@@ -411,12 +413,23 @@
       </div>
     </div>
 
+    <!-- Карточка 4: Тетрис -->
+    <div class="project-card">
+      <div class="cover-container">
+        <img src="cover4.PNG" alt="Геометрический Тетрис" class="project-cover" onerror="this.style.display='none'">
+      </div>
+      <div class="project-content">
+        <h1 class="project-title">Геометрический Тетрис</h1>
+        <p class="project-desc">Классика в неоновом стиле. 7 фигур, 10 уровней скорости и процедурные звуки.</p>
+        <!-- ВАЖНО: Убедись, что папка с тетрисом называется 'tetris' или измени ссылку здесь -->
+        <a href="https://vadimtychkov17-a11y.github.io/tetris/" class="btn-play">Играть</a>
+      </div>
+    </div>
+
   </main>
 
-  <!-- Кнопка Инфо -->
   <button class="btn-info" id="infoBtn">ℹ</button>
 
-  <!-- Модальное окно -->
   <div class="modal-overlay" id="infoModal">
     <div class="modal">
       <h2>О проектах</h2>
@@ -433,7 +446,7 @@
         📁 Репозиторий сайта
       </a>
 
-      <p style="font-size: 13px; color: rgba(255,255,255,0.4); text-align: center;">Версия лаунчера: 1.1.0</p>
+      <p style="font-size: 13px; color: rgba(255,255,255,0.4); text-align: center;">Версия лаунчера: 1.2.0</p>
       
       <button class="btn-close" id="closeModalBtn">Закрыть</button>
     </div>
